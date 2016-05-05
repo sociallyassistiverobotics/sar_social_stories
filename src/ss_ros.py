@@ -33,7 +33,8 @@ class tega_teleop_ros():
     tablet_pub = rospy.Publisher('opal_tablet_command', OpalCommand,
             queue_size = 10)
 
-    def __init__(self, ros_node, ros_label, flags):
+
+    def __init__(self, ros_node):
         """ Initialize ROS """
         # we get a reference to the main ros node so we can do callbacks
         # to publish messages, and subscribe to stuff
@@ -44,15 +45,17 @@ class tega_teleop_ros():
         # TODO subscribe to messages from opal game
         # EXAMPLE rospy.Subscriber('tega_state', TegaState, self.on_tega_state_msg)
 
+
     def send_opal_message(self, command):
         """ Publish opal command message """
         print 'sending opal command: %s' % command
         msg = OpalCommand()
         msg.command = command
-        # TODO opal command messages often taken properties, add these!
+        # TODO opal command messages often take properties, add these!
         # TODO use sar_opal_sender as examples of how to add properties
         self.tablet_pub.publish(msg)
         rospy.loginfo(msg)
+
 
     # TODO add callbacks for any rosmsgs we subscribe to!
     # EXAMPLE:
