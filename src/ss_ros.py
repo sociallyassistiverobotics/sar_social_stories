@@ -24,14 +24,18 @@
 # SOFTWARE.
 
 import rospy # ROS
-from sar_opal_msgs.msg import OpalCommand # ROS msgs to talk to tablet
+from sar_opal_msgs.msg import OpalCommand # ROS msgs to talk to game
+from sar_opal_msgs.msg import OpalAction # ROS msgs for game actions 
+from sar_robot_command_msgs.msg import RobotCommand # ROS msgs for robot cmd
+from sar_robot_command_msgs.msg import RobotState # ROS msgs for robot state
 
-class tega_teleop_ros():
+class ss_ros():
     # ROS node
-    # set up rostopics we publish: commands to the tablet and commands
-    # to Tega
-    tablet_pub = rospy.Publisher('opal_tablet_command', OpalCommand,
+    # set up rostopics we publish: commands to the game (on a tablet or on a
+    # PC/touchscreen), and commands to the robot
+    game_pub = rospy.Publisher('opal_tablet_command', OpalCommand,
             queue_size = 10)
+    robot_pub = rospy.Publisher('robot_command', RobotCommand, queue_size = 10)
 
 
     def __init__(self, ros_node):
@@ -42,8 +46,10 @@ class tega_teleop_ros():
 
         # subscribe to other ros nodes
         # TODO could we put list of nodes to subscribe to in config file?
-        # TODO subscribe to messages from opal game
-        # EXAMPLE rospy.Subscriber('tega_state', TegaState, self.on_tega_state_msg)
+        # subscribe to messages from opal game
+        rospy.Subscriber('opal_tablet_action', OpalAction, self.on_opal_action_msg)
+        # subscribe to messages about the robot's state
+        rospy.Subscriber('robot_state', RobotState, self.on_robot_state_msg)
 
 
     def send_opal_message(self, command):
@@ -53,19 +59,31 @@ class tega_teleop_ros():
         msg.command = command
         # TODO opal command messages often take properties, add these!
         # TODO use sar_opal_sender as examples of how to add properties
-        self.tablet_pub.publish(msg)
+        self.game_pub.publish(msg)
         rospy.loginfo(msg)
 
 
-    # TODO add callbacks for any rosmsgs we subscribe to!
-    # EXAMPLE:
-    #def on_tega_state_msg(self, data):
-        # when we get tega state messages, set a flag indicating whether the
+    def send_robot_command(self, command):
+        """ Publish robot command message """
+        print 'sending robot command: %s' % command
+        msg = RobotCommand()
+        msg.command = command
+        # TODO add header
+        # TODO robot command messages may take properties, add these!
+        # TODO use robot_command_sender as examples of how to add properties
+        self.robot_pub.publish(msg)
+        rospy.loginfo(msg)
+
+
+    def on_opal_action_msg(data):
+        """ Called when we receive OpalAction messages """
+        print("TODO received OpalAction message!")
+
+
+    def on_robot_state_msg(data):
+        """ Called when we receive RobotState messages """
+        print("TODO received RobotState message!")
+        # when we get robot state messages, set a flag indicating whether the
         # robot is in motion or playing sound or not
-        #self.flags.tega_is_playing_sound = data.is_playing_sound
-        
-        # Instead of giving us a boolean to indicate whether tega is in motion
-        # or not, we get the name of the animation. Let's check whether it is
-        # our "idle" animation (usually, the idle animation is either
-        # MOTION_IDLESTILL or MOTION_BREATHING).
-        #self.flags.tega_is_doing_motion = data.doing_motion
+        #self.flags.robot_is_playing_sound = data.is_playing_sound
+        #self.flags.robot_doing_action = data.doing_action

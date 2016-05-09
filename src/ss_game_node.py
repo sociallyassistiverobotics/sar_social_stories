@@ -57,30 +57,29 @@ class ss_game_node():
 
     def __init__(self):
         """ Initialize anything that needs initialization """
-        # TODO initialize stuff
 
         # setup ROS node publisher and subscriber
         self.ros_ss = ss_ros(self.ros_node)
 
 
-    def ss_game_node():
+    def parse_arguments_and_launch():
         # Parse python arguments 
-        # The game node requires the session number and participant ID be provided
-        # so the appropriate game scripts can be loaded.
+        # The game node requires the session number and participant ID be
+        # provided so the appropriate game scripts can be loaded.
         parser = argparse.ArgumentParser(
                 formatter_class=argparse.RawDescriptionHelpFormatter,
                 description='Start the SAR Social Stories game node, which '
-                + 'orchestrates the game: loads scripts, uses ROS to tell the robot'
-                + 'and tablet what to do.\nRequires roscore to be running and ' 
-                + 'requires rosbridge_server for communication with the SAR opal ' 
-                + 'tablet (where game content is shown).')
+                + 'orchestrates the game: loads scripts, uses ROS to tell the '
+                + 'robot and tablet what to do.\nRequires roscore to be running' 
+                + ' and requires rosbridge_server for communication with the ' 
+                + 'SAR opal tablet (where game content is shown).')
         parser.add_argument('session', dest='session', action='store', 
-               nargs=1, type=int, default=-1, help='Indicate which session this is'
-               + ' so the appropriate game scripts can be loaded.')
+               nargs=1, type=int, default=-1, help='Indicate which session this'
+               + ' is so the appropriate game scripts can be loaded.')
         parser.add_argument('participant', dest='participant', 
-               action='store', nargs=1, type=str, default='DEMO', help='Indicate '
-               + ' which participant this is so the appropriate game scripts can '
-               + 'be loaded.')
+               action='store', nargs=1, type=str, default='DEMO', help=
+               'Indicate which participant this is so the appropriate game '
+               + 'scripts can be loaded.')
 
         # parse the args we got, and print them out
         args = parser.parse_args()
@@ -90,11 +89,11 @@ class ss_game_node():
         # where they will be used to load appropriate game scripts
         #
         # if the session number doesn't make sense, or we've specified that
-        # this is a test or demo, run demo
+        # this is a demo, run demo
         if args.session < 0 or args.participant == 'DEMO':
             self.launch_game(-1, 'DEMO')
         # otherwise, launch the game for the provided session and ID
-        else 
+        else:
             self.launch_game(args.session, args.participant)
 
 
@@ -103,28 +102,31 @@ class ss_game_node():
         # set up logger
         self.logger = ss_logger(session, participant)
 
-        # get list of session scripts from session manager
-        self.game_manager = ss_session_manager(self.logger)
-        session_scripts = self.session_manager.get_scripts(session)
+        # get list of session scripts from script manager
+        self.script_manager = ss_script_manager(self.logger)
+        session_scripts = self.script_manager.get_scripts(session)
 
         # get list of story scripts from personalization manager
         self.personalization_manager = ss_personalization_manager(self.logger)
         stories = self.personalization_manager.get_story_scripts(session,
                                                                  participant)
 
+        # load scripts and generate full session script
+        script = self.script_manager.load_scripts(session_scripts, stories)
+
         # start game
-        self.game_manager = ss_game_manager(self.logger, self.ros_ss,
-                                            session_scripts, stories)
+        self.game_manager = ss_game_manager(self.logger, self.ros_ss, script)
         self.game_manager.start()
 
 
-    if __name__ == '__main__':
-        # try launching the game
-        try:
-            ss_game_node()
+if __name__ == '__main__':
+    # try launching the game
+    try:
+        game_node = ss_game_node()
+        game_node.parse_arguments_and_launch()
 
-        # if roscore isn't running or shuts down unexpectedly
-        except rospy.ROSInterruptException: 
-            print ('ROS node shutdown')
-            pass
+    # if roscore isn't running or shuts down unexpectedly
+    except rospy.ROSInterruptException: 
+        print ('ROS node shutdown')
+        pass
 

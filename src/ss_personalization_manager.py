@@ -24,12 +24,22 @@
 # SOFTWARE.
 
 class ss_personalization_manager():
-   """ Determine personalization for a participant, given their past 
-   performance and the current session """ 
+    """ Determine personalization for a participant, given their past 
+    performance and the current session """ 
 
-    
-    def __init__(self, session, participant):
-        """ """
- 
+
+    def __init__(self, logger):
+        """ initialize stuff """
+        print("TODO initialize personalization manager")
+        
+        # save reference to logger for logging stuff later
+        self.logger = logger
+
         # TODO load any saved files for this participant
         # TODO check personalization, determine which stories to present
+
+
+    def get_story_scripts(participant, session):
+        """ Given the participant and session, determine which stories should
+        be heard next """
+        print("TODO get story scripts")

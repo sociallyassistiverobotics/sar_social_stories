@@ -29,3 +29,4 @@ class ss_logger():
     def __init__(self, session, participant):
         """ Set up logger, tag files with session number and participant ID """
         # TODO set up logger
+        print("TODO initialize logger")

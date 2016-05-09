@@ -23,23 +23,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-class ss_game_manager():
-    """ Social stories game manager """
+class ss_script_manager():
+    """ Determine which scripts to load, and load them """ 
 
-    def __init__(self, logger, ros_ss, script):
-        """ Save references to ROS connection, logger, script """
-        print("Setting up game manager...")
+    
+   def __init__(self, logger):
+        """ Initialize session manager """
+        print("TODO initialize session manager")
 
         # save reference to logger for logging stuff later
         self.logger = logger
 
-        # save reference to our ros node so we can publish messages
-        self.ros_ss = ros_ss
 
-        # save reference to the game script so we can run it
-        self.script = script
+   def get_scripts(self, session):
+       """ Get scripts for the specified session """
+        if session == -1:
+            # will use the demo session script
+        else:
+            # pick out the scripts for specified session
 
 
-    def start():
-        """ start the game! """
-        print("TODO start game")
+    def load_scripts(self, session_scripts, stories):
+        """ Load full session script with stories """
+        print("TODO load script")
+        # TODO load script
