@@ -39,7 +39,13 @@ class ss_personalization_manager():
         # TODO check personalization, determine which stories to present
 
 
-    def get_story_scripts(participant, session):
+    def get_story_scripts(self, participant, session):
         """ Given the participant and session, determine which stories should
         be heard next """
         print("TODO get story scripts")
+
+
+    def get_joint_attention_level(self, participant, session):
+        """ Given the participant and session, determine what level of joint
+        attention scaffolding to provide each time it is required """
+        print("TODO determine joint attention level")

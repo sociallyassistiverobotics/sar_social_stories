@@ -29,9 +29,7 @@ import sys # exit and argv
 import rospy # ROS
 import argparse # to parse command line arguments
 from ss_logger import ss_logger # for logging data
-from ss_personalization_manager import ss_personalization_manager
-from ss_session_manager import ss_session_manager
-from ss_game_manager import ss_game_manager
+from ss_script_handler import ss_script_handler # plays back script lines
 from ss_ros import ss_ros
 
 # The SAR Social Stories game node orchestrates the game: what the robot is
@@ -62,7 +60,7 @@ class ss_game_node():
         self.ros_ss = ss_ros(self.ros_node)
 
 
-    def parse_arguments_and_launch():
+    def parse_arguments_and_launch(self):
         # Parse python arguments 
         # The game node requires the session number and participant ID be
         # provided so the appropriate game scripts can be loaded.
@@ -73,11 +71,11 @@ class ss_game_node():
                 + 'robot and tablet what to do.\nRequires roscore to be running' 
                 + ' and requires rosbridge_server for communication with the ' 
                 + 'SAR opal tablet (where game content is shown).')
-        parser.add_argument('session', dest='session', action='store', 
-               nargs=1, type=int, default=-1, help='Indicate which session this'
+        parser.add_argument('session', action='store', 
+               nargs='?', type=int, default=-1, help='Indicate which session this'
                + ' is so the appropriate game scripts can be loaded.')
-        parser.add_argument('participant', dest='participant', 
-               action='store', nargs=1, type=str, default='DEMO', help=
+        parser.add_argument('participant', 
+               action='store', nargs='?', type=str, default='DEMO', help=
                'Indicate which participant this is so the appropriate game '
                + 'scripts can be loaded.')
 
@@ -97,26 +95,25 @@ class ss_game_node():
             self.launch_game(args.session, args.participant)
 
 
-    def launch_game(session, participant):
+    def launch_game(self, session, participant):
         """ Load game based on the current session and participant """
         # set up logger
         self.logger = ss_logger(session, participant)
 
-        # get list of session scripts from script manager
-        self.script_manager = ss_script_manager(self.logger)
-        session_scripts = self.script_manager.get_scripts(session)
-
-        # get list of story scripts from personalization manager
-        self.personalization_manager = ss_personalization_manager(self.logger)
-        stories = self.personalization_manager.get_story_scripts(session,
-                                                                 participant)
-
-        # load scripts and generate full session script
-        script = self.script_manager.load_scripts(session_scripts, stories)
-
         # start game
-        self.game_manager = ss_game_manager(self.logger, self.ros_ss, script)
-        self.game_manager.start()
+        try: 
+            self.script_handler = ss_script_handler(self.logger, self.ros_ss,
+                    session, participant)
+        except IOError:
+            self.logger.log("Did not load the session script... stopping.")
+            
+        else:
+            while (True):
+                try:
+                    self.script_handler.iterate_once()
+                except StopIteration:
+                    self.logger.log("Finished script!")
+                    break
 
 
 if __name__ == '__main__':

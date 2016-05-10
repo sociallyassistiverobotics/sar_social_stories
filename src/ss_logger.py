@@ -30,3 +30,8 @@ class ss_logger():
         """ Set up logger, tag files with session number and participant ID """
         # TODO set up logger
         print("TODO initialize logger")
+
+
+    def log(self, logme, args=""):
+        # TODO log to file or ROS or wherever (with timestamps?)
+        print(logme + args)

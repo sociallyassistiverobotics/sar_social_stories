@@ -116,3 +116,8 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+
+# ignore script files
+session_scripts/*
+story_scripts/*

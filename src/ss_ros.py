@@ -54,7 +54,7 @@ class ss_ros():
 
     def send_opal_message(self, command):
         """ Publish opal command message """
-        print 'sending opal command: %s' % command
+        print("sending opal command: " + command)
         msg = OpalCommand()
         msg.command = command
         # TODO opal command messages often take properties, add these!
@@ -62,10 +62,15 @@ class ss_ros():
         self.game_pub.publish(msg)
         rospy.loginfo(msg)
 
+    
+    def send_opal_message_and_wait(self, command, timeout):
+        """ Publish opal command message and wait for a response """
+        print("TODO send opal command and wait")
+      
 
-    def send_robot_command(self, command):
+    def send_robot_command(self, command, timeout):
         """ Publish robot command message """
-        print 'sending robot command: %s' % command
+        print("sending robot command: " + command)
         msg = RobotCommand()
         msg.command = command
         # TODO add header
@@ -73,6 +78,11 @@ class ss_ros():
         # TODO use robot_command_sender as examples of how to add properties
         self.robot_pub.publish(msg)
         rospy.loginfo(msg)
+
+
+    def send_robot_command_and_wait(self, command):
+        """ Publish robot command message and wait for a response """
+        print("TODO send robot command and wait")
 
 
     def on_opal_action_msg(data):
