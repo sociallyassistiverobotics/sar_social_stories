@@ -39,7 +39,7 @@ class ss_script_parser():
         if session == -1:
             # will use the demo session script
             # TODO get script!
-            return "../session_scripts/dmo.txt"
+            return "../session_scripts/demo.txt"
         else:
             # pick out the scripts for the specified session
             # TODO get script!

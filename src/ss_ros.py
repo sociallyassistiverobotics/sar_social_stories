@@ -24,6 +24,8 @@
 # SOFTWARE.
 
 import rospy # ROS
+import datetime # for header times and timeouts
+import time # for sleep
 from sar_opal_msgs.msg import OpalCommand # ROS msgs to talk to game
 from sar_opal_msgs.msg import OpalAction # ROS msgs for game actions 
 from sar_robot_command_msgs.msg import RobotCommand # ROS msgs for robot cmd
@@ -44,17 +46,15 @@ class ss_ros():
         # to publish messages, and subscribe to stuff
         self.ros_node = ros_node
 
-        # subscribe to other ros nodes
-        # TODO could we put list of nodes to subscribe to in config file?
         # subscribe to messages from opal game
         rospy.Subscriber('opal_tablet_action', OpalAction, self.on_opal_action_msg)
         # subscribe to messages about the robot's state
         rospy.Subscriber('robot_state', RobotState, self.on_robot_state_msg)
 
 
-    def send_opal_message(self, command):
+    def send_opal_command(self, command):
         """ Publish opal command message """
-        print("sending opal command: " + command)
+        print("sending opal command: %s", command)
         msg = OpalCommand()
         msg.command = command
         # TODO opal command messages often take properties, add these!
@@ -63,14 +63,20 @@ class ss_ros():
         rospy.loginfo(msg)
 
     
-    def send_opal_message_and_wait(self, command, timeout):
+    def send_opal_command_and_wait(self, command, timeout):
         """ Publish opal command message and wait for a response """
-        print("TODO send opal command and wait")
-      
+        self.send_opal_command(command)
+        self.response_received = False
+        start_time = datetime.datetime.now()
+        while datetime.datetime.now() - start_time < timeout:
+            time.sleep(0.1)
+            if self.response_received:
+                break
+
 
     def send_robot_command(self, command, timeout):
         """ Publish robot command message """
-        print("sending robot command: " + command)
+        print("sending robot command: %s", command)
         msg = RobotCommand()
         msg.command = command
         # TODO add header
@@ -80,17 +86,30 @@ class ss_ros():
         rospy.loginfo(msg)
 
 
-    def send_robot_command_and_wait(self, command):
+    def send_robot_command_and_wait(self, command, timeout):
         """ Publish robot command message and wait for a response """
-        print("TODO send robot command and wait")
+        self.send_robot_command(command)
+        self.response_received = False
+        start_time = datetime.datetime.now()
+        while datetime.datetime.now() - start_time < timeout:
+            time.sleep(0.1)
+            print(self.response_received)
+            if self.response_received:
+                break
 
 
-    def on_opal_action_msg(data):
+    def on_opal_action_msg(self, data):
         """ Called when we receive OpalAction messages """
         print("TODO received OpalAction message!")
 
+        # sometimes we need to wait until we get a message back from the
+        # opal game, so when we do get the message we were waiting for,
+        # set this flag (TODO may need to check first that this *was* the
+        # message we were waiting for!)
+        self.response_received = True
 
-    def on_robot_state_msg(data):
+
+    def on_robot_state_msg(self, data):
         """ Called when we receive RobotState messages """
         print("TODO received RobotState message!")
         # when we get robot state messages, set a flag indicating whether the

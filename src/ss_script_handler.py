@@ -23,6 +23,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import sys # for getting generic exception info
+import datetime # for getting time deltas for timeouts
 from ss_script_parser import ss_script_parser
 from ss_personalization_manager import ss_personalization_manager
 from ss_ros import ss_ros
@@ -34,7 +36,7 @@ class ss_script_handler():
     to replace how scripts are stored and accessed (e.g., in a database versus 
     in text files). """
 
-    def __init__(self, logger, ros_ss, session, participant):
+    def __init__(self, logger, ros_node, session, participant):
         """ Save references to ROS connection and logger, get scripts and
         set up to read script lines """
 
@@ -43,7 +45,7 @@ class ss_script_handler():
         self.logger.log("Setting up script handler...")
 
         # save reference to our ros node so we can publish messages
-        self.ros_ss = ros_ss
+        self.ros_node = ros_node
 
         # set up personalization manager so we can get personalized stories
         # for each participant
@@ -76,8 +78,12 @@ class ss_script_handler():
             # got a line, what do we do with it?
             print("LINE: " + repr(line))
 
-            # if line indicates we need to start a story, load next story in its 
-            # own script parser?
+            # TODO sometimes we need to wait for a response
+            #self.ros_node.send_opal_command_and_wait(6, 
+                    #datetime.timedelta(seconds=10))
+
+            # TODO if line indicates we need to start a story, load next story 
+            # in its own script parser?
 
         except StopIteration:
             self.logger.log("No more script lines to get!")
@@ -85,6 +91,8 @@ class ss_script_handler():
             raise
 
         except:
-            self.logger.log("Unexpected exception!")
+            self.logger.log("Unexpected exception! Error:")
+            print(sys.exc_info()[0])
+            raise
 
         
