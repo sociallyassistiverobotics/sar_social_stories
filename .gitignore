@@ -121,3 +121,7 @@ target/
 # ignore script files
 session_scripts/*
 story_scripts/*
+
+# but don't ignore the demo scripts
+!session_scripts/demo-*.txt
+!story_scripts/demo-*.txt

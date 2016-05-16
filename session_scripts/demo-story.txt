@@ -1,0 +1,13 @@
+OPAL    CLEAR
+OPAL    LOAD_ALL    yesno.txt
+ROBOT   "Are you ready to hear the story? <anticipate>"
+WAIT    YES_NO  10
+OPAL    CLEAR
+OPAL    SETUP_STORY_SCENE
+OPAL    LOAD_STORY
+OPAL    SET_CORRECT
+ROBOT   STORY_INTRO
+ROBOT   "Let's look <lookat-game> at the story together."
+STORY
+ROBOT   STORY_CLOSING
+

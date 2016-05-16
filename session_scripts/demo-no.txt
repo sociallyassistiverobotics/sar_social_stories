@@ -1,0 +1,2 @@
+"Touch yes when you're ready."
+"Okay. When you're ready, touch yes."

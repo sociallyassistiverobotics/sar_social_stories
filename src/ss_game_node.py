@@ -32,17 +32,15 @@ from ss_logger import ss_logger # for logging data
 from ss_script_handler import ss_script_handler # plays back script lines
 from ss_ros import ss_ros
 
-# The SAR Social Stories game node orchestrates the game: what the robot is
-# told to do, what is loaded on the tablet, what to do in response to stuff
-# that happens on the tablet or from other sensors. 
-#
-# This node sends ROS messages to a SAR Opal tablet via a rosbridge_server
-# websocket connection, and uses ROS to exchange messages with other relevant
-# nodes (such as the node that translates robot commands to specific robot
-# platforms). 
-
 class ss_game_node():
-    """ Social stories main game node """
+    """ The SAR social stories main game node orchestrates the game: what the
+    robot is told to do, what is loaded on the tablet, what to do in response
+    to stuff that happens on the tablet or from other sensors.
+
+    This node sends ROS messages to a SAR Opal game via a rosbridge_server
+    websocket connection, and uses ROS to exchange messages with other relevant
+    nodes (such as the node that translates robot commands to specific robot
+    platforms). """
 
     # set up ROS node globally 
     # TODO if running on network where DNS does not resolve local

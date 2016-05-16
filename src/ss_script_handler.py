@@ -78,6 +78,8 @@ class ss_script_handler():
             # got a line, what do we do with it?
             print("LINE: " + repr(line))
 
+            # TODO parse line!
+
             # TODO sometimes we need to wait for a response
             #self.ros_node.send_opal_command_and_wait(6, 
                     #datetime.timedelta(seconds=10))
