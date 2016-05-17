@@ -52,7 +52,7 @@ class ss_ros():
         rospy.Subscriber('robot_state', RobotState, self.on_robot_state_msg)
 
 
-    def send_opal_command(self, command):
+    def send_opal_command(self, command, properties):
         """ Publish opal command message """
         print("sending opal command: %s", command)
         msg = OpalCommand()
@@ -63,18 +63,13 @@ class ss_ros():
         rospy.loginfo(msg)
 
     
-    def send_opal_command_and_wait(self, command, timeout):
+    def send_opal_command_and_wait(self, command, properties, response, timeout):
         """ Publish opal command message and wait for a response """
-        self.send_opal_command(command)
-        self.response_received = False
-        start_time = datetime.datetime.now()
-        while datetime.datetime.now() - start_time < timeout:
-            time.sleep(0.1)
-            if self.response_received:
-                break
+        self.send_opal_command(command, properties)
+        self.wait_for_response(response, timeout) 
 
 
-    def send_robot_command(self, command, timeout):
+    def send_robot_command(self, command, properties):
         """ Publish robot command message """
         print("sending robot command: %s", command)
         msg = RobotCommand()
@@ -86,17 +81,10 @@ class ss_ros():
         rospy.loginfo(msg)
 
 
-    def send_robot_command_and_wait(self, command, timeout):
+    def send_robot_command_and_wait(self, command, properties, response, timeout):
         """ Publish robot command message and wait for a response """
-        self.send_robot_command(command)
-        self.response_received = False
-        start_time = datetime.datetime.now()
-        while datetime.datetime.now() - start_time < timeout:
-            time.sleep(0.1)
-            print(self.response_received)
-            if self.response_received:
-                break
-
+        self.send_robot_command(command, properties)
+        self.wait_for_response(response, timeout) 
 
     def on_opal_action_msg(self, data):
         """ Called when we receive OpalAction messages """
@@ -106,7 +94,9 @@ class ss_ros():
         # opal game, so when we do get the message we were waiting for,
         # set this flag (TODO may need to check first that this *was* the
         # message we were waiting for!)
-        self.response_received = True
+        self.was_response_received = True
+        # TODO record what the response was (e.g., yes/no, correct/incorrect)
+        self.response_received = "YES"
 
 
     def on_robot_state_msg(self, data):
@@ -116,3 +106,16 @@ class ss_ros():
         # robot is in motion or playing sound or not
         #self.flags.robot_is_playing_sound = data.is_playing_sound
         #self.flags.robot_doing_action = data.doing_action
+
+
+    def wait_for_response(self, response, timeout):
+        # TODO check what response to wait for and set that response received
+        # flag to false
+        self.was_response_received = False
+        start_time = datetime.datetime.now()
+        while datetime.datetime.now() - start_time < timeout:
+            time.sleep(0.1)
+            if self.was_response_received:
+                return self.response_received
+        return "TIMEOUT"
+

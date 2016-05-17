@@ -52,7 +52,15 @@ Script lines should be tab-delimited. Look at the demo script located in
 
 The session script lists what happens during a game session. It should list, in
 order, the actions the program should take. These actions include the
-following:
+following, which are described in more detail below:
+
+- ADD
+- SET
+- ROBOT
+- OPAL
+- WAIT
+- REPEAT
+- STORY
 
 #### ADD
 
@@ -69,12 +77,13 @@ taken by the user:
 
 Currently, the following lists can be added:
 
-- Responses for correct user actions
-- Responses for incorrect user actions
-- Responses to the user selecting a "yes" button
-- Responses to the user selecting a "no" button
-- Introductory comment before telling a story
-- Responses for when the maximum game time is reached
+- CORRECT\_RESPONSES: Responses for correct user actions
+- INCORRECT\_RESPONSES: Responses for incorrect user actions
+- YES\_RESPONSES: Responses to the user selecting a "yes" button
+- NO\_RESPONSES: Responses to the user selecting a "no" button
+- STORY\_INTROS: Introductory comment before telling a story
+- STORY\_CLOSINGS: Closing comment after telling a story
+- TIMEOUT\_CLOSINGS: Responses for when the maximum game time is reached
 
 #### SET
 
@@ -93,11 +102,24 @@ For example, the following commands will set the maximum incorrect responses to
 
 #### ROBOT
 
-ROBOT is used to send the robot a speech and/or action command. Write it as a
-string containing what the robot should say and the actions the robot should
-do, following the format for RobotCommand messages defined in [sar\_robot\_command\_msgs](https://github.com/personal-robots/sar_robot_command_msgs "/sar_robot_command_msgs"). For example, the following would send a command to the robot to say "Hi, I am a robot" while smiling:
+ROBOT is used to send the robot a speech and/or action command. For DO actions,
+write it as a string containing what the robot should say and the actions the
+robot should do, following the format for RobotCommand messages defined in
+[sar\_robot\_command\_msgs](https://github.com/personal-robots/sar_robot_command_msgs
+"/sar_robot_command_msgs"). For example, the following would send a command to
+the robot to say "Hi, I am a robot" while smiling:
 
-`ROBOT   "Hi &lt;smile&rt;, I am a robot!"`
+`ROBOT   DO "Hi &lt;smile&rt;, I am a robot!"`
+
+You can also send other RobotCommand messages, for example:
+
+`ROBOT  SLEEP`
+
+The robot commands also include a few special commands that indicate that one
+of the robot commands from the STORY\_INTROS or STORY\_CLOSINGS lists should be
+used, such as:
+
+`ROBOT  STORY_INTRO` 
 
 #### OPAL
 
