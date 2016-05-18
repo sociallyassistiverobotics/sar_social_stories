@@ -25,6 +25,7 @@
 
 import sys # for getting generic exception info
 import datetime # for getting time deltas for timeouts
+import json
 from ss_script_parser import ss_script_parser
 from ss_personalization_manager import ss_personalization_manager
 from ss_ros import ss_ros
@@ -35,11 +36,13 @@ class ss_script_handler():
     the script parser to get the next line in a script. We keep loading script
     lines and parsing script lines separate on the offchance that we might want
     to replace how scripts are stored and accessed (e.g., in a database versus 
-    in text files). """
+    in text files). 
+    """
 
     def __init__(self, logger, ros_node, session, participant):
         """ Save references to ROS connection and logger, get scripts and
-        set up to read script lines """
+        set up to read script lines 
+        """
 
         # save reference to logger for logging stuff later
         self.logger = logger
@@ -49,12 +52,10 @@ class ss_script_handler():
         self.ros_node = ros_node
 
         # set up personalization manager so we can get personalized stories
-        # for each participant
-        self.personalization_manager = ss_personalization_manager(self.logger)
+        # for this participant
+        self.personalization_manager = ss_personalization_manager(self.logger,
+                session, participant)
 
-        # get story scripts from personalization manager
-        self.personalization_manager.get_story_scripts(session, participant)
-        
         # set up script parser
         self.script_parser = ss_script_parser(self.logger)
 
@@ -100,13 +101,15 @@ class ss_script_handler():
             #########################################################
             # only STORY lines have only one part to the command
             elif len(elements) == 1:
-                # for STORY lines, play back the next story for this participant
+                # for STORY lines, play back the next story for this
+                # participant
                 if "STORY" in elements[0]:
                     print("STORY")
-                    # TODO if line indicates we need to start a story, load 
-                    # next story in its own script parser?
+                    # TODO if line indicates we need to start a story, do so 
+                    # use self.script_file
+                    # open in new script parser like REPEAT lines
 
-            # we have 2+ elements in the line, so check the other commands
+            # line has 2+ elements, so check the other commands
             #########################################################
             # for ROBOT lines, send command to the robot
             elif "ROBOT" in elements[0]:
@@ -114,13 +117,13 @@ class ss_script_handler():
                 # play a randomly selected story intro from the list
                 if "STORY_INTRO" in elements[1]:
                     self.ros_node.send_robot_command("DO", self.story_intros[
-                        randint(0,len(self.story_intros)-1]))
+                        randint(0,len(self.story_intros)-1)])
 
                 # play a randomly selected story closing from the list
                 elif "STORY_CLOSING" in elements[1]:
                     print("TODO play a story closing")
                     self.ros_node.send_robot_command("DO", self.story_closings[
-                        randint(0,len(self.story_closings)-1]))
+                        randint(0,len(self.story_closings)-1)])
                 
                 # send a command to the robot, with properties
                 elif len(elements) > 2:
@@ -134,16 +137,38 @@ class ss_script_handler():
             # for OPAL lines, send command to Opal game
             elif "OPAL" in elements[0]:
                 print("OPAL")
-                if "LOAD_ALL" in elements[1] && len(elements) >= 3:
-                    # load all objects listed in file -- the file is assumed
-                    # to have the properties for one object one each line
+                if "LOAD_ALL" in elements[1] and len(elements) >= 3:
+                    # load all objects listed in file -- the file is 
+                    # assumed to have properties for one object on each 
+                    # line
                     to_load = read_list_from_file(elements[2])
                     for obj in to_load:
                         self.ros_node.send_opal_command("LOAD_OBJECT", obj)
 
                 elif "LOAD_STORY" in elements[1]:
-                    # TODO load graphics for the next story
-                    print("TODO load story graphics")
+                    # get the next story
+                    self.script_file, scenes, in_order, num_answers = \
+                        self.personalization_manager.get_next_story()
+
+                    # set up the story scene in the game
+                    setup = {}
+                    setup["numScenes"] = len(scenes)
+                    setup["scenesInOrder"] = in_order
+                    setup["numAnswers"] = num_answers
+                    self.ros_node.send_opal_command("SETUP_STORY_SCENE",
+                           json.dumps(setup))
+
+                    # load the scene graphics
+                    for scene in scenes:
+                        toload = {}
+                        toload["name"] = scene
+                        toload["tag"] = "PlayObject"
+                        toload["slot"] = scenes.index(scene) + 1
+                        if not in_order:
+                            toload["correctSlot"] = scenes.index(scene) + 1
+                        toload["draggable"] = False if in_order else True
+                        toload["isAnswerSlot"] = False
+                        self.ros_node.send_opal_command("LOAD_OBJECT", toload)
 
                 # send an opal command, with properties
                 elif len(elements) > 2:
@@ -154,10 +179,11 @@ class ss_script_handler():
                     self.ros_node.send_opal_command(elements[1])
             
             #########################################################
-            # for ADD lines, get a list of robot commands that can be used in
-            # response to particular triggers from the specified file and save
-            # them for later use -- all ADD lines should have 3 elements
-            elif "ADD" in elements[0] && len(elements) >= 3:
+            # for ADD lines, get a list of robot commands that can be 
+            # used in response to particular triggers from the specified
+            # file and save them for later use -- all ADD lines should 
+            # have 3 elements
+            elif "ADD" in elements[0] and len(elements) >= 3:
                 # read list of responses from the specified file into the 
                 # appropriate variable
                 try:
@@ -171,9 +197,11 @@ class ss_script_handler():
                         self.yes_responses = self.read_list_from_file(
                                 elements[2])
                     elif "NO_RESPONSES" in elements[1]:
-                        self.no_responses = self.read_list_from_file(elements[2])
+                        self.no_responses = self.read_list_from_file(
+                                elements[2])
                     elif "STORY_INTROS" in elements[1]:
-                        self.story_intros = self.read_list_from_file(elements[2])
+                        self.story_intros = self.read_list_from_file(
+                                elements[2])
                     elif "STORY_CLOSINGS" in elements[1]:
                         self.story_closings = self.read_list_from_file(
                                 elements[2])
@@ -188,7 +216,7 @@ class ss_script_handler():
 
             #########################################################
             # for SET lines, set the specified constant
-            elif "SET" in elements[0] && len(elements) >= 3:
+            elif "SET" in elements[0] and len(elements) >= 3:
                 if "MAX_INCORRECT_RESPONSES" in elements[1]:
                     self.max_incorrect_responses = elements[2]
                     self.logger.log("Set MAX_INCORRECT_RESPONSES to " + 
@@ -203,7 +231,7 @@ class ss_script_handler():
             #########################################################
             # for WAIT lines, wait for the specified user response, or timeout
             # if no response is received
-            elif "WAIT" in elements[0] && len(elements) >= 3:
+            elif "WAIT" in elements[0] and len(elements) >= 3:
                 # wait for a user response or wait until the specified time has
                 # elapsed. If the response is incorrect, allow multiple 
                 # attempts up to the maximum number of incorrect responses
@@ -221,7 +249,7 @@ class ss_script_handler():
                     if "CORRECT" in response:
                         self.ros_node.send_robot_command("DO", 
                                 self.correct_responses[randint(0,
-                                    len(self.correct_responses)-1]))
+                                    len(self.correct_responses)-1)])
                         break
 
                     # if response was YES, randomly select a robot response to
@@ -229,7 +257,7 @@ class ss_script_handler():
                     elif "YES" in response:
                         self.ros_node.send_robot_command("DO", 
                                 self.yes_responses[randint(0,
-                                    len(self.yes_responses)-1]))
+                                    len(self.yes_responses)-1)])
                         break
 
                     # if we received no user response before timing out, 
@@ -237,19 +265,19 @@ class ss_script_handler():
 
                     # if response was INCORRECT, randomly select a robot 
                     # response to an incorrect user action
-                    elif "INCORRECT" in response or 
-                        ("TIMEOUT" in response and "CORRECT" in elements[1]):
+                    elif ("INCORRECT" in response) or ("TIMEOUT" in response 
+                            and "CORRECT" in elements[1]):
                         self.ros_node.send_robot_command("DO", 
                                 self.incorrect_responses[randint(0,
-                                    len(self.incorrect_responses)-1]))
+                                    len(self.incorrect_responses)-1)])
 
                     # if response was NO, randomly select a robot response to
                     # the user selecting no 
-                    elif "NO" in response or
-                        ("TIMEOUT" in response and "YES_NO" in elements[1]):
+                    elif "NO" in response or ("TIMEOUT" in response 
+                            and "YES_NO" in elements[1]):
                         self.ros_node.send_robot_command("DO", 
                                 self.no_responses[randint(0,
-                                    len(self.no_responses)-1]))
+                                    len(self.no_responses)-1)])
 
                 # we exhausted our allowed number of user responses, so have
                 # the robot do something
@@ -261,7 +289,7 @@ class ss_script_handler():
             #########################################################
             # for REPEAT lines, repeat lines in the specified script file the 
             # specified number of times
-            elif "REPEAT" in elements[0] && len(elements) >= 3:
+            elif "REPEAT" in elements[0] and len(elements) >= 3:
                 self.repeating = True
                 self.repetitions = 0
                 # create a script parser for the filename provided, assume it
@@ -278,16 +306,17 @@ class ss_script_handler():
 
                 # figure out how many times we should repeat the script
                 if "MAX_STORIES" in elements[1]:
-                    self.max_repetitions = self.max_stories
-                except NameError:
-                    self.logger.log("Tried to set MAX_REPETITIONS to 
-                            MAX_STORIES, but MAX_STORIES has not been set."
-                            "Setting to 1 repetition instead.")
-                    self.max_repetitions = 1
-                else:
-                    self.max_repetitions = elements[1]
-                self.logger.log("Going to repeat " + elements[2] + " " +
-                        self.max_repetitions + " times.")
+                    try:
+                        self.max_repetitions = self.max_stories
+                    except NameError:
+                        self.logger.log("Tried to set MAX_REPETITIONS to " + 
+                                "MAX_STORIES, but MAX_STORIES has not been set"
+                                ". Setting to 1 repetition instead.")
+                        self.max_repetitions = 1
+                    else:
+                        self.max_repetitions = elements[1]
+                    self.logger.log("Going to repeat " + elements[2] + " " +
+                            self.max_repetitions + " times.")
 
 
         # if we get a stop iteration exception, we're at the end of the file
@@ -317,7 +346,8 @@ class ss_script_handler():
     
     def read_list_from_file(self, filename):
         ''' Read a list of robot responses from a file, return a list of the
-        lines from the file '''
+        lines from the file 
+        '''
         # open script for reading
         try:
             fh = open(script, "r")

@@ -28,24 +28,43 @@ class ss_personalization_manager():
     performance and the current session """ 
 
 
-    def __init__(self, logger):
+    def __init__(self, logger, participant, session):
         """ initialize stuff """
         print("TODO initialize personalization manager")
         
         # save reference to logger for logging stuff later
         self.logger = logger
 
+        # save participant and session so we can use them to determine 
+        # which stories to present and to load any saved files
+        self.participant = participant
+        self.session = session
+
         # TODO load any saved files for this participant
         # TODO check personalization, determine which stories to present
 
 
-    def get_story_scripts(self, participant, session):
-        """ Given the participant and session, determine which stories should
-        be heard next """
+    def get_next_story(self):
+        """ Determine which story should be heard next """
         print("TODO get story scripts")
+        # TODO get name of next script file
+        script_file = "demo-story-1.txt"
+
+        # TODO get list of scene graphics names
+        scenes = ["scene1", "scene2", "scene3"]
+
+        # TODO determine whether the scenes are shown in order or not
+        in_order = True
+
+        # TODO determine how many answer options there are per question 
+        # at this story level
+        num_answers = 3
+
+        # return all the story information
+        return script_file, scenes, in_order, num_answers
 
 
-    def get_joint_attention_level(self, participant, session):
-        """ Given the participant and session, determine what level of joint
-        attention scaffolding to provide each time it is required """
+    def get_joint_attention_level(self):
+        """ Determine what level of joint attention scaffolding to provide 
+        each time it is required """
         print("TODO determine joint attention level")

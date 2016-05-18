@@ -179,7 +179,8 @@ STORY
 
 ### Story Scripts
 
-The story scripts follow the same format as the main session scripts. See the example in "story\_scripts/demo-story-1.txt".
+The story scripts follow the same format as the main session scripts. See the
+example in "story\_scripts/demo-story-1.txt".
 
 ## Version Notes
 
