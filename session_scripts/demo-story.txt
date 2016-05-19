@@ -8,4 +8,3 @@ ROBOT   STORY_INTRO
 ROBOT   DO  "Let's look <lookat-game> at the story together."
 STORY
 ROBOT   STORY_CLOSING
-

@@ -52,24 +52,26 @@ class ss_ros():
         rospy.Subscriber('robot_state', RobotState, self.on_robot_state_msg)
 
 
-    def send_opal_command(self, command, properties):
+    def send_opal_command(self, command, properties=None):
         """ Publish opal command message """
         print("sending opal command: %s", command)
         msg = OpalCommand()
         msg.command = command
         # TODO opal command messages often take properties, add these!
         # TODO use sar_opal_sender as examples of how to add properties
+        # if properties:
         self.game_pub.publish(msg)
         rospy.loginfo(msg)
 
     
-    def send_opal_command_and_wait(self, command, properties, response, timeout):
+    def send_opal_command_and_wait(self, command, properties=None,
+            response, timeout):
         """ Publish opal command message and wait for a response """
         self.send_opal_command(command, properties)
         self.wait_for_response(response, timeout) 
 
 
-    def send_robot_command(self, command, properties):
+    def send_robot_command(self, command, properties=None):
         """ Publish robot command message """
         print("sending robot command: %s", command)
         msg = RobotCommand()
@@ -77,11 +79,13 @@ class ss_ros():
         # TODO add header
         # TODO robot command messages may take properties, add these!
         # TODO use robot_command_sender as examples of how to add properties
+        # if properties:
         self.robot_pub.publish(msg)
         rospy.loginfo(msg)
 
 
-    def send_robot_command_and_wait(self, command, properties, response, timeout):
+    def send_robot_command_and_wait(self, command, properties=None,
+            response, timeout):
         """ Publish robot command message and wait for a response """
         self.send_robot_command(command, properties)
         self.wait_for_response(response, timeout) 
@@ -109,8 +113,17 @@ class ss_ros():
 
 
     def wait_for_response(self, response, timeout):
-        # TODO check what response to wait for and set that response received
-        # flag to false
+        # TODO check what response to wait for and set that response
+        # received flag to false
+        # valid responses are:
+        # YES_NO, CORRECT_INCORRECT, ROBOT_NOT_SPEAKING
+        if "YES_NO" in response:
+            self.yes_no_response_received = False
+        elif "CORRECT" in response:
+            self.correct_incorrect_response_received = False
+        elif "ROBOT_NOT_SPEAKING" in response:
+            self.robot_speaking = False
+
         self.was_response_received = False
         start_time = datetime.datetime.now()
         while datetime.datetime.now() - start_time < timeout:

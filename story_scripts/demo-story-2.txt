@@ -2,5 +2,11 @@ ROBOT   "Once upon a time, a little penguin named George lived at the South Pole
 ROBOT   "George lived in the snow with many other penguins."
 ROBOT   "George liked to climb up massive icebergs. He liked to slide back down in the snow. Wheee!"
 ROBOT   "The end."
+OPAL    LOAD_ANSWERS    happy, sad, angry, frustrated
+OPAL    SET_CORRECT {"correct":["happy"], "incorrect":["sad","angry","frustrated"]}
 ROBOT   "How did George feel about sliding?"
+WAIT    CORRECT_INCORRECT   10
+OPAL    LOAD_ANSWERS    happy, sad, angry, frustrated
+OPAL    SET_CORRECT {"correct":["happy"], "incorrect":["sad","angry","frustrated"]}
+ROBOT   "How did George feel about climbing icebergs?"
 WAIT    CORRECT_INCORRECT   10
