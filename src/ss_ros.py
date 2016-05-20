@@ -94,41 +94,70 @@ class ss_ros():
         """ Called when we receive OpalAction messages """
         print("TODO received OpalAction message!")
 
+        # TODO parse OpalAction message
+        # save the message received
+        # self.response_received = what was in message
+
         # sometimes we need to wait until we get a message back from the
         # opal game, so when we do get the message we were waiting for,
-        # set this flag (TODO may need to check first that this *was* the
-        # message we were waiting for!)
-        self.was_response_received = True
-        # TODO record what the response was (e.g., yes/no, correct/incorrect)
-        self.response_received = "YES"
+        # TODO set the relevant flag 
+        # if "YES" in message or "NO" in message:
+        # self.yes_no_response_received = True
+        # if "CORRECT" in message:
+        # self.correct_incorrect_response_received = True
 
 
     def on_robot_state_msg(self, data):
         """ Called when we receive RobotState messages """
         print("TODO received RobotState message!")
-        # when we get robot state messages, set a flag indicating whether the
-        # robot is in motion or playing sound or not
+        # TODO when we get robot state messages, set a flag indicating 
+        # whether the robot is in motion or playing sound or not
+        #self.response_received = "ROBOT_STATE"
         #self.flags.robot_is_playing_sound = data.is_playing_sound
         #self.flags.robot_doing_action = data.doing_action
 
 
     def wait_for_response(self, response, timeout):
-        # TODO check what response to wait for and set that response
-        # received flag to false
+        ''' Wait for particular user or robot responses for the 
+        specified amount of time.
+        '''
+        # check what response to wait for, set that response received
+        # flag to false
         # valid responses are:
         # YES_NO, CORRECT_INCORRECT, ROBOT_NOT_SPEAKING
         if "YES_NO" in response:
             self.yes_no_response_received = False
+            self.waiting_for_yes_no = True
+            self.waiting_for_correct_incorrect = False
+            self.waiting_for_robot_speaking = False
         elif "CORRECT" in response:
             self.correct_incorrect_response_received = False
+            self.waiting_for_yes_no = False
+            self.waiting_for_correct_incorrect = True
+            self.waiting_for_robot_speaking = False
         elif "ROBOT_NOT_SPEAKING" in response:
             self.robot_speaking = False
+            self.waiting_for_yes_no = False
+            self.waiting_for_correct_incorrect = False
+            self.waiting_for_robot_speaking = True
 
-        self.was_response_received = False
         start_time = datetime.datetime.now()
         while datetime.datetime.now() - start_time < timeout:
             time.sleep(0.1)
-            if self.was_response_received:
+            # check periodically whether we've received the response we
+            # were waiting for, and if so, we're done waiting 
+            if (self.waiting_for_yes_no and self.yes_no_response_received) \
+                or (self.waiting_for_correct_incorrect and \
+                        self.correct_incorrect_response_received) or \
+                (self.waiting_for_robot_speaking and not self.robot_speaking):
+                self.waiting_for_yes_no = False
+                self.waiting_for_correct_incorrect = False
+                self.waiting_for_robot_speaking = False
                 return self.response_received
+        # if we don't get the response we were waiting for, we're done
+        # waiting and timed out
+        self.waiting_for_yes_no = False
+        self.waiting_for_correct_incorrect = False
+        self.waiting_for_robot_speaking = False
         return "TIMEOUT"
 

@@ -334,15 +334,23 @@ class ss_script_handler():
             # after waiting for a response, need to play back an
             # appropriate robot response 
             # if response was CORRECT, randomly select a robot response
-            # to a correct user action, and break out of response loop
+            # to a correct user action, highlight the correct answer, 
+            # and break out of response loop
             if "CORRECT" in response:
                 try:
-                    self.ros_node.send_robot_command("DO", 
+                    self.ros_node.send_robot_command_and_wait("DO", 
                             self.correct_responses[randint(0,
                                 len(self.correct_responses)-1)])
+                    self.ros_node.send_opal_command("SHOW_CORRECT")
+                    self.ros_node.send_robot_command_and_wait("DO",
+                            self.answer_feedback[randint(0,
+                                len(self.answer_feedback)-1)], 
+                            "ROBOT_NOT_SPEAKING", 10)
+                    self.ros_node.send_opal_command("HIDE_CORRECT")
                 except NameError:
                     self.logger.log("Could not play a correct " 
-                            + "response because none were loaded!")
+                            + "response or could not play robot's answer"
+                            + "feedback because none were loaded!")
                 break
 
             # if response was YES, randomly select a robot response to
