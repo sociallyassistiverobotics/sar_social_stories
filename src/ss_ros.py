@@ -30,6 +30,7 @@ from sar_opal_msgs.msg import OpalCommand # ROS msgs to talk to game
 from sar_opal_msgs.msg import OpalAction # ROS msgs for game actions 
 from sar_robot_command_msgs.msg import RobotCommand # ROS msgs for robot cmd
 from sar_robot_command_msgs.msg import RobotState # ROS msgs for robot state
+from std_msgs.msg import Header # standard ROS msg header
 
 class ss_ros():
     # ROS node
@@ -73,13 +74,29 @@ class ss_ros():
 
     def send_robot_command(self, command, properties=None):
         """ Publish robot command message """
-        print("sending robot command: %s", command)
+        self.logger.log("Sending robot command: %s", command)
+        # build message
         msg = RobotCommand()
-        msg.command = command
-        # TODO add header
-        # TODO robot command messages may take properties, add these!
-        # TODO use robot_command_sender as examples of how to add properties
-        # if properties:
+        # add header
+        msg.header = Header()
+        msg.header.stamp = rospy.Time.now()
+        # add appropriate command
+        if "SLEEP" in command:
+            msg.command = RobotCommand.SLEEP 
+        elif "WAKEUP" in command:
+            msg.command = RobotCommand.WAKEUP
+        elif "DO" in command:
+            msg.command = RobotCommand.DO
+            # DO commands take properties in the form of a string
+            # contianing text to say and/or actions to do. We assume
+            # these are provided in the correct string format.
+            if properties:
+                msg.properties = properties
+            else:
+                self.logger.log("Did not get properties for a DO command! "
+                        + "Not sending empty command.")
+                return
+        # send message
         self.robot_pub.publish(msg)
         rospy.loginfo(msg)
 
@@ -89,6 +106,7 @@ class ss_ros():
         """ Publish robot command message and wait for a response """
         self.send_robot_command(command, properties)
         self.wait_for_response(response, timeout) 
+
 
     def on_opal_action_msg(self, data):
         """ Called when we receive OpalAction messages """
@@ -118,9 +136,9 @@ class ss_ros():
 
 
     def wait_for_response(self, response, timeout):
-        ''' Wait for particular user or robot responses for the 
+        """ Wait for particular user or robot responses for the 
         specified amount of time.
-        '''
+        """
         # check what response to wait for, set that response received
         # flag to false
         # valid responses are:

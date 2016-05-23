@@ -468,6 +468,6 @@ class ss_script_handler():
                 toload["correctSlot"] = scenes.index(scene) + 1
             toload["draggable"] = False if in_order else True
             toload["isAnswerSlot"] = False
-            self.ros_node.send_opal_command("LOAD_OBJECT", toload)
+            self.ros_node.send_opal_command("LOAD_OBJECT", json.dumps(toload))
 
 
