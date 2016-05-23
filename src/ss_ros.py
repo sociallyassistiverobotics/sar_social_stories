@@ -55,12 +55,97 @@ class ss_ros():
 
     def send_opal_command(self, command, properties=None):
         """ Publish opal command message """
-        print("sending opal command: %s", command)
+        self.logger.log("Sending opal command: %s", command)
+        # build message
         msg = OpalCommand()
-        msg.command = command
-        # TODO opal command messages often take properties, add these!
-        # TODO use sar_opal_sender as examples of how to add properties
-        # if properties:
+        # Add appropriate command and properties if there are any.
+        # We check properties for each command individually, since some
+        # require properties, and if there are none, we shouldn't send 
+        # the message. We assume any properties provided are in the 
+        # correct format for the command.
+        if "RESET" in command:
+            msg.command = OpalCommand.RESET
+        elif "DISABLE_TOUCH" in command:
+            msg.command = OpalCommand.DISABLE_TOUCH
+        elif "ENABLE_TOUCH" in command:
+            msg.command = OpalCommand.ENABLE_TOUCH
+        elif "SIDEKICK_DO" in command:
+            msg.command = OpalCommand.SIDEKICK_DO
+            # properties: a string with the name of action to do
+        elif "SIDEKICK_SAY" in command:
+            msg.command = OpalCommand.SIDEKICK_SAY
+            # properties: a string with the name of audio file to play
+            if properties:
+                msg.properties = properties
+            else:
+                self.logger.log("Did not get properties for a "
+                    + "SIDEKICK_SAY command! Not sending empty command.")
+                return
+        elif "LOAD_OBJECT" in command:
+            msg.command = OpalCommand.LOAD_OBJECT
+            # properties: JSON defining what object to load
+            if properties:
+                msg.properties = properties
+            else:
+                self.logger.log("Did not get properties for a "
+                    + "LOAD_OBJECT command! Not sending empty command.")
+                return
+        elif "CLEAR" in command:
+            msg.command = OpalCommand.CLEAR
+        elif "MOVE_OBJECT" in command:
+            msg.command = OpalCommand.MOVE_OBJECT
+            # properties: JSON defining what object to move where
+            if properties:
+                msg.properties = properties
+            else:
+                self.logger.log("Did not get properties for a "
+                    + "MOVE_OBJECT command! Not sending empty command.")
+                return
+        elif "HIGHLIGHT_OBJECT" in command:
+            msg.command = OpalCommand.HIGHLIGHT_OBJECT
+            # properties: a string with name of the object to highlight
+            if properties:
+                msg.properties = properties
+            else:
+                self.logger.log("Did not get properties for a "
+                    + "HIGHLIGHT_OBJECT command! Not sending empty command.")
+                return
+        elif "REQUEST_KEYFRAME" in command:
+            msg.command = OpalCommand.REQUEST_KEYFRAME
+        elif "FADE_SCREEN" in command:
+            msg.command = OpalCommand.FADE_SCREEN
+        elif "UNFADE_SCREEN" in command:
+            msg.command = OpalCommand.UNFADE_SCREEN
+        elif "NEXT_PAGE" in command:
+            msg.command = OpalCommand.NEXT_PAGE
+        elif "PREV_PAGE" in command:
+            msg.command = OpalCommand.PREV_PAGE
+        elif "EXIT" in command:
+            msg.command = OpalCommand.EXIT
+        elif "SET_CORRECT" in command:
+            msg.command = OpalCommand.SET_CORRECT
+            # properties: JSON listing names of objects that are
+            # correct or incorrect
+            if properties:
+                msg.properties = properties
+            else:
+                self.logger.log("Did not get properties for a "
+                    + "SET_CORRECT command! Not sending empty command.")
+                return
+        elif "SHOW_CORRECT" in command:
+            msg.command = OpalCommand.SHOW_CORRECT
+        elif "HIDE_CORRECT" in command:
+            msg.command = OpalCommand.HIDE_CORRECT
+        elif "SETUP_STORY_SCENE" in command:
+            msg.command = OpalCommand.SETUP_STORY_SCENE
+            # properties: JSON listing scene attributes
+            if properties:
+                msg.properties = properties
+            else:
+                self.logger.log("Did not get properties for a "
+                    + "SETUP_STORY_SCENE command! Not sending empty command.")
+                return
+        # send message
         self.game_pub.publish(msg)
         rospy.loginfo(msg)
 
@@ -110,19 +195,43 @@ class ss_ros():
 
     def on_opal_action_msg(self, data):
         """ Called when we receive OpalAction messages """
-        print("TODO received OpalAction message!")
+        self.logger.log("Received OpalAction message!")
 
-        # TODO parse OpalAction message
-        # save the message received
-        # self.response_received = what was in message
-
-        # sometimes we need to wait until we get a message back from the
-        # opal game, so when we do get the message we were waiting for,
-        # TODO set the relevant flag 
-        # if "YES" in message or "NO" in message:
-        # self.yes_no_response_received = True
-        # if "CORRECT" in message:
-        # self.correct_incorrect_response_received = True
+        # Currently, we are only using OpalAction messages to get
+        # responses from the user. So we only care whether the action
+        # was a PRESS and whether it was on an object that is used as
+        # a YES or NO button or is a CORRECT or INCORRECT response 
+        # object. When we do get one of these messages, set the 
+        # relevant flag.
+        if "tap" in data.action:
+            # objectName, position
+            pass
+        elif "press" in data.action:
+            # objectName, position
+            # check if YES or NO was in the message
+            if "YES" in data.message or "NO" in data.message:
+                self.yes_no_response_received = True
+                self.response_received = data.message
+            # check if CORRECT was in the message
+            if "CORRECT" in data.message:
+                self.correct_incorrect_response_received = True
+                self.response_received = data.message
+            pass
+        elif "release" in data.action:
+            # no object
+            pass
+        elif "pancomplete" in data.action:
+            # no object
+            pass
+        elif "pan" in data.action:
+            # objectName, position
+            pass
+        elif "collideEnd" in data.action:
+            # objectName, position, objectTwoName, positionTwo
+            pass
+        elif "collide" in data.action:
+            # objectName, position, objectTwoName, positionTwo
+            pass
 
 
     def on_robot_state_msg(self, data):
