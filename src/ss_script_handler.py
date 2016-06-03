@@ -119,7 +119,7 @@ class ss_script_handler():
 
             # parse line!
             # split on tabs
-            elements = line.split('\t')
+            elements = line.rstrip().split('\t')
             print("... " + str(len(elements)) + " elements: \n... " + str(elements))
 
             if len(elements) < 1:
@@ -147,7 +147,7 @@ class ss_script_handler():
                         self.logger.log("Script parser could not open story "
                                 + "script! Skipping STORY line.")
                         self.doing_story = False
-                    except NameError:
+                    except AttributeError:
                         self.logger.log("Script parser could not open story "
                                 + "script because no script was loaded! "
                                 + "Skipping STORY line.")
@@ -184,13 +184,19 @@ class ss_script_handler():
                     # load all objects listed in file -- the file is 
                     # assumed to have properties for one object on each 
                     # line
-                    to_load = read_list_from_file(elements[2])
+                    to_load = self.read_list_from_file(
+                            self.script_path + self.session_script_path +
+                            elements[2])
                     for obj in to_load:
                         self.ros_node.send_opal_command("LOAD_OBJECT", obj)
 
                 # get the next story and load graphics into game
                 elif "LOAD_STORY" in elements[1]:
                     self.load_next_story()
+
+                # load answers for game
+                elif "LOAD_ANSWERS" in elements[1]:
+                    self.load_answers()
 
                 # send an opal command, with properties
                 elif len(elements) > 2:
@@ -211,31 +217,49 @@ class ss_script_handler():
                 try:
                     if "CORRECT_RESPONSES" in elements[1]:
                         self.correct_responses = self.read_list_from_file(
+                                self.script_path + self.session_script_path +
                                 elements[2])
+                        self.logger.log("Got " + str(len(self.correct_responses)))
                     elif "INCORRECT_RESPONSES" in elements[1]:
                         self.incorrect_responses = self.read_list_from_file(
+                                self.script_path + self.session_script_path +
                                 elements[2])
+                        self.logger.log("Got " + str(len(self.incorrect_responses)))
                     elif "YES_RESPONSES" in elements[1]:
                         self.yes_responses = self.read_list_from_file(
+                                self.script_path + self.session_script_path +
                                 elements[2])
+                        self.logger.log("Got " + str(len(self.yes_responses)))
                     elif "NO_RESPONSES" in elements[1]:
                         self.no_responses = self.read_list_from_file(
+                                self.script_path + self.session_script_path +
                                 elements[2])
+                        self.logger.log("Got " + str(len(self.no_responses)))
                     elif "ANSWER_FEEDBACK" in elements[1]:
                         self.answer_feedback = self.read_list_from_file(
+                                self.script_path + self.session_script_path +
                                 elements[2])
+                        self.logger.log("Got " + str(len(self.answer_feedback)))
                     elif "STORY_INTROS" in elements[1]:
                         self.story_intros = self.read_list_from_file(
+                                self.script_path + self.session_script_path +
                                 elements[2])
+                        self.logger.log("Got " + str(len(self.story_intros)))
                     elif "STORY_CLOSINGS" in elements[1]:
                         self.story_closings = self.read_list_from_file(
+                                self.script_path + self.session_script_path +
                                 elements[2])
+                        self.logger.log("Got " + str(len(self.story_closings)))
                     elif "TIMEOUT_CLOSINGS" in elements[1]:
                         self.timeout_closings = self.read_list_from_file(
+                                self.script_path + self.session_script_path +
                                 elements[2])
+                        self.logger.log("Got " + str(len(self.timeout_closings)))
                     elif "MAX_STORIES_REACHED" in elements[1]:
                         self.max_stories_reached = self.read_list_from_file(
+                                self.script_path + self.session_script_path +
                                 elements[2])
+                        self.logger.log("Got " + str(len(self.max_stories_reached)))
                 except IOError:
                     self.logger.log("Failed to add responses!")
                 else:
@@ -259,7 +283,7 @@ class ss_script_handler():
             # for WAIT lines, wait for the specified user response, or timeout
             # if no response is received
             elif "WAIT" in elements[0] and len(elements) >= 3:
-                wait_for_response(elements[1], int(elements[2]))                  
+                self.wait_for_response(elements[1], int(elements[2]))
 
             #########################################################
             # for REPEAT lines, repeat lines in the specified script 
@@ -284,7 +308,7 @@ class ss_script_handler():
                 if "MAX_STORIES" in elements[1]:
                     try:
                         self.max_repetitions = self.max_stories
-                    except NameError:
+                    except AttributeError:
                         self.logger.log("Tried to set MAX_REPETITIONS to " + 
                                 "MAX_STORIES, but MAX_STORIES has not been set"
                                 ". Setting to 1 repetition instead.")
@@ -321,8 +345,9 @@ class ss_script_handler():
 
         # oh no got some unexpected error! raise it again so we can 
         # figure out what happened and deal with it during debugging
-        except:
+        except Exception as e:
             self.logger.log("Unexpected exception! Error:")
+            self.logger.log(e)
             self.logger.log(sys.exc_info()[0])
             raise
 
@@ -335,8 +360,9 @@ class ss_script_handler():
         try:
             fh = open(filename, "r")
             return fh.readlines()
-        except IOError:
+        except IOError as e:
             self.logger.log("Cannot open file: " + filename)
+            self.logger.log(e)
             # pass exception up so anyone trying to add a response list from
             # a script knows it didn't work
             raise
@@ -347,7 +373,7 @@ class ss_script_handler():
         has elapsed. If the response is incorrect, allow multiple 
         attempts up to the maximum number of incorrect responses.
         '''
-        for i in range(0, self.max_incorrect_responses):
+        for i in range(0, len(self.max_incorrect_responses)):
             self.logger.log("Waiting for user response...")
             # wait for the specified type of response, or until the 
             # specified time has elapsed
@@ -371,7 +397,7 @@ class ss_script_handler():
                             self.answer_feedback[randint(0,
                                 len(self.answer_feedback)-1)])
                     self.ros_node.send_opal_command("HIDE_CORRECT")
-                except NameError:
+                except AttributeError:
                     self.logger.log("Could not play a correct " 
                             + "response or could not play robot's answer"
                             + "feedback because none were loaded!")
@@ -384,7 +410,7 @@ class ss_script_handler():
                         self.ros_node.send_robot_command("DO", 
                                 self.yes_responses[randint(0,
                                     len(self.yes_responses)-1)])
-                    except NameError:
+                    except AttributeError:
                         self.logger.log("Could not play response to user's"
                                 + "YES because none were loaded!")
                     break
@@ -400,7 +426,7 @@ class ss_script_handler():
                     self.ros_node.send_robot_command("DO", 
                             self.incorrect_responses[randint(0,
                                 len(self.incorrect_responses)-1)])
-                except NameError:
+                except AttributeError:
                     self.logger.log("Could not play an incorrect " 
                             + "response because none were loaded!")
 
@@ -412,7 +438,7 @@ class ss_script_handler():
                     self.ros_node.send_robot_command("DO", 
                             self.no_responses[randint(0,
                                 len(self.no_responses)-1)])
-                except NameError:
+                except AttributeError:
                     self.logger.log("Could not play a response to " 
                             + "user's NO because none were loaded!")
 
@@ -429,7 +455,7 @@ class ss_script_handler():
                             self.answer_feedback[randint(0,
                                 len(self.answer_feedback)-1)])
                     self.ros_node.send_opal_command("HIDE_CORRECT")
-                except NameError:
+                except AttributeError:
                     self.logger.log("Could not play robot's answer"
                             + " feedback because none were loaded!")
             
@@ -440,6 +466,8 @@ class ss_script_handler():
                 self.repeating = False
                 self.story = False
 
+    def load_answers(self):
+        self.logger.log("TODO load answer graphics!")
 
     def load_next_story(self):
         ''' Get the next story, set up the game scene with scene and 
@@ -458,7 +486,7 @@ class ss_script_handler():
             try:
                 self.ros_node.send_robot_command("DO", self.max_stories_reached
                         [randint(0, len(self.no_responses)-1)])
-            except NameError:
+            except AttributeError:
                 self.logger.log("Could not play a max stories reached response"
                         + " because none were loaded!")
             # We were either told to play another story because a
@@ -493,5 +521,4 @@ class ss_script_handler():
             toload["draggable"] = False if in_order else True
             toload["isAnswerSlot"] = False
             self.ros_node.send_opal_command("LOAD_OBJECT", json.dumps(toload))
-
 

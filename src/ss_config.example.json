@@ -1,5 +1,5 @@
 {
-	"script_path": "../relative/path/to/your/game_scripts/"
-	"story_script_path": "path/to/story_scripts/from/script_path/",
-	"session_script_path": "path/to/session_scripts/from/script_path/"
+    "script_path": "../relative/path/to/your/game_scripts/"
+    "story_script_path": "path/to/story_scripts/from/script_path/",
+    "session_script_path": "path/to/session_scripts/from/script_path/"
 }

@@ -26,6 +26,7 @@
 # SOFTWARE.
 
 import sys # exit and argv
+import json # for reading config file
 import rospy # ROS
 import argparse # to parse command line arguments
 from ss_logger import ss_logger # for logging data
@@ -100,37 +101,41 @@ class ss_game_node():
 
         # read config file to get relative file path to game scripts
         try:
-            with open("ss_config.json") as json_file:
+            config_file = "ss_config.demo.json" if participant == "DEMO" \
+                    else "ss_config.json"
+            with open(config_file) as json_file:
                 json_data = json.load(json_file)
-            self.logger.log("Reading configuration file... it says: \n", json_data)
-            if ("script_path" in json_data):
-                self.script_path = json_data["script_path"]
-            else:
-                self.logger.log("Could not read relative path to game scripts!"
-                    + " Expected option \"script_path\" to be in the config"
-                    + " file. Exiting because we need the scripts to run the"
-                    + " game.")
-                return
-            if ("story_script_path" in json_data):
-                self.story_script_path = json_data["story_script_path"]
-            else:
-                self.logger.log("Could not read path to story scripts! "
-                    + "Expected option \"story_script_path\" to be in config"
-                    + " file. Assuming story scripts are in the main game "
-                    + "script directory and not a sub-directory.")
-                self.story_script_path = None
-            if ("session_script_path" in json_data):
-                self.session_script_path = json_data["session_script_path"]
-            else:
-                self.logger.log("Could not read path to session scripts! "
-                    + "Expected option \"session_script_path\" to be in config"
-                    + " file. Assuming session scripts are in the main game "
-                    + "script directory and not a sub-directory.")
-                self.session_script_path = None
-        except:
-            self.logger.log("Could not read your json config file! Is it valid"
-                + " json? Exiting because we need the config file to run the"
-                + " game.")
+                self.logger.log("Reading config file... it says:")
+                self.logger.log(json_data)
+                if ("script_path" in json_data):
+                    self.script_path = json_data["script_path"]
+                else:
+                    self.logger.log("Could not read relative path to game "
+                        + "scripts! Expected option \"script_path\" to be in "
+                        + "the config file. Exiting because we need the "
+                        + "scripts to run the game.")
+                    return
+                if ("story_script_path" in json_data):
+                    self.story_script_path = json_data["story_script_path"]
+                else:
+                    self.logger.log("Could not read path to story scripts! "
+                        + "Expected option \"story_script_path\" to be in "
+                        + "config file. Assuming story scripts are in the main"
+                        + " game script directory and not a sub-directory.")
+                    self.story_script_path = None
+                if ("session_script_path" in json_data):
+                    self.session_script_path = json_data["session_script_path"]
+                else:
+                    self.logger.log("Could not read path to session scripts! "
+                        + "Expected option \"session_script_path\" to be in config"
+                        + "config file. Assuming session scripts are in the main"
+                        + "game script directory and not a sub-directory.")
+                    self.session_script_path = None
+        except Exception as e:
+            self.logger.log("Could not read your json config file \"" 
+                + config_file + "\". Does the file exist? Is it valid json?"
+                + " Exiting because we need the config file to run the game.")
+            self.logger.log(e)
             return
 
         # start game
@@ -138,9 +143,10 @@ class ss_game_node():
             self.script_handler = ss_script_handler(self.logger, self.ros_ss,
                 session, participant, self.script_path, self.story_script_path,
                 self.session_script_path)
-        except IOError:
+        except IOError as e:
             self.logger.log("Did not load the session script... exiting "
                 + "because we need the session script to run the game.")
+            self.logger.log(e)
             
         else:
             while (True):

@@ -35,6 +35,6 @@ class ss_logger():
     def log(self, logme, args=""):
         # TODO log to file or ROS or wherever (with timestamps?)
         if (args):
-            print(logme + args)
+            print(logme, args)
         else:
             print(logme)

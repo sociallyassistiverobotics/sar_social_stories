@@ -58,7 +58,7 @@ class ss_ros():
 
     def send_opal_command(self, command, properties=None):
         """ Publish opal command message """
-        self.logger.log("Sending opal command: %s", command)
+        self.logger.log("Sending opal command: ", command)
         # build message
         msg = OpalCommand()
         # Add appropriate command and properties if there are any.
@@ -148,6 +148,9 @@ class ss_ros():
                 self.logger.log("Did not get properties for a "
                     + "SETUP_STORY_SCENE command! Not sending empty command.")
                 return
+        else:
+            self.logger.log("Not sending invalid OpalCommand: ", command)
+            return
         # send message
         self.game_pub.publish(msg)
         rospy.loginfo(msg)
@@ -162,7 +165,7 @@ class ss_ros():
 
     def send_robot_command(self, command, properties=None):
         """ Publish robot command message """
-        self.logger.log("Sending robot command: %s", command)
+        self.logger.log("Sending robot command: ", command)
         # build message
         msg = RobotCommand()
         # add header
@@ -199,6 +202,7 @@ class ss_ros():
     def on_opal_action_msg(self, data):
         """ Called when we receive OpalAction messages """
         self.logger.log("Received OpalAction message!")
+        self.logger.log("... ACTION: " + data.action + " MESSAGE: " + data.message)
 
         # Currently, we are only using OpalAction messages to get
         # responses from the user. So we only care whether the action

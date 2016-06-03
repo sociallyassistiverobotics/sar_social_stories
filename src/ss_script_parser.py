@@ -52,8 +52,9 @@ class ss_script_parser():
         # open script for reading
         try:
             self.fh = open(script, "r")
-        except IOError:
+        except IOError as e:
             self.logger.log("Cannot open script: " + script)
+            self.logger.log(e)
             # pass exception up so anyone trying to load a script
             # knows it didn't work
             raise
