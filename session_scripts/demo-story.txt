@@ -1,4 +1,5 @@
 OPAL    CLEAR
+OPAL    SETUP_STORY_SCENE   {"numScenes":"2", "scenesInOrder":"true", "numAnswers":"0"}
 OPAL    LOAD_ALL    yesno.txt
 ROBOT   DO  "Are you ready to hear the story? <anticipate>"
 WAIT    YES_NO  10

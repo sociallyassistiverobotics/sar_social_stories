@@ -73,7 +73,7 @@ list of robot commands. For example, the following command will load the
 commands listed in "incorrect.txt" as response options for incorrect actions
 taken by the user:
 
-`ADD INCORRECT\_RESPONSE incorrect.txt`
+`ADD INCORRECT_RESPONSE incorrect.txt`
 
 Currently, the following lists can be added:
 
@@ -97,8 +97,9 @@ the following:
 For example, the following commands will set the maximum incorrect responses to
 2 and the maximum game time allowed to 10 minutes:
 
-`SET MAX\_INCORRECT\_RESPONSES    2`
-`SET MAX\_GAME\_TIME 10`
+`SET MAX_INCORRECT_RESPONSES    2`
+
+`SET MAX_GAME_TIME 10`
 
 #### ROBOT
 
@@ -137,9 +138,12 @@ set up the next story scene, load the pictures for the next story, and set the
 correct responses for the next story:
 
 `OPAL    CLEAR`
-`OPAL    SETUP\_STORY\_SCENE`
-`OPAL    LOAD\_STORY`
-`OPAL    SET\_CORRECT`
+
+`OPAL    SETUP_STORY_SCENE`
+
+`OPAL    LOAD_STORY`
+
+`OPAL    SET_CORRECT`
 
 #### WAIT
 
@@ -149,7 +153,7 @@ received, script playback will continue after that amount of time. The timeout
 should be specified in seconds. For example, the following would wait for a
 response to a YES or NO button press and would timeout after 10 seconds:
 
-`WAIT    YES\_NO  10`
+`WAIT    YES_NO  10`
 
 #### REPEAT
 
@@ -163,7 +167,7 @@ elapsed, whichever is reached first.
 The following example would repeat the "demo-stories.txt" script for
 MAX\_STORIES iterations or until the maximum game time elapsed: 
 
-`REPEAT  MAX\_STORIES    demo-stories.txt`
+`REPEAT  MAX_STORIES    demo-stories.txt`
 
 #### STORY
 
@@ -175,7 +179,7 @@ play back the next story. This command requires no arguments, as the program
 will keep its own list of which stories should be played back next, so a line
 will look like this:
 
-STORY
+`STORY`
 
 ### Story Scripts
 
@@ -184,14 +188,11 @@ example in "story\_scripts/demo-story-1.txt".
 
 ## Version Notes
 
-This program was developed and tested with Python 2.7.6, ROS Indigo, [sar\_opal\_msgs](https://github.com/personal-robots/sar_opal_msgs "/sar_opal_msgs") 2.2.0, and [sar\_robot\_command\_msgs](https://github.com/personal-robots/sar_robot_command_msgs "/sar_robot_command_msgs") 0.1.0 on Ubuntu 14.04 LTS. 
+This program was developed and tested with Python 2.7.6, ROS Indigo, [sar\_opal\_msgs](https://github.com/personal-robots/sar_opal_msgs "/sar_opal_msgs") 3.0.0, and [sar\_robot\_command\_msgs](https://github.com/personal-robots/sar_robot_command_msgs "/sar_robot_command_msgs") 0.1.0 on Ubuntu 14.04 LTS. 
 
 ## TODO
 - Select scripts
 - Consider listing the mapping of session script files to sessions in a config file.
-- Load scripts
 - Add personalization
 - Add logger
 - Start game, play scripts
-
-
