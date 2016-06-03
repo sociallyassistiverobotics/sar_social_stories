@@ -30,7 +30,7 @@ class ss_personalization_manager():
 
     def __init__(self, logger, participant, session):
         """ initialize stuff """
-        print("TODO initialize personalization manager")
+        print("TODO initialize personalization manager - using DEMO setup")
         
         # save reference to logger for logging stuff later
         self.logger = logger
@@ -44,11 +44,19 @@ class ss_personalization_manager():
         # TODO check personalization, determine which stories to present
 
 
-    def get_next_story(self):
+    def get_next_story_script(self):
         """ Determine which story should be heard next """
-        print("TODO get story scripts")
+        print("TODO get story scripts - using DEMO set")
         # TODO get name of next script file
         script_file = "demo-story-1.txt"
+        return script_file
+
+
+    def get_next_story_details(self):
+        """ Determine the number of scenes, whether they are shown in
+        order, and the number of answer options for the next story.
+        """
+        print("TODO get story details - using DEMO set")
 
         # TODO get list of scene graphics names
         scenes = ["scene1", "scene2", "scene3"]
@@ -60,8 +68,8 @@ class ss_personalization_manager():
         # at this story level
         num_answers = 3
 
-        # return all the story information
-        return script_file, scenes, in_order, num_answers
+        # return the story information
+        return scenes, in_order, num_answers
 
 
     def get_joint_attention_level(self):

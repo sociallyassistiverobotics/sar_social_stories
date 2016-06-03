@@ -41,11 +41,14 @@ class ss_ros():
     robot_pub = rospy.Publisher('robot_command', RobotCommand, queue_size = 10)
 
 
-    def __init__(self, ros_node):
+    def __init__(self, ros_node, logger):
         """ Initialize ROS """
         # we get a reference to the main ros node so we can do callbacks
         # to publish messages, and subscribe to stuff
         self.ros_node = ros_node
+
+        # save reference to logger for logging stuff later
+        self.logger = logger
 
         # subscribe to messages from opal game
         rospy.Subscriber('opal_tablet_action', OpalAction, self.on_opal_action_msg)
@@ -150,8 +153,8 @@ class ss_ros():
         rospy.loginfo(msg)
 
     
-    def send_opal_command_and_wait(self, command, properties=None,
-            response, timeout):
+    def send_opal_command_and_wait(self, command, response, timeout,
+            properties=None):
         """ Publish opal command message and wait for a response """
         self.send_opal_command(command, properties)
         self.wait_for_response(response, timeout) 
@@ -186,8 +189,8 @@ class ss_ros():
         rospy.loginfo(msg)
 
 
-    def send_robot_command_and_wait(self, command, properties=None,
-            response, timeout):
+    def send_robot_command_and_wait(self, command, response, timeout,
+            properties=None):
         """ Publish robot command message and wait for a response """
         self.send_robot_command(command, properties)
         self.wait_for_response(response, timeout) 

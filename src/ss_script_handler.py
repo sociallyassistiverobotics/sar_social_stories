@@ -39,7 +39,8 @@ class ss_script_handler():
     in text files). 
     """
 
-    def __init__(self, logger, ros_node, session, participant):
+    def __init__(self, logger, ros_node, session, participant, script_path,
+            story_script_path, session_script_path):
         """ Save references to ROS connection and logger, get scripts and
         set up to read script lines 
         """
@@ -50,6 +51,19 @@ class ss_script_handler():
         # save reference to our ros node so we can publish messages
         self.ros_node = ros_node
 
+        # save script paths so we can load scripts later
+        self.script_path = script_path
+
+        if (story_script_path is None):
+            self.story_script_path = "" 
+        else:
+            self.story_script_path = story_script_path 
+
+        if (session_script_path is None):
+            self.session_script_path = ""
+        else:
+            self.session_script_path = session_script_path 
+
         # set up personalization manager so we can get personalized 
         # stories for this participant
         self.personalization_manager = ss_personalization_manager(self.logger,
@@ -58,14 +72,20 @@ class ss_script_handler():
         # set up counter for how many stories have been told this
         self.stories_told = 0
 
+        # when we start, we are not currently telling a story or 
+        # repeating a script
+        self.doing_story = False
+        self.repeating = False
+
         # set up script parser
         self.script_parser = ss_script_parser(self.logger)
 
         # get session script from script parser and story scripts from
         # the personalization manager, and give to the script parser
         try:
-            self.script_parser.load_script(self.script_parser.get_session_script(
-                session))
+            self.script_parser.load_script(self.script_path
+                    + self.session_script_path
+                    + self.script_parser.get_session_script(session))
         except IOError:
             self.logger.log("Script parser could not open session script!")
             # pass exception up so whoever wanted a script handler knows
@@ -93,14 +113,15 @@ class ss_script_handler():
             else:
                 line = self.script_parser.next_line()
 
-
             # got a line - print for debugging
-            print("LINE: " + repr(line))
+            self.logger.log("LINE: " + repr(line))
             # TODO switch prints to logger.logs if we want to log them
 
             # parse line!
             # split on tabs
-            elements = line.split("\t")
+            elements = line.split('\t')
+            print("... " + str(len(elements)) + " elements: \n... " + str(elements))
+
             if len(elements) < 1:
                 self.logger.log("Line had no elements! Going to next line...")
                 return
@@ -119,8 +140,9 @@ class ss_script_handler():
                     # assume it is in the session_scripts directory 
                     self.story_parser = ss_script_parser(self.logger)
                     try:
-                        self.story_parser.load_script("../session_scripts/" +
-                            self.story_script)
+                        self.story_parser.load_script(self.script_path
+                           + self.story_script_path
+                           + self.personalization_manager.get_next_story_script())
                     except IOError:
                         self.logger.log("Script parser could not open story "
                                 + "script! Skipping STORY line.")
@@ -200,7 +222,7 @@ class ss_script_handler():
                         self.no_responses = self.read_list_from_file(
                                 elements[2])
                     elif "ANSWER_FEEDBACK" in elements[1]:
-                        self.answer-feedback = self.read_list_from_file(
+                        self.answer_feedback = self.read_list_from_file(
                                 elements[2])
                     elif "STORY_INTROS" in elements[1]:
                         self.story_intros = self.read_list_from_file(
@@ -227,7 +249,7 @@ class ss_script_handler():
                     self.logger.log("Set MAX_INCORRECT_RESPONSES to " + 
                             elements[2])
                 elif "MAX_GAME_TIME" in elements[1]:
-                    self.max_game_time = datetime.timedelta(seconds=elements[2])
+                    self.max_game_time = datetime.timedelta(seconds=int(elements[2]))
                     self.logger.log("Set MAX_GAME_TIME to " + elements[2])
                 elif "MAX_STORIES" in elements[1]:
                     self.max_stories = elements[2]
@@ -237,7 +259,7 @@ class ss_script_handler():
             # for WAIT lines, wait for the specified user response, or timeout
             # if no response is received
             elif "WAIT" in elements[0] and len(elements) >= 3:
-                wait_for_response(elements[1], elements[2])                  
+                wait_for_response(elements[1], int(elements[2]))                  
 
             #########################################################
             # for REPEAT lines, repeat lines in the specified script 
@@ -249,11 +271,12 @@ class ss_script_handler():
                 # assume it is in the session_scripts directory 
                 self.repeat_parser = ss_script_parser(self.logger)
                 try:
-                    self.repeat_parser.load_script("../session_scripts/" +
-                        elements[2])
+                    self.repeat_parser.load_script(self.script_path
+                            + self.session_script_path
+                            + elements[2])
                 except IOError:
-                    self.logger.log("Script parser could not open script to "
-                            + "repeat! Skipping REPEAT line.")
+                    self.logger.log("Script parser could not open session "
+                        + "script to repeat! Skipping REPEAT line.")
                     self.repeating = False
                     return
 
@@ -310,7 +333,7 @@ class ss_script_handler():
         '''
         # open script for reading
         try:
-            fh = open(script, "r")
+            fh = open(filename, "r")
             return fh.readlines()
         except IOError:
             self.logger.log("Cannot open file: " + filename)
@@ -339,13 +362,14 @@ class ss_script_handler():
             if "CORRECT" in response:
                 try:
                     self.ros_node.send_robot_command_and_wait("DO", 
+                            "ROBOT_NOT_SPEAKING", 10,
                             self.correct_responses[randint(0,
                                 len(self.correct_responses)-1)])
                     self.ros_node.send_opal_command("SHOW_CORRECT")
                     self.ros_node.send_robot_command_and_wait("DO",
+                            "ROBOT_NOT_SPEAKING", 10,
                             self.answer_feedback[randint(0,
-                                len(self.answer_feedback)-1)], 
-                            "ROBOT_NOT_SPEAKING", 10)
+                                len(self.answer_feedback)-1)])
                     self.ros_node.send_opal_command("HIDE_CORRECT")
                 except NameError:
                     self.logger.log("Could not play a correct " 
@@ -401,9 +425,9 @@ class ss_script_handler():
                 try:
                     self.ros_node.send_opal_command("SHOW_CORRECT")
                     self.ros_node.send_robot_command_and_wait("DO",
+                            "ROBOT_NOT_SPEAKING", 10,
                             self.answer_feedback[randint(0,
-                                len(self.answer_feedback)-1)], 
-                            "ROBOT_NOT_SPEAKING", 10)
+                                len(self.answer_feedback)-1)])
                     self.ros_node.send_opal_command("HIDE_CORRECT")
                 except NameError:
                     self.logger.log("Could not play robot's answer"
@@ -448,8 +472,8 @@ class ss_script_handler():
             return
 
         # get the next story
-        self.story_script, scenes, in_order, num_answers = \
-            self.personalization_manager.get_next_story()
+        scenes, in_order, num_answers = \
+            self.personalization_manager.get_next_story_details()
 
         # set up the story scene in the game
         setup = {}

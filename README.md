@@ -4,7 +4,7 @@ The SAR Social Stories game node was designed for use during the SAR Year 5 stud
 
 ## Usage 
 
-`ss\_game\_node.py session participant`
+`python ss_game_node.py session participant`
 
 Arguments:
 
@@ -18,12 +18,38 @@ Arguments:
       be loaded. Defaults to DEMO, which indicates that the demo session should
       be loaded.
 
+### Configuration
+
+The game read in the configuration file "ss\_config.json", which is located in
+the "src/" directory. An example config file named "ss\_config.example.json" is
+provided.
+
+The options you can set in the config file include:
+
+- script\_path: The relative path from the "src/" directory to the directory
+  containing game scripts.
+
+- story\_script\_path: The relative path from the "script\_path" directory to
+  the directory containing story scripts. For example, the demo story scripts
+  are in a subdirectory of the main game script directory named
+  "story\_scripts". This field is optional. If not set, it is assumed that the
+  story scripts are in the main script directory specifed by "script\_path".
+
+- session\_script\_path: The relative path from the "script\_path" directory to
+  the directory containing session scripts. For example, the demo session
+  scripts are in a subdirectory of the main game script directory named
+  "session\_scripts". This field is optional. If not set, it is assumed that
+  the session scripts are in the main script directory specifed by
+  "script\_path".
 
 ### Demo Version
 
 To run the demo version of the game, run without arguments (the argument
 defaults indicate the demo game should be loaded), enter "-1" as the session
 number, and/or enter "DEMO" as the participant string. 
+
+The demo game uses the config file "ss\_config.demo.json" and game scripts
+located in the "game\_scripts/" directory.
 
 ## ROS messages
 
@@ -37,8 +63,11 @@ This node publishes "/[sar\_robot\_command\_msgs] (https://github.com/personal-r
 
 ## Game Scripts
 
-The program will use the interaction scripts in the "session\_scripts/" and
-"story\_scripts/" directories.
+The program will attempt to read interaction scripts from the directory listed
+in the config file. For the demo game, the interaction scripts are located in
+the "game\_scripts/" directory. This directory has two sub-directories:
+"session\_scripts/", which contains all session-level scripts, and
+"story\_scripts/", which contains all story-specific scripts.
 
 ### Session Scripts
 

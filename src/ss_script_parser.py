@@ -39,11 +39,12 @@ class ss_script_parser():
         if session == -1:
             # will use the demo session script
             # TODO get script!
-            return "../session_scripts/demo.txt"
+            return "demo.txt"
         else:
             # pick out the scripts for the specified session
             # TODO get script!
-            return "../session_scripts/demo.txt"
+            self.logger.log("TODO pick session script -- using DEMO script")
+            return "demo.txt"
 
 
     def load_script(self, script):
