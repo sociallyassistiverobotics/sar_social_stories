@@ -195,8 +195,8 @@ class ss_script_handler():
                     self.load_next_story()
 
                 # load answers for game
-                elif "LOAD_ANSWERS" in elements[1]:
-                    self.load_answers()
+                elif "LOAD_ANSWERS" in elements[1] and len(elements) >= 3:
+                    self.load_answers(elements[2])
 
                 # send an opal command, with properties
                 elif len(elements) > 2:
@@ -466,8 +466,28 @@ class ss_script_handler():
                 self.repeating = False
                 self.story = False
 
-    def load_answers(self):
-        self.logger.log("TODO load answer graphics!")
+    def load_answers(self, answer_list):
+        ''' Load the answer graphics for this story '''
+        # we are given a list of words that indicate what the answer
+        # options are. By convention, the first word is probably the 
+        # correct answer; the others are incorrect answers. However,
+        # we won't set this now because this convention may not hold.
+        # We expect the SET_CORRECT OpalCommand to be used to set
+        # which answers are correct or incorrect.
+        # split the list of answers on commas
+        answers = answer_list.rstrip().split(',')
+
+        # load in the graphic for each answer
+        for answer in answers:
+            toload = {}
+            toload["name"] = answer
+            toload["tag"] = "PlayObject"
+            # TODO load answers in random order?
+            toload["slot"] = answers.index(answer) + 1
+            toload["draggable"] = False
+            toload["isAnswerSlot"] = True
+            self.ros_node.send_opal_command("LOAD_OBJECT", json.dumps(toload))
+
 
     def load_next_story(self):
         ''' Get the next story, set up the game scene with scene and 
