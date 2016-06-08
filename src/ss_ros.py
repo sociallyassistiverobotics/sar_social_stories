@@ -61,6 +61,9 @@ class ss_ros():
         self.logger.log("Sending opal command: ", command)
         # build message
         msg = OpalCommand()
+        # add header
+        msg.header = Header()
+        msg.header.stamp = rospy.Time.now()
         # Add appropriate command and properties if there are any.
         # We check properties for each command individually, since some
         # require properties, and if there are none, we shouldn't send 
