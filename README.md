@@ -1,6 +1,12 @@
 # sar\_social\_stories
 
-The SAR Social Stories game node was designed for use during the SAR Year 5 study. This program loads and launches the social stories game, using scripts to list what the robot should be told to do, what stories should be loaded in the game, and what to do in response to stuff that happens in the game. It uses ROS to communicate with a SAR Opal game (on a tablet or on a PC) via a rosbridge\_server websocket connection and with the robot via the robot\_command node.
+The SAR Social Stories game node was designed for use during the SAR Year 5
+study. This program loads and launches the social stories game, using
+scripts to list what the robot should be told to do, what stories should be
+loaded in the game, and what to do in response to stuff that happens in the
+game. It uses ROS to communicate with a SAR Opal game (on a tablet or on a PC)
+via a rosbridge\_server websocket connection and with the robot via the
+robot\_command node.
 
 ## Usage 
 
@@ -217,11 +223,25 @@ example in "story\_scripts/demo-story-1.txt".
 
 ## Version Notes
 
-This program was developed and tested with Python 2.7.6, ROS Indigo, [sar\_opal\_msgs](https://github.com/personal-robots/sar_opal_msgs "/sar_opal_msgs") 3.0.0, and [sar\_robot\_command\_msgs](https://github.com/personal-robots/sar_robot_command_msgs "/sar_robot_command_msgs") 0.1.0 on Ubuntu 14.04 LTS. 
+This program was developed and tested with:
+
+- Python 2.7.6
+- ROS Indigo
+- [sar\_opal\_msgs](https://github.com/personal-robots/sar_opal_msgs
+  "/sar_opal_msgs") 4.0.0
+- [sar\_robot\_command\_msgs](https://github.com/personal-robots/sar_robot_command_msgs
+  "/sar_robot_command_msgs") 1.0.0
+- Ubuntu 14.04 LTS (64-bit)
+
+## Bugs and issues
+
+Please report all bugs and issues on the [sar\_social\_stories github issues
+page](https://github.com/personal-robots/sar_social_stories/issues).
 
 ## TODO
 - Select scripts
-- Consider listing the mapping of session script files to sessions in a config file.
+- Consider listing the mapping of session script files to sessions in a config
+  file.
 - Add personalization
 - Add logger
 - Start game, play scripts

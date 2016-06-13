@@ -26,10 +26,10 @@
 import sys # for getting generic exception info
 import datetime # for getting time deltas for timeouts
 import json # for packing ros message properties
+import random # for picking robot responses and shuffling answer options
 from ss_script_parser import ss_script_parser
 from ss_personalization_manager import ss_personalization_manager
 from ss_ros import ss_ros
-from random import randint # for randomly picking robot responses
 
 class ss_script_handler():
     """ Social stories script handler parses and deals with script lines. Uses 
@@ -161,12 +161,12 @@ class ss_script_handler():
                 # play a randomly selected story intro from the list
                 if "STORY_INTRO" in elements[1]:
                     self.ros_node.send_robot_command("DO", self.story_intros[
-                        randint(0,len(self.story_intros)-1)])
+                        random.randint(0,len(self.story_intros)-1)])
 
                 # play a randomly selected story closing from the list
                 elif "STORY_CLOSING" in elements[1]:
                     self.ros_node.send_robot_command("DO", self.story_closings[
-                        randint(0,len(self.story_closings)-1)])
+                        random.randint(0,len(self.story_closings)-1)])
                 
                 # send a command to the robot, with properties
                 elif len(elements) > 2:
@@ -389,12 +389,12 @@ class ss_script_handler():
                 try:
                     self.ros_node.send_robot_command_and_wait("DO", 
                             "ROBOT_NOT_SPEAKING", 10,
-                            self.correct_responses[randint(0,
+                            self.correct_responses[random.randint(0,
                                 len(self.correct_responses)-1)])
                     self.ros_node.send_opal_command("SHOW_CORRECT")
                     self.ros_node.send_robot_command_and_wait("DO",
                             "ROBOT_NOT_SPEAKING", 10,
-                            self.answer_feedback[randint(0,
+                            self.answer_feedback[random.randint(0,
                                 len(self.answer_feedback)-1)])
                     self.ros_node.send_opal_command("HIDE_CORRECT")
                 except AttributeError:
@@ -408,7 +408,7 @@ class ss_script_handler():
             elif "YES" in response:
                     try:
                         self.ros_node.send_robot_command("DO", 
-                                self.yes_responses[randint(0,
+                                self.yes_responses[random.randint(0,
                                     len(self.yes_responses)-1)])
                     except AttributeError:
                         self.logger.log("Could not play response to user's"
@@ -424,7 +424,7 @@ class ss_script_handler():
                     and "CORRECT" in response_to_get):
                 try:
                     self.ros_node.send_robot_command("DO", 
-                            self.incorrect_responses[randint(0,
+                            self.incorrect_responses[random.randint(0,
                                 len(self.incorrect_responses)-1)])
                 except AttributeError:
                     self.logger.log("Could not play an incorrect " 
@@ -436,7 +436,7 @@ class ss_script_handler():
                     and "YES_NO" in response_to_get):
                 try:
                     self.ros_node.send_robot_command("DO", 
-                            self.no_responses[randint(0,
+                            self.no_responses[random.randint(0,
                                 len(self.no_responses)-1)])
                 except AttributeError:
                     self.logger.log("Could not play a response to " 
@@ -452,7 +452,7 @@ class ss_script_handler():
                     self.ros_node.send_opal_command("SHOW_CORRECT")
                     self.ros_node.send_robot_command_and_wait("DO",
                             "ROBOT_NOT_SPEAKING", 10,
-                            self.answer_feedback[randint(0,
+                            self.answer_feedback[random.randint(0,
                                 len(self.answer_feedback)-1)])
                     self.ros_node.send_opal_command("HIDE_CORRECT")
                 except AttributeError:
@@ -477,6 +477,9 @@ class ss_script_handler():
         # which answers are correct or incorrect.
         # split the list of answers on commas
         answers = answer_list.rstrip().split(',')
+
+        # shuffle answers to display them in a random order
+        random.shuffle(answers)
 
         # load in the graphic for each answer
         for answer in answers:
@@ -506,7 +509,7 @@ class ss_script_handler():
             self.doing_story = False
             try:
                 self.ros_node.send_robot_command("DO", self.max_stories_reached
-                        [randint(0, len(self.no_responses)-1)])
+                        [random.randint(0, len(self.no_responses)-1)])
             except AttributeError:
                 self.logger.log("Could not play a max stories reached response"
                         + " because none were loaded!")
