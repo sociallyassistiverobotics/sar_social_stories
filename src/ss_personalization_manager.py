@@ -59,14 +59,18 @@ class ss_personalization_manager():
         print("TODO get story details - using DEMO set")
 
         # TODO get list of scene graphics names
-        scenes = ["scene1", "scene2", "scene3"]
+		# demo set:
+        scenes = ["scenes/CR1-scene1.png", "scenes/CR1-scene2.png", 
+				"scenes/CR1-scene3.png", "scenes/CR1-scene4.png"]
 
         # TODO determine whether the scenes are shown in order or not
+		# demo is in order
         in_order = True
 
         # TODO determine how many answer options there are per question 
         # at this story level
-        num_answers = 3
+		# demo has 4 scenes
+        num_answers = 4
 
         # return the story information
         return scenes, in_order, num_answers

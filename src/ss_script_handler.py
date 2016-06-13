@@ -466,6 +466,7 @@ class ss_script_handler():
                 self.repeating = False
                 self.story = False
 
+
     def load_answers(self, answer_list):
         ''' Load the answer graphics for this story '''
         # we are given a list of words that indicate what the answer
