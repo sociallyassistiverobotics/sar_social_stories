@@ -1,2 +1,2 @@
-{ "name": "buttons/no_button.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
-{ "name": "buttons/yes_button.png", "tag": "PlayObject", "draggable": "false",  "slot": "2", "isAnswerSlot": "false"}
+{ "name": "buttons/no_button_wide.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
+{ "name": "buttons/yes_button_wide.png", "tag": "PlayObject", "draggable": "false",  "slot": "2", "isAnswerSlot": "false"}

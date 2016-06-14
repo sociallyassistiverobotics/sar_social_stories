@@ -198,6 +198,7 @@ class ss_ros():
     def send_robot_command_and_wait(self, command, response, timeout,
             properties=None):
         """ Publish robot command message and wait for a response """
+        # timeout should be a datetime.timedelta object
         self.send_robot_command(command, properties)
         self.wait_for_response(response, timeout) 
 

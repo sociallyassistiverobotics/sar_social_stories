@@ -273,7 +273,8 @@ class ss_script_handler():
                     self.logger.log("Set MAX_INCORRECT_RESPONSES to " + 
                             elements[2])
                 elif "MAX_GAME_TIME" in elements[1]:
-                    self.max_game_time = datetime.timedelta(seconds=int(elements[2]))
+                    self.max_game_time = datetime.timedelta(minutes=
+                            int(elements[2]))
                     self.logger.log("Set MAX_GAME_TIME to " + elements[2])
                 elif "MAX_STORIES" in elements[1]:
                     self.max_stories = elements[2]
@@ -328,7 +329,7 @@ class ss_script_handler():
                 self.stories_told += 1
             # if we were repeating a script, increment counter 
             elif self.repeating:
-                self.logger.log("Finished repetition " + self.repetitions + "!")
+                self.logger.log("Finished repetition " + str(self.repetitions) + "!")
                 self.repetitions += 1
                 # if we've done enough repetitions, or if we've run out
                 # of game time, go back to the main session script (set
@@ -378,7 +379,7 @@ class ss_script_handler():
             # wait for the specified type of response, or until the 
             # specified time has elapsed
             response = self.ros_node.wait_for_response(response_to_get,
-                    datetime.timedelta(seconds=timeout))
+                    datetime.timedelta(seconds=int(timeout)))
             
             # after waiting for a response, need to play back an
             # appropriate robot response 
@@ -388,12 +389,14 @@ class ss_script_handler():
             if "CORRECT" in response:
                 try:
                     self.ros_node.send_robot_command_and_wait("DO", 
-                            "ROBOT_NOT_SPEAKING", 10,
+                            "ROBOT_NOT_SPEAKING", 
+                            datetime.timedelta(seconds=int(10)),
                             self.correct_responses[random.randint(0,
                                 len(self.correct_responses)-1)])
                     self.ros_node.send_opal_command("SHOW_CORRECT")
                     self.ros_node.send_robot_command_and_wait("DO",
-                            "ROBOT_NOT_SPEAKING", 10,
+                            "ROBOT_NOT_SPEAKING", 
+                            datetime.timedelta(seconds=int(10)),
                             self.answer_feedback[random.randint(0,
                                 len(self.answer_feedback)-1)])
                     self.ros_node.send_opal_command("HIDE_CORRECT")
@@ -451,7 +454,8 @@ class ss_script_handler():
                 try:
                     self.ros_node.send_opal_command("SHOW_CORRECT")
                     self.ros_node.send_robot_command_and_wait("DO",
-                            "ROBOT_NOT_SPEAKING", 10,
+                            "ROBOT_NOT_SPEAKING", 
+                            datetime.timedelta(seconds=int(10)),
                             self.answer_feedback[random.randint(0,
                                 len(self.answer_feedback)-1)])
                     self.ros_node.send_opal_command("HIDE_CORRECT")
@@ -476,7 +480,7 @@ class ss_script_handler():
         # We expect the SET_CORRECT OpalCommand to be used to set
         # which answers are correct or incorrect.
         # split the list of answers on commas
-        answers = answer_list.rstrip().split(',')
+        answers = answer_list.strip().split(',')
 
         # shuffle answers to display them in a random order
         random.shuffle(answers)
@@ -484,9 +488,8 @@ class ss_script_handler():
         # load in the graphic for each answer
         for answer in answers:
             toload = {}
-            toload["name"] = answer
+            toload["name"] = answer.strip() # remove whitespace from name
             toload["tag"] = "PlayObject"
-            # TODO load answers in random order?
             toload["slot"] = answers.index(answer) + 1
             toload["draggable"] = False
             toload["isAnswerSlot"] = True
@@ -504,8 +507,8 @@ class ss_script_handler():
         if self.stories_told >= self.max_stories or \
             datetime.datetime.now() - self.start_time >= self.max_game_time:
             self.logger.log("We were told to load another story, but we've "
-                    + "already played the maximum number of stories! Skipping"
-                    + " and ending now.")
+                    + "already played the maximum number of stories or we ran"
+                    " out of time! Skipping and ending now.")
             self.doing_story = False
             try:
                 self.ros_node.send_robot_command("DO", self.max_stories_reached

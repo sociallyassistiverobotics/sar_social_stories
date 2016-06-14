@@ -72,7 +72,10 @@ class ss_script_parser():
         # may get attribute error if file handle does not exist because no
         # script was loaded
         except AttributeError:
-            self.logger.log("No script loaded!")
+            self.logger.log("Cannot get next line -- no script loaded!")
+
+        except ValueError:
+            self.logger.log("Cannot get next line -- script file is closed!")
         
         except StopIteration:
             self.logger.log("At end of script file!")

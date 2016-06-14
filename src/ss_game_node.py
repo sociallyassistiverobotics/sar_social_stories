@@ -29,6 +29,7 @@ import sys # exit and argv
 import json # for reading config file
 import rospy # ROS
 import argparse # to parse command line arguments
+import time # TODO for debugging: to pause between iterating lines in script 
 from ss_logger import ss_logger # for logging data
 from ss_script_handler import ss_script_handler # plays back script lines
 from ss_ros import ss_ros
@@ -152,6 +153,7 @@ class ss_game_node():
             while (True):
                 try:
                     self.script_handler.iterate_once()
+                    time.sleep(1)
                 except StopIteration:
                     self.logger.log("Finished script!")
                     break
