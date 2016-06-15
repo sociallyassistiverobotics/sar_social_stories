@@ -13,6 +13,6 @@ ROBOT	"How did Lisa feel when she couldn't get her shoe back?"
 WAIT	CORRECT_INCORRECT	10
 
 OPAL	LOAD_ANSWERS	answers/lisa_angry.png, answers/lisa_afraid.png, answers/lisa_frustrated.png, answers/lisa_happy.png
-OPAL	SET_CORRECT {"correct":["lisa_happy"], "incorrect":["lisa_angry","lisa_afraid","lisa_frustrated"]}
+OPAL	SET_CORRECT	{"correct":["lisa_happy"], "incorrect":["lisa_angry","lisa_afraid","lisa_frustrated"]}
 ROBOT	"How did Lisa feel when she got her shoe back from her mom?"
 WAIT	CORRECT_INCORRECT	10

@@ -8,4 +8,5 @@ OPAL	LOAD_STORY
 ROBOT	STORY_INTRO
 ROBOT	DO	"Let's look <lookat-game> at the story together."
 STORY
+OPAL	CLEAR
 ROBOT	STORY_CLOSING

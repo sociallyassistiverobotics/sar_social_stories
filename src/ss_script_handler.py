@@ -105,13 +105,23 @@ class ss_script_handler():
 
             # get next line from story script
             if self.doing_story:
+                self.logger.log("Getting next line from story script...")
                 line = self.story_parser.next_line()
             # if not in a story, get next line from repeating script
             elif self.repeating:
+                self.logger.log("Getting next line from repeating script...")
                 line = self.repeat_parser.next_line()
             # if not repeating, get next line from main session script
             else:
+                self.logger.log("Getting next line from main session script...")
                 line = self.script_parser.next_line()
+            
+            # Make sure we got a line before we try parsing it. We 
+            # might not get a line if the file has closed or if
+            # next_line has some other problem.
+            if not line:
+                self.logger.log("[iterate_once] Tried to get next line, but got None!")
+                return
 
             # got a line - print for debugging
             self.logger.log("LINE: " + repr(line))
@@ -314,10 +324,10 @@ class ss_script_handler():
                                 "MAX_STORIES, but MAX_STORIES has not been set"
                                 ". Setting to 1 repetition instead.")
                         self.max_repetitions = 1
-                    else:
-                        self.max_repetitions = elements[1]
-                    self.logger.log("Going to repeat " + elements[2] + " " +
-                            self.max_repetitions + " times.")
+                else:
+                    self.max_repetitions = elements[1]
+                self.logger.log("Going to repeat " + elements[2] + " " +
+                        self.max_repetitions + " time(s).")
 
         # if we get a stop iteration exception, we're at the end of the
         # file and will stop iterating over lines
@@ -329,14 +339,18 @@ class ss_script_handler():
                 self.stories_told += 1
             # if we were repeating a script, increment counter 
             elif self.repeating:
-                self.logger.log("Finished repetition " + str(self.repetitions) + "!")
+                self.logger.log("Finished repetition " + str(self.repetitions
+                    + 1) + " of " + str(self.max_repetitions) + "!")
                 self.repetitions += 1
+                self.logger.log("finished: " + str(self.repetitions) + " max: " +
+                        str(self.max_repetitions)) 
                 # if we've done enough repetitions, or if we've run out
                 # of game time, go back to the main session script (set
                 # the repeating flag to false)
                 if self.repetitions >= self.max_repetitions or \
                     datetime.datetime.now() - self.start_time >= \
                     self.max_game_time:
+                    self.logger.log("Done repeating!")
                     self.repeating = False
             # otherwise we're at the end of the main script
             else:
