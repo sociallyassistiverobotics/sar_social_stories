@@ -58,7 +58,7 @@ class ss_ros():
 
     def send_opal_command(self, command, properties=None):
         """ Publish opal command message """
-        self.logger.log("Sending opal command: ", command)
+        self.logger.log("Sending opal command: " + str(command))
         # build message
         msg = OpalCommand()
         # add header
@@ -168,7 +168,7 @@ class ss_ros():
 
     def send_robot_command(self, command, properties=None):
         """ Publish robot command message """
-        self.logger.log("Sending robot command: ", command)
+        self.logger.log("Sending robot command: " + str(command))
         # build message
         msg = RobotCommand()
         # add header
@@ -205,8 +205,8 @@ class ss_ros():
 
     def on_opal_action_msg(self, data):
         """ Called when we receive OpalAction messages """
-        self.logger.log("Received OpalAction message!")
-        self.logger.log("... ACTION: " + data.action + " MESSAGE: " + data.message)
+        self.logger.log("Received OpalAction message!\n... ACTION: " 
+                + data.action + ", MESSAGE: " + data.message)
 
         # Currently, we are only using OpalAction messages to get
         # responses from the user. So we only care whether the action

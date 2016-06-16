@@ -276,41 +276,42 @@ class ss_script_handler():
                 # read list of responses from the specified file into the 
                 # appropriate variable
                 try:
+                    if "INCORRECT_RESPONSES" in elements[1]:
+                        self.incorrect_responses = self.read_list_from_file(
+                                self.script_path + self.session_script_path +
+                                elements[2])
+                        self.logger.log("... Got " + str(len(self.incorrect_responses)))
                     if "CORRECT_RESPONSES" in elements[1]:
                         self.correct_responses = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("Got " + str(len(self.correct_responses)))
-                    elif "INCORRECT_RESPONSES" in elements[1]:
-                        self.incorrect_responses = self.read_list_from_file(
-                                self.script_path + self.session_script_path +
-                                elements[2])
-                        self.logger.log("Got " + str(len(self.incorrect_responses)))
+                        self.logger.log("... Got " + str(len(self.correct_responses)))
+
                     elif "YES_RESPONSES" in elements[1]:
                         self.yes_responses = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("Got " + str(len(self.yes_responses)))
+                        self.logger.log("... Got " + str(len(self.yes_responses)))
                     elif "NO_RESPONSES" in elements[1]:
                         self.no_responses = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("Got " + str(len(self.no_responses)))
+                        self.logger.log("... Got " + str(len(self.no_responses)))
                     elif "ANSWER_FEEDBACK" in elements[1]:
                         self.answer_feedback = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("Got " + str(len(self.answer_feedback)))
+                        self.logger.log("... Got " + str(len(self.answer_feedback)))
                     elif "STORY_INTROS" in elements[1]:
                         self.story_intros = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("Got " + str(len(self.story_intros)))
+                        self.logger.log("... Got " + str(len(self.story_intros)))
                     elif "STORY_CLOSINGS" in elements[1]:
                         self.story_closings = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("Got " + str(len(self.story_closings)))
+                        self.logger.log("... Got " + str(len(self.story_closings)))
                     elif "TIMEOUT_CLOSINGS" in elements[1]:
                         self.timeout_closings = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
@@ -320,7 +321,7 @@ class ss_script_handler():
                         self.max_stories_reached = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("Got " + str(len(self.max_stories_reached)))
+                        self.logger.log("... Got " + str(len(self.max_stories_reached)))
                 except IOError:
                     self.logger.log("Failed to add responses!")
                 else:
@@ -454,8 +455,8 @@ class ss_script_handler():
             elif ("INCORRECT" in response) or ("TIMEOUT" in response 
                     and "CORRECT" in response_to_get):
                 try:
-                    self.ros_node.send_robot_command("DO", 
-                            self.incorrect_responses[random.randint(0,
+                    self.ros_node.send_robot_command("DO",
+                            self.incorrect_responses[random.randint(0, \
                                 len(self.incorrect_responses)-1)])
                 except AttributeError:
                     self.logger.log("Could not play an incorrect " 
