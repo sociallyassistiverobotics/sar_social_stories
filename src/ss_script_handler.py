@@ -132,10 +132,6 @@ class ss_script_handler():
                 self.repetitions += 1
                 self.logger.log("Finished repetition " + str(self.repetitions)
                     + " of " + str(self.max_repetitions) + "!")
-                self.logger.log("repetitions >= max_repetitions ? " +
-                        str(self.repetitions >= self.max_repetitions))
-                print(self.repetitions)
-                print(self.max_repetitions)
                 # if we've done enough repetitions, or if we've run out
                 # of game time, go back to the main session script (set
                 # the repeating flag to false)
@@ -156,7 +152,6 @@ class ss_script_handler():
             # probably went wrong with ending playback of a story script
             # or a repeating script. End repeating and end the current
             # story so we go back to the main session script.
-            # TODO may need to handle this differently!
             if self.doing_story:
                 self.doing_story = False
             if self.repeating:
@@ -335,7 +330,7 @@ class ss_script_handler():
             # for SET lines, set the specified constant
             elif "SET" in elements[0] and len(elements) >= 3:
                 if "MAX_INCORRECT_RESPONSES" in elements[1]:
-                    self.max_incorrect_responses = elements[2]
+                    self.max_incorrect_responses = int(elements[2])
                     self.logger.log("Set MAX_INCORRECT_RESPONSES to " + 
                             elements[2])
                 elif "MAX_GAME_TIME" in elements[1]:
@@ -343,7 +338,7 @@ class ss_script_handler():
                             int(elements[2]))
                     self.logger.log("Set MAX_GAME_TIME to " + elements[2])
                 elif "MAX_STORIES" in elements[1]:
-                    self.max_stories = elements[2]
+                    self.max_stories = int(elements[2])
                     self.logger.log("Set MAX_STORIES to " + elements[2])
 
             #########################################################
@@ -381,9 +376,9 @@ class ss_script_handler():
                                 ". Setting to 1 repetition instead.")
                         self.max_repetitions = 1
                 else:
-                    self.max_repetitions = elements[1]
+                    self.max_repetitions = int(elements[1])
                 self.logger.log("Going to repeat " + elements[2] + " " +
-                        self.max_repetitions + " time(s).")
+                        str(self.max_repetitions) + " time(s).")
 
 
     def read_list_from_file(self, filename):
@@ -407,7 +402,7 @@ class ss_script_handler():
         has elapsed. If the response is incorrect, allow multiple 
         attempts up to the maximum number of incorrect responses.
         '''
-        for i in range(0, len(self.max_incorrect_responses)):
+        for i in range(0, self.max_incorrect_responses):
             self.logger.log("Waiting for user response...")
             # wait for the specified type of response, or until the 
             # specified time has elapsed
