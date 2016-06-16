@@ -69,7 +69,7 @@ class ss_script_handler():
         self.personalization_manager = ss_personalization_manager(self.logger,
                 session, participant)
 
-        # set up counter for how many stories have been told this
+        # set up counter for how many stories have been told this session
         self.stories_told = 0
 
         # when we start, we are not currently telling a story or 
@@ -116,6 +116,62 @@ class ss_script_handler():
                 self.logger.log("Getting next line from main session script...")
                 line = self.script_parser.next_line()
             
+        # we didn't read a line!
+        # if we get a stop iteration exception, we're at the end of the
+        # file and will stop iterating over lines
+        except StopIteration:
+            # if we were doing a story, now we're done, go back to
+            # the previous script
+            if self.doing_story:
+                self.logger.log("Finished story " + str(self.stories_told + 1) +
+                        " of " + str(self.max_stories) + "!")
+                self.doing_story = False
+                self.stories_told += 1
+            # if we were repeating a script, increment counter
+            elif self.repeating:
+                self.repetitions += 1
+                self.logger.log("Finished repetition " + str(self.repetitions)
+                    + " of " + str(self.max_repetitions) + "!")
+                self.logger.log("repetitions >= max_repetitions ? " +
+                        str(self.repetitions >= self.max_repetitions))
+                print(self.repetitions)
+                print(self.max_repetitions)
+                # if we've done enough repetitions, or if we've run out
+                # of game time, go back to the main session script (set
+                # the repeating flag to false)
+                if (self.repetitions >= self.max_repetitions) \
+                        or (datetime.datetime.now() - self.start_time \
+                        >= self.max_game_time):
+                    self.logger.log("Done repeating!")
+                    self.repeating = False
+            # otherwise we're at the end of the main script
+            else:
+                self.logger.log("No more script lines to get!")
+                # pass on the stop iteration exception
+                raise
+
+        except ValueError:
+            # We may get this exception if we try to get the next line
+            # but the script file is closed. If that happens, something
+            # probably went wrong with ending playback of a story script
+            # or a repeating script. End repeating and end the current
+            # story so we go back to the main session script.
+            # TODO may need to handle this differently!
+            if self.doing_story:
+                self.doing_story = False
+            if self.repeating:
+                self.repeating = False
+
+        # oh no got some unexpected error! raise it again so we can
+        # figure out what happened and deal with it during debugging
+        except Exception as e:
+            self.logger.log("Unexpected exception! Error:")
+            self.logger.log(e)
+            self.logger.log(sys.exc_info()[0])
+            raise
+
+        # we got a line: parse it!
+        else:
             # Make sure we got a line before we try parsing it. We 
             # might not get a line if the file has closed or if
             # next_line has some other problem.
@@ -329,47 +385,10 @@ class ss_script_handler():
                 self.logger.log("Going to repeat " + elements[2] + " " +
                         self.max_repetitions + " time(s).")
 
-        # if we get a stop iteration exception, we're at the end of the
-        # file and will stop iterating over lines
-        except StopIteration:
-            # if we were doing a story, now we're done, go back to 
-            # the previous script
-            if self.doing_story:
-                self.doing_story = False
-                self.stories_told += 1
-            # if we were repeating a script, increment counter 
-            elif self.repeating:
-                self.logger.log("Finished repetition " + str(self.repetitions
-                    + 1) + " of " + str(self.max_repetitions) + "!")
-                self.repetitions += 1
-                self.logger.log("finished: " + str(self.repetitions) + " max: " +
-                        str(self.max_repetitions)) 
-                # if we've done enough repetitions, or if we've run out
-                # of game time, go back to the main session script (set
-                # the repeating flag to false)
-                if self.repetitions >= self.max_repetitions or \
-                    datetime.datetime.now() - self.start_time >= \
-                    self.max_game_time:
-                    self.logger.log("Done repeating!")
-                    self.repeating = False
-            # otherwise we're at the end of the main script
-            else:
-                self.logger.log("No more script lines to get!")
-                # pass on the stop iteration exception
-                raise
 
-        # oh no got some unexpected error! raise it again so we can 
-        # figure out what happened and deal with it during debugging
-        except Exception as e:
-            self.logger.log("Unexpected exception! Error:")
-            self.logger.log(e)
-            self.logger.log(sys.exc_info()[0])
-            raise
-
-    
     def read_list_from_file(self, filename):
-        ''' Read a list of robot responses from a file, return a list of the
-        lines from the file 
+        ''' Read a list of robot responses from a file, return a list
+        of the lines from the file 
         '''
         # open script for reading
         try:
@@ -378,8 +397,8 @@ class ss_script_handler():
         except IOError as e:
             self.logger.log("Cannot open file: " + filename)
             self.logger.log(e)
-            # pass exception up so anyone trying to add a response list from
-            # a script knows it didn't work
+            # pass exception up so anyone trying to add a response list
+            # from a script knows it didn't work
             raise
 
 

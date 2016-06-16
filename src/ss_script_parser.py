@@ -73,9 +73,11 @@ class ss_script_parser():
         # script was loaded
         except AttributeError:
             self.logger.log("Cannot get next line -- no script loaded!")
+            raise
 
         except ValueError:
             self.logger.log("Cannot get next line -- script file is closed!")
+            raise
         
         except StopIteration:
             self.logger.log("At end of script file!")

@@ -279,15 +279,18 @@ class ss_ros():
             self.waiting_for_correct_incorrect = False
             self.waiting_for_robot_speaking = True
 
+        self.logger.log("[wait_for_response] waiting...")
         start_time = datetime.datetime.now()
         while datetime.datetime.now() - start_time < timeout:
             time.sleep(0.1)
             # check periodically whether we've received the response we
             # were waiting for, and if so, we're done waiting 
             if (self.waiting_for_yes_no and self.yes_no_response_received) \
-                or (self.waiting_for_correct_incorrect and \
+                    or (self.waiting_for_correct_incorrect and \
                         self.correct_incorrect_response_received) or \
-                (self.waiting_for_robot_speaking and not self.robot_speaking):
+                    (self.waiting_for_robot_speaking and not self.robot_speaking):
+                self.logger.log("[wait_for_response] Got response!" 
+                        + self.response_received)
                 self.waiting_for_yes_no = False
                 self.waiting_for_correct_incorrect = False
                 self.waiting_for_robot_speaking = False
@@ -297,5 +300,6 @@ class ss_ros():
         self.waiting_for_yes_no = False
         self.waiting_for_correct_incorrect = False
         self.waiting_for_robot_speaking = False
+        self.logger.log("[wait_for_response] Timed out! Moving on...")
         return "TIMEOUT"
 

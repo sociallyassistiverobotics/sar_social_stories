@@ -153,7 +153,7 @@ class ss_game_node():
             while (True):
                 try:
                     self.script_handler.iterate_once()
-                    time.sleep(1)
+                    #time.sleep(1)
                 except StopIteration:
                     self.logger.log("Finished script!")
                     break
