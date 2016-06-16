@@ -98,6 +98,10 @@ class ss_ros():
                 return
         elif "CLEAR" in command:
             msg.command = OpalCommand.CLEAR
+            # properties: optionally, string defining what objects to
+            # remove
+            if properties:
+                msg.properties = properties
         elif "MOVE_OBJECT" in command:
             msg.command = OpalCommand.MOVE_OBJECT
             # properties: JSON defining what object to move where
@@ -289,8 +293,7 @@ class ss_ros():
                     or (self.waiting_for_correct_incorrect and \
                         self.correct_incorrect_response_received) or \
                     (self.waiting_for_robot_speaking and not self.robot_speaking):
-                self.logger.log("[wait_for_response] Got response!" 
-                        + self.response_received)
+                self.logger.log("[wait_for_response] Got response!")
                 self.waiting_for_yes_no = False
                 self.waiting_for_correct_incorrect = False
                 self.waiting_for_robot_speaking = False
