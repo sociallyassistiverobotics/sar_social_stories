@@ -4,9 +4,11 @@ OPAL	LOAD_ALL	demo-yesno-scene.txt
 ROBOT	DO	"Are you ready to hear the story? <anticipate>"
 WAIT	YES_NO	10
 OPAL	CLEAR
+PAUSE	1
 OPAL	LOAD_STORY
 ROBOT	STORY_INTRO
 ROBOT	DO	"Let's look <lookat-game> at the story together."
 STORY
+PAUSE	1
 OPAL	CLEAR
 ROBOT	STORY_CLOSING

@@ -11,6 +11,8 @@ ADD	MAX_STORIES_REACHED	demo-max-stories-reached.txt
 SET	MAX_GAME_TIME	6
 SET	MAX_STORIES	1
 ROBOT	DO	"Hi <smile>, I am a robot!"
+PAUSE	1
 ROBOT	DO	"Let's play a story game."
 REPEAT	MAX_STORIES	demo-story.txt
+PAUSE	1
 ROBOT	DO	"That was fun. <happy> Let's play again sometime! Bye!"

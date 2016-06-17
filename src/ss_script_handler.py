@@ -276,6 +276,16 @@ class ss_script_handler():
                     self.ros_node.send_opal_command(elements[1])
             
             #########################################################
+            # For PAUSE lines, sleep for the specified number of
+            # seconds before continuing script playback
+            elif "PAUSE" in elements[0] and len(elements) >= 2:
+                try:
+                    time.sleep(int(elements[1]))
+                except ValueError:
+                    self.logger.log("Not pausing! PAUSE command was given an"
+                        + " invalid argument (should be an int)!")
+
+            #########################################################
             # for ADD lines, get a list of robot commands that can be 
             # used in response to particular triggers from the specified
             # file and save them for later use -- all ADD lines should 

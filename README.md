@@ -59,13 +59,24 @@ located in the "game\_scripts/" directory.
 
 ## ROS messages
 
-This node subscribes to the ROS topic "robot\_state" to receive messages of the type "/[sar\_robot\_command\_msgs] (https://github.com/personal-robots/sar_robot_command_msgs "/sar_robot_command_msgs")/RobotState".
+This node subscribes to the ROS topic "robot\_state" to receive messages of the
+type
+"/[sar\_robot\_command\_msgs](https://github.com/personal-robots/sar_robot_command_msgs
+"/sar_robot_command_msgs")/RobotState".
 
-This node subscribes to the ROS topic "opal\_tablet\_action" to receive messages of the type "/[sar\_opal\_msgs] (https://github.com/personal-robots/sar_opal_msgs "/sar_opal_msgs")/OpalAction".
+This node subscribes to the ROS topic "opal\_tablet\_action" to receive
+messages of the type
+"/[sar\_opal\_msgs](https://github.com/personal-robots/sar_opal_msgs
+"/sar_opal_msgs")/OpalAction".
 
-This node publishes "/[sar\_opal\_msgs] (https://github.com/personal-robots/sar_opal_msgs "/sar_opal_msgs")/OpalCommand" messages to the topic "opal\_tablet\_command".
+This node publishes
+"/[sar\_opal\_msgs](https://github.com/personal-robots/sar_opal_msgs
+"/sar_opal_msgs")/OpalCommand" messages to the topic "opal\_tablet\_command".
 
-This node publishes "/[sar\_robot\_command\_msgs] (https://github.com/personal-robots/sar_robot_command_msgs "/sar_robot_command_msgs")/RobotCommand" messages to the topic "robot\_command".
+This node publishes
+"/[sar\_robot\_command\_msgs](https://github.com/personal-robots/sar_robot_command_msgs
+"/sar_robot_command_msgs")/RobotCommand" messages to the topic
+"robot\_command".
 
 ## Game Scripts
 
@@ -112,8 +123,10 @@ taken by the user:
 
 Currently, the following lists can be added:
 
-- CORRECT\_RESPONSES: Responses for correct user actions
-- INCORRECT\_RESPONSES: Responses for incorrect user actions
+- CORRECT\_RESPONSES: Responses to correct user actions
+- INCORRECT\_RESPONSES: Responses to incorrect user actions
+- ANSWER\_FEEDBACK: Responses indicating which action was correct (regardless
+  of whether the user performed a correct or incorrect action)
 - YES\_RESPONSES: Responses to the user selecting a "yes" button
 - NO\_RESPONSES: Responses to the user selecting a "no" button
 - STORY\_INTROS: Introductory comment before telling a story
