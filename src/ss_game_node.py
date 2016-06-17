@@ -164,7 +164,7 @@ class ss_game_node():
                     break
 
 
-    def signal_handler(self, signal, frame):
+    def signal_handler(self, sig, frame):
         """ Handle signals caught """
         if sig == signal.SIGINT:
             self.logger.log("Got keyboard interrupt! Exiting.")

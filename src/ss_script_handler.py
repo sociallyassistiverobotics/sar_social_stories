@@ -412,19 +412,47 @@ class ss_script_handler():
             
             # after waiting for a response, need to play back an
             # appropriate robot response 
+
+            # if we received no user response before timing out, treat
+            # as either NO or INCORRECT
+
+            # if response was INCORRECT, randomly select a robot 
+            # response to an incorrect user action
+            if ("INCORRECT" in response) or ("TIMEOUT" in response 
+                    and "CORRECT" in response_to_get):
+                try:
+                    self.ros_node.send_robot_command("DO",
+                            self.incorrect_responses[random.randint(0, \
+                                len(self.incorrect_responses)-1)])
+                except AttributeError:
+                    self.logger.log("Could not play an incorrect " 
+                            + "response because none were loaded!")
+
+            # if response was NO, randomly select a robot response to
+            # the user selecting no 
+            elif "NO" in response or ("TIMEOUT" in response
+                    and "YES_NO" in response_to_get):
+                try:
+                    self.ros_node.send_robot_command("DO",
+                            self.no_responses[random.randint(0,
+                                len(self.no_responses)-1)])
+                except AttributeError:
+                    self.logger.log("Could not play a response to " 
+                            + "user's NO because none were loaded!")
+
             # if response was CORRECT, randomly select a robot response
             # to a correct user action, highlight the correct answer, 
             # and break out of response loop
-            if "CORRECT" in response:
+            elif "CORRECT" in response:
                 try:
-                    self.ros_node.send_robot_command_and_wait("DO", 
-                            "ROBOT_NOT_SPEAKING", 
+                    self.ros_node.send_robot_command_and_wait("DO",
+                            "ROBOT_NOT_SPEAKING",
                             datetime.timedelta(seconds=int(10)),
                             self.correct_responses[random.randint(0,
                                 len(self.correct_responses)-1)])
                     self.ros_node.send_opal_command("SHOW_CORRECT")
                     self.ros_node.send_robot_command_and_wait("DO",
-                            "ROBOT_NOT_SPEAKING", 
+                            "ROBOT_NOT_SPEAKING",
                             datetime.timedelta(seconds=int(10)),
                             self.answer_feedback[random.randint(0,
                                 len(self.answer_feedback)-1)])
@@ -447,34 +475,7 @@ class ss_script_handler():
                                 + "YES because none were loaded!")
                     break
 
-            # if we received no user response before timing out, treat
-            # as either NO or INCORRECT
-
-            # if response was INCORRECT, randomly select a robot 
-            # response to an incorrect user action
-            elif ("INCORRECT" in response) or ("TIMEOUT" in response 
-                    and "CORRECT" in response_to_get):
-                try:
-                    self.ros_node.send_robot_command("DO",
-                            self.incorrect_responses[random.randint(0, \
-                                len(self.incorrect_responses)-1)])
-                except AttributeError:
-                    self.logger.log("Could not play an incorrect " 
-                            + "response because none were loaded!")
-
-            # if response was NO, randomly select a robot response to
-            # the user selecting no 
-            elif "NO" in response or ("TIMEOUT" in response 
-                    and "YES_NO" in response_to_get):
-                try:
-                    self.ros_node.send_robot_command("DO", 
-                            self.no_responses[random.randint(0,
-                                len(self.no_responses)-1)])
-                except AttributeError:
-                    self.logger.log("Could not play a response to " 
-                            + "user's NO because none were loaded!")
-
-        # we exhausted our allowed number of user responses, so have 
+       # we exhausted our allowed number of user responses, so have 
         # the robot do something
         else:
             # if user was never correct, play robot's correct answer
