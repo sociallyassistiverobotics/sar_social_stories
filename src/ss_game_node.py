@@ -29,7 +29,7 @@ import sys # exit and argv
 import json # for reading config file
 import rospy # ROS
 import argparse # to parse command line arguments
-import time # TODO for debugging: to pause between iterating lines in script 
+import signal # for catching SIGINT signal
 from ss_logger import ss_logger # for logging data
 from ss_script_handler import ss_script_handler # plays back script lines
 from ss_ros import ss_ros
@@ -150,13 +150,25 @@ class ss_game_node():
             self.logger.log(e)
             
         else:
+            # flag to indicate whether we should exit
+            self.stop = False
+
+            # set up signal handler to catch SIGINT (e.g., ctrl-c)
+            signal.signal(signal.SIGINT, self.signal_handler)
+
             while (True):
                 try:
                     self.script_handler.iterate_once()
-                    #time.sleep(1)
                 except StopIteration:
                     self.logger.log("Finished script!")
                     break
+
+
+    def signal_handler(self, signal, frame):
+        """ Handle signals caught """
+        if sig == signal.SIGINT:
+            self.logger.log("Got keyboard interrupt! Exiting.")
+            self.stop = True
 
 
 if __name__ == '__main__':
