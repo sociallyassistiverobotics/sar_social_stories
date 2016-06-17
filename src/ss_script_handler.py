@@ -12,8 +12,8 @@
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
 # 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 # 
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -25,6 +25,7 @@
 
 import sys # for getting generic exception info
 import datetime # for getting time deltas for timeouts
+import time # for sleep
 import json # for packing ros message properties
 import random # for picking robot responses and shuffling answer options
 from ss_script_parser import ss_script_parser
@@ -38,6 +39,11 @@ class ss_script_handler():
     to replace how scripts are stored and accessed (e.g., in a database versus 
     in text files). 
     """
+
+    # constants for script playback
+    # time to pause after showing answer feedback and playing robot
+    # feedback speech before moving on to the next question
+    ANSWER_FEEDBACK_PAUSE_TIME = 3
 
     def __init__(self, logger, ros_node, session, participant, script_path,
             story_script_path, session_script_path):
@@ -105,15 +111,15 @@ class ss_script_handler():
 
             # get next line from story script
             if self.doing_story:
-                self.logger.log("Getting next line from story script...")
+                self.logger.log("Getting next line from story script.")
                 line = self.story_parser.next_line()
             # if not in a story, get next line from repeating script
             elif self.repeating:
-                self.logger.log("Getting next line from repeating script...")
+                self.logger.log("Getting next line from repeating script.")
                 line = self.repeat_parser.next_line()
             # if not repeating, get next line from main session script
             else:
-                self.logger.log("Getting next line from main session script...")
+                self.logger.log("Getting next line from main session script.")
                 line = self.script_parser.next_line()
             
         # we didn't read a line!
@@ -123,8 +129,8 @@ class ss_script_handler():
             # if we were doing a story, now we're done, go back to
             # the previous script
             if self.doing_story:
-                self.logger.log("Finished story " + str(self.stories_told + 1) +
-                        " of " + str(self.max_stories) + "!")
+                self.logger.log("Finished story " + str(self.stories_told + 1)
+                        + " of " + str(self.max_stories) + "!")
                 self.doing_story = False
                 self.stories_told += 1
             # if we were repeating a script, increment counter
@@ -171,7 +177,8 @@ class ss_script_handler():
             # might not get a line if the file has closed or if
             # next_line has some other problem.
             if not line:
-                self.logger.log("[iterate_once] Tried to get next line, but got None!")
+                self.logger.log("[iterate_once] Tried to get next line, but "
+                    + "got None!")
                 return
 
             # got a line - print for debugging
@@ -181,7 +188,8 @@ class ss_script_handler():
             # parse line!
             # split on tabs
             elements = line.rstrip().split('\t')
-            print("... " + str(len(elements)) + " elements: \n... " + str(elements))
+            print("... " + str(len(elements)) + " elements: \n... " 
+                    + str(elements))
 
             if len(elements) < 1:
                 self.logger.log("Line had no elements! Going to next line...")
@@ -285,43 +293,51 @@ class ss_script_handler():
                         self.correct_responses = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("... Got " + str(len(self.correct_responses)))
+                        self.logger.log("... Got " 
+                                + str(len(self.correct_responses)))
 
                     elif "YES_RESPONSES" in elements[1]:
                         self.yes_responses = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("... Got " + str(len(self.yes_responses)))
+                        self.logger.log("... Got " 
+                                + str(len(self.yes_responses)))
                     elif "NO_RESPONSES" in elements[1]:
                         self.no_responses = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("... Got " + str(len(self.no_responses)))
+                        self.logger.log("... Got " 
+                                + str(len(self.no_responses)))
                     elif "ANSWER_FEEDBACK" in elements[1]:
                         self.answer_feedback = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("... Got " + str(len(self.answer_feedback)))
+                        self.logger.log("... Got " 
+                                + str(len(self.answer_feedback)))
                     elif "STORY_INTROS" in elements[1]:
                         self.story_intros = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("... Got " + str(len(self.story_intros)))
+                        self.logger.log("... Got " 
+                                + str(len(self.story_intros)))
                     elif "STORY_CLOSINGS" in elements[1]:
                         self.story_closings = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("... Got " + str(len(self.story_closings)))
+                        self.logger.log("... Got " 
+                                + str(len(self.story_closings)))
                     elif "TIMEOUT_CLOSINGS" in elements[1]:
                         self.timeout_closings = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("Got " + str(len(self.timeout_closings)))
+                        self.logger.log("Got " 
+                                + str(len(self.timeout_closings)))
                     elif "MAX_STORIES_REACHED" in elements[1]:
                         self.max_stories_reached = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
-                        self.logger.log("... Got " + str(len(self.max_stories_reached)))
+                        self.logger.log("... Got " 
+                                + str(len(self.max_stories_reached)))
                 except IOError:
                     self.logger.log("Failed to add responses!")
                 else:
@@ -343,7 +359,8 @@ class ss_script_handler():
                     self.logger.log("Set MAX_STORIES to " + elements[2])
 
             #########################################################
-            # for WAIT lines, wait for the specified user response, or timeout
+            # For WAIT lines, wait for the specified user response, 
+            # or for a timeout.
             # if no response is received
             elif "WAIT" in elements[0] and len(elements) >= 3:
                 self.wait_for_response(elements[1], int(elements[2]))
@@ -413,7 +430,7 @@ class ss_script_handler():
             # after waiting for a response, need to play back an
             # appropriate robot response 
 
-            # if we didn't receive a response, then it was probably 
+            # if we didn't receive a response, then it was probably
             # because we didn't send a valid response to wait for
             if not response:
                 self.logger.log("Done waiting -- did not get valid response!")
@@ -462,6 +479,8 @@ class ss_script_handler():
                             datetime.timedelta(seconds=int(10)),
                             self.answer_feedback[random.randint(0,
                                 len(self.answer_feedback)-1)])
+                    # pause after speaking before hiding correct again
+                    time.sleep(self.ANSWER_FEEDBACK_PAUSE_TIME)
                     self.ros_node.send_opal_command("HIDE_CORRECT")
                 except AttributeError:
                     self.logger.log("Could not play a correct " 
@@ -481,7 +500,7 @@ class ss_script_handler():
                                 + "YES because none were loaded!")
                     break
 
-        # we exhausted our allowed number of user responses, so have 
+        # we exhausted our allowed number of user responses, so have
         # the robot do something
         else:
             # if user was never correct, play robot's correct answer
@@ -494,6 +513,8 @@ class ss_script_handler():
                             datetime.timedelta(seconds=int(10)),
                             self.answer_feedback[random.randint(0,
                                 len(self.answer_feedback)-1)])
+                    # pause after speaking before hiding correct again
+                    time.sleep(self.ANSWER_FEEDBACK_PAUSE_TIME)
                     self.ros_node.send_opal_command("HIDE_CORRECT")
                 except AttributeError:
                     self.logger.log("Could not play robot's answer"

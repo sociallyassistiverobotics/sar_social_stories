@@ -209,8 +209,8 @@ class ss_ros():
 
     def on_opal_action_msg(self, data):
         """ Called when we receive OpalAction messages """
-        self.logger.log("Received OpalAction message!\n... ACTION: " 
-                + data.action + ", MESSAGE: " + data.message)
+        self.logger.log("Received OpalAction message: ACTION="
+                + data.action + ", MESSAGE=" + data.message)
 
         # Currently, we are only using OpalAction messages to get
         # responses from the user. So we only care whether the action
@@ -256,7 +256,7 @@ class ss_ros():
         self.robot_speaking = data.is_playing_sound
         self.robot_doing_action = data.doing_action
         self.logger.log("Received RobotState message: doing_action="
-                + str(data.doing_action) + " playing_sound="
+                + str(data.doing_action) + ", playing_sound="
                 + str(data.is_playing_sound))
         # TODO set flags for any other fields that we add to
         # RobotState messages later
@@ -291,7 +291,7 @@ class ss_ros():
                     + "responses to wait for!")
             return
 
-        self.logger.log("[wait_for_response] waiting...")
+        self.logger.log("[wait_for_response] waiting for " + response + "...")
         start_time = datetime.datetime.now()
         while datetime.datetime.now() - start_time < timeout:
             time.sleep(0.1)
