@@ -169,6 +169,7 @@ class ss_game_node():
         if sig == signal.SIGINT:
             self.logger.log("Got keyboard interrupt! Exiting.")
             self.stop = True
+            exit("Interrupted by user.")
 
 
 if __name__ == '__main__':

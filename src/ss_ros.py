@@ -251,12 +251,15 @@ class ss_ros():
 
     def on_robot_state_msg(self, data):
         """ Called when we receive RobotState messages """
-        print("TODO received RobotState message!")
-        # TODO when we get robot state messages, set a flag indicating 
+        # When we get robot state messages, set a flag indicating
         # whether the robot is in motion or playing sound or not
-        #self.response_received = "ROBOT_STATE"
-        #self.flags.robot_is_playing_sound = data.is_playing_sound
-        #self.flags.robot_doing_action = data.doing_action
+        self.robot_speaking = data.is_playing_sound
+        self.robot_doing_action = data.doing_action
+        self.logger.log("Received RobotState message: doing_action="
+                + str(data.doing_action) + " playing_sound="
+                + str(data.is_playing_sound))
+        # TODO set flags for any other fields that we add to
+        # RobotState messages later
 
 
     def wait_for_response(self, response, timeout):
@@ -282,6 +285,11 @@ class ss_ros():
             self.waiting_for_yes_no = False
             self.waiting_for_correct_incorrect = False
             self.waiting_for_robot_speaking = True
+        else:
+            self.logger.log("[wait_for_response] Told to wait for "
+                    + response + " but that isn't one of the allowed "
+                    + "responses to wait for!")
+            return
 
         self.logger.log("[wait_for_response] waiting...")
         start_time = datetime.datetime.now()
@@ -291,8 +299,9 @@ class ss_ros():
             # were waiting for, and if so, we're done waiting 
             if (self.waiting_for_yes_no and self.yes_no_response_received) \
                     or (self.waiting_for_correct_incorrect and \
-                        self.correct_incorrect_response_received) or \
-                    (self.waiting_for_robot_speaking and not self.robot_speaking):
+                        self.correct_incorrect_response_received) \
+                    or (self.waiting_for_robot_speaking \
+                    and not self.robot_speaking):
                 self.logger.log("[wait_for_response] Got response!")
                 self.waiting_for_yes_no = False
                 self.waiting_for_correct_incorrect = False

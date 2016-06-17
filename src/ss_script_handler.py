@@ -413,6 +413,12 @@ class ss_script_handler():
             # after waiting for a response, need to play back an
             # appropriate robot response 
 
+            # if we didn't receive a response, then it was probably 
+            # because we didn't send a valid response to wait for
+            if not response:
+                self.logger.log("Done waiting -- did not get valid response!")
+                return
+
             # if we received no user response before timing out, treat
             # as either NO or INCORRECT
 
@@ -475,7 +481,7 @@ class ss_script_handler():
                                 + "YES because none were loaded!")
                     break
 
-       # we exhausted our allowed number of user responses, so have 
+        # we exhausted our allowed number of user responses, so have 
         # the robot do something
         else:
             # if user was never correct, play robot's correct answer
