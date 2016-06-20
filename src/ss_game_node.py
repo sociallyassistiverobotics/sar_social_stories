@@ -29,7 +29,8 @@ import sys # exit and argv
 import json # for reading config file
 import rospy # ROS
 import argparse # to parse command line arguments
-import signal # for catching SIGINT signal
+import signal # catching SIGINT signal
+import logging # log messages
 from ss_logger import ss_logger # for logging data
 from ss_script_handler import ss_script_handler # plays back script lines
 from ss_ros import ss_ros
@@ -55,6 +56,21 @@ class ss_game_node():
 
     def __init__(self):
         """ Initialize anything that needs initialization """
+        # set up logger
+        self.logger = logging.getLogger(__name__)
+        # configure logging
+        try:
+            config_file = "ss_log_config.json"
+            with open(config_file) as json_file:
+                json_data = json.load(json_file)
+                logging.config.dictConfig(json_data)
+        except Exception as e:
+            # could not read config file -- use basic configuration
+            logging.basicConfig(filename="ss.log", level=logging.DEBUG)
+            self.logger.logerr("Could not read your json log config file \"" 
+                + config_file + "\". Does the file exist? Is it valid json? "
+                + "\nUsing basic log setup -- will not be logging to ROS!",
+                exc_info=True)
 
 
     def parse_arguments_and_launch(self):
