@@ -24,7 +24,6 @@
 # SOFTWARE.
 import logging
 import rospy # for ROS logging
-from __future__ import print_function # get new version of print
 
 class ss_roslog_handler(logging.Handler):
     """ Logger handler to connect to ROS """
@@ -38,20 +37,13 @@ class ss_roslog_handler(logging.Handler):
         logging.CRITICAL:rospy.logfatal
     }
 
-
     def emit(self, record):
         """ Emit a record (route log message to rospy) """
         # use the log level for this message to route the message to 
         # the appropriate rospy log function
         try:
-            self.MAP[record.levelno](record.name, ":", record.msg)
+            #self.MAP[record.levelno]("%s: %s", record.name, record.message)
+            pass
         except KeyError:
-            rospy.logerr("Unknown log level", record.levelno, "LOG:",
-                    record.name, ":", record.msg)
-
-
-# connect logging calls from this logger's children to ROS
-logging.getLogger('trigger').addHandler(ss_roslog_handler())
-
-# send all messages with this log level or higher to ROS
-logging.getLogger('trigger').setLevel(logging.DEBUG)
+            rospy.logerr("Unknown log level! %s LOG: %s : %s", (record.levelno,
+                    record.name, record.message))

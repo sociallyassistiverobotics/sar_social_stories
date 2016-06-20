@@ -22,17 +22,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import logging # log messages
 
 class ss_script_parser(): 
     """ Determine which session scripts to load, load them, and provide the next
     line in the script file on request. """ 
     
-    def __init__(self, logger):
+    def __init__(self):
         """ Initialize script parser manager """
-        # save reference to logger for logging stuff later
-        self.logger = logger
-
+        # set up logger
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Setting up script parser...")
 
     def get_session_script(self, session):
         """ Get scripts for the specified session """
@@ -43,7 +43,7 @@ class ss_script_parser():
         else:
             # pick out the scripts for the specified session
             # TODO get script!
-            self.logger.log("TODO pick session script -- using DEMO script")
+            self.logger.info("TODO pick session script -- using DEMO script")
             return "demo.txt"
 
 
@@ -53,14 +53,13 @@ class ss_script_parser():
         try:
             self.fh = open(script, "r")
         except IOError as e:
-            self.logger.log("Cannot open script: " + script)
-            self.logger.log(e)
+            self.logger.exception("Cannot open script: " + str(script))
             # pass exception up so anyone trying to load a script
             # knows it didn't work
             raise
         else:
             # log that we opened script
-            self.logger.log("Opened ", script)
+            self.logger.info("Opened " + str(script))
 
 
     def next_line(self):
@@ -72,15 +71,16 @@ class ss_script_parser():
         # may get attribute error if file handle does not exist because no
         # script was loaded
         except AttributeError:
-            self.logger.log("Cannot get next line -- no script loaded!")
+            self.logger.exception("Cannot get next line -- no script loaded!")
             raise
 
         except ValueError:
-            self.logger.log("Cannot get next line -- script file is closed!")
+            self.logger.exception("Cannot get next line -- script file is "
+                + "closed!")
             raise
         
         except StopIteration:
-            self.logger.log("At end of script file!")
+            self.logger.exception("At end of script file!")
             # close script file now that we're done
             self.fh.close()
             # pass on the stop iteration exception
