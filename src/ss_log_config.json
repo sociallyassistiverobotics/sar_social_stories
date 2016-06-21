@@ -4,7 +4,7 @@
 
     "formatters": {
         "basic_format": {
-            "format": "%(asctime)s [%(name)s:%(funcName)s:%(lineno)d] %(levelname)s -  %(message)s"
+            "format": "[%(levelname)s] [%(asctime)s] [%(filename)s:%(funcName)s:%(lineno)d] - %(message)s"
         }
     },
 
@@ -21,8 +21,8 @@
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
             "formatter": "basic_format",
-            "filename": "../logs/ss_info.log",
-            "maxBytes": 10485760,
+            "filename": "../logs/ss_debug.log",
+            "maxBytes": 50000000,
             "backupCount": 20,
             "encoding": "utf8"
         },
@@ -32,21 +32,43 @@
             "level": "ERROR",
             "formatter": "basic_format",
             "filename": "../logs/ss_error.log",
-            "maxBytes": 10485760,
+            "maxBytes": 50000000,
             "backupCount": 20,
             "encoding": "utf8"
         },
 
-        "ss_roslog_handler": {
-            "class": "ss_roslog_handler.ss_roslog_handler",
+        "rosout": {
+            "class": "rospy.impl.rosout.RosOutHandler",
             "level": "DEBUG",
             "formatter": "basic_format"
         }
     },
 
+    "loggers": {
+        "ss_script_handler": {
+            "level": "DEBUG",
+            "handlers": ["rosout"]
+        },
+        "ss_script_parser": {
+            "level": "DEBUG",
+            "handlers": ["rosout"]
+        },
+        "ss_game_node": {
+            "level": "DEBUG",
+            "handlers": ["rosout"]
+        },
+        "ss_personalization_manager": {
+            "level": "DEBUG",
+            "handlers": ["rosout"]
+        },
+        "ss_ros": {
+            "level": "DEBUG",
+            "handlers": ["rosout"]
+        }
+    },
+
     "root": {
         "level": "DEBUG",
-        "handlers": ["console", "ss_roslog_handler", "info_file_handler",
-            "error_file_handler"]
+        "handlers": ["console", "info_file_handler", "error_file_handler"]
     }
 }

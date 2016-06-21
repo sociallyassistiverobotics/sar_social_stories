@@ -543,7 +543,7 @@ class ss_script_handler():
 
     def load_answers(self, answer_list):
         ''' Load the answer graphics for this story '''
-        # we are given a list of words that indicate what the answer
+        # We are given a list of words that indicate what the answer
         # options are. By convention, the first word is probably the 
         # correct answer; the others are incorrect answers. However,
         # we won't set this now because this convention may not hold.

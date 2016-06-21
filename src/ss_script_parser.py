@@ -24,9 +24,10 @@
 # SOFTWARE.
 import logging # log messages
 
-class ss_script_parser(): 
-    """ Determine which session scripts to load, load them, and provide the next
-    line in the script file on request. """ 
+class ss_script_parser():
+    """ Determine which session scripts to load, load them, and provide the
+    next line in the script file on request.
+    """
     
     def __init__(self):
         """ Initialize script parser manager """

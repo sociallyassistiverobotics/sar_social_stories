@@ -31,7 +31,6 @@ import rospy # ROS
 import argparse # to parse command line arguments
 import signal # catching SIGINT signal
 import logging # log messages
-from ss_logger import ss_logger # for logging data
 from ss_script_handler import ss_script_handler # plays back script lines
 from ss_ros import ss_ros
 
@@ -52,6 +51,9 @@ class ss_game_node():
     # address of this node, so the user doesn't have to remember 
     # to do this before starting the node.
     ros_node = rospy.init_node('social_story_game', anonymous=True)
+            # we could set the ROS log level here if we want
+            # the rest of our logging is set up in the log config file
+            #log_level=rospy.DEBUG)
 
     def __init__(self):
         """ Initialize anything that needs initialization """
@@ -63,15 +65,16 @@ class ss_game_node():
             with open(config_file) as json_file:
                 json_data = json.load(json_file)
                 logging.config.dictConfig(json_data)
-                self.logger.debug("Logger is configured as follows:\n %s",
-                        json_data)
+                self.logger.debug("==============================\n" +
+                    "STARTING\nLogger configuration:\n %s", json_data)
         except Exception as e:
             # could not read config file -- use basic configuration
-            logging.basicConfig(filename="../logs/ss.log", level=logging.DEBUG)
-            self.logger.error("Could not read your json log config file \"" 
-                + config_file + "\". Does the file exist? Is it valid json? "
-                + "\nUsing basic log setup -- will not be logging to ROS!",
-                exc_info=True)
+            logging.basicConfig(filename="ss.log", 
+                    level=logging.DEBUG)
+            self.logger.exception("ERROR! Could not read your json log " 
+                + "config file \"" + config_file + "\". Does the file "
+                + "exist? Is it valid json?\n\nUsing default log setup to "
+                + "log to \"ss.log\". Will not be logging to rosout!")
 
 
     def parse_arguments_and_launch(self):
@@ -112,8 +115,8 @@ class ss_game_node():
     def launch_game(self, session, participant):
         """ Load game based on the current session and participant """
         # log session and participant ID
-        self.logger.info("Session: %s, Participant ID: %s", session,
-                participant)
+        self.logger.info("==============================\nSOCIAL STORIES " +
+            "GAME\nSession: %s, Participant ID: %s", session, participant)
 
         # setup ROS node publisher and subscriber
         self.ros_ss = ss_ros(self.ros_node)
@@ -170,9 +173,10 @@ class ss_game_node():
             # set up signal handler to catch SIGINT (e.g., ctrl-c)
             signal.signal(signal.SIGINT, self.signal_handler)
 
-            while (True):
+            while (not self.stop):
                 try:
                     self.script_handler.iterate_once()
+
                 except StopIteration:
                     self.logger.info("Finished script!")
                     break

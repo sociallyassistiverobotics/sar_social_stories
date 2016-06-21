@@ -30,12 +30,12 @@ class ss_personalization_manager():
 
 
     def __init__(self, participant, session):
-        """ initialize stuff """
-        self.logger.info("TODO initialize personalization manager - "
-            + "using DEMO setup")
-        
+        """ Initialize stuff """
         # set up logger
         self.logger = logging.getLogger(__name__)
+
+        self.logger.info("TODO initialize personalization manager - "
+            + "using DEMO setup")
 
         # save participant and session so we can use them to determine 
         # which stories to present and to load any saved files
