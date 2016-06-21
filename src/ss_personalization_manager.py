@@ -22,18 +22,20 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import logging # log messages
 
 class ss_personalization_manager():
     """ Determine personalization for a participant, given their past 
     performance and the current session """ 
 
 
-    def __init__(self, logger, participant, session):
-        """ initialize stuff """
-        print("TODO initialize personalization manager - using DEMO setup")
-        
-        # save reference to logger for logging stuff later
-        self.logger = logger
+    def __init__(self, participant, session):
+        """ Initialize stuff """
+        # set up logger
+        self.logger = logging.getLogger(__name__)
+
+        self.logger.info("TODO initialize personalization manager - "
+            + "using DEMO setup")
 
         # save participant and session so we can use them to determine 
         # which stories to present and to load any saved files
@@ -46,7 +48,7 @@ class ss_personalization_manager():
 
     def get_next_story_script(self):
         """ Determine which story should be heard next """
-        print("TODO get story scripts - using DEMO set")
+        self.logger.debug("TODO get story scripts - using DEMO set")
         # TODO get name of next script file
         script_file = "demo-story-1.txt"
         return script_file
@@ -56,8 +58,6 @@ class ss_personalization_manager():
         """ Determine the number of scenes, whether they are shown in
         order, and the number of answer options for the next story.
         """
-        print("TODO get story details - using DEMO set")
-
         # TODO get list of scene graphics names
 		# demo set:
         scenes = ["scenes/CR1-scene1.png", "scenes/CR1-scene2.png", 
@@ -72,6 +72,10 @@ class ss_personalization_manager():
 		# demo has 4 scenes
         num_answers = 4
 
+        self.logger.debug("TODO get story details - using DEMO set:\nScenes: "
+                + scenes + "\nIn order: " + in_order + "\nNum answers: " +
+                num_answers)
+
         # return the story information
         return scenes, in_order, num_answers
 
@@ -79,4 +83,4 @@ class ss_personalization_manager():
     def get_joint_attention_level(self):
         """ Determine what level of joint attention scaffolding to provide 
         each time it is required """
-        print("TODO determine joint attention level")
+        self.logger.debug("TODO determine joint attention level")

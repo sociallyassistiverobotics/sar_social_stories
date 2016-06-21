@@ -118,6 +118,7 @@ target/
 .ipynb_checkpoints
 
 
+# project-specific stuff to ignore
 # ignore script files
 session_scripts/*
 story_scripts/*
@@ -132,3 +133,6 @@ src/*.json
 # but don't ignore the example and demo config files
 !src/ss_config.demo.json
 !src/ss_config.example.json
+
+# don't ignore the log config file
+!src/ss_log_config.json

@@ -26,7 +26,9 @@ Arguments:
 
 ### Configuration
 
-The game read in the configuration file "ss\_config.json", which is located in
+#### Game Config
+
+The game reads in the configuration file "ss\_config.json", which is located in
 the "src/" directory. An example config file named "ss\_config.example.json" is
 provided.
 
@@ -48,6 +50,46 @@ The options you can set in the config file include:
   the session scripts are in the main script directory specifed by
   "script\_path".
 
+#### Log Config
+
+The game uses the Python logging module to direct log output to four places:
+
+1. the console
+2. debug log file
+3. error log file
+4. rosout
+
+The game reads in the logging configuration file "ss\_log\_config.json", which
+is located in the "src/" directory.
+
+The options you can set in this log config file include where log files should
+be saved, the general format of each log message, and the log level to record
+to each log location. We also list the modules that are logging stuff, since we
+can set their individual log levels if we so desire as well as list which
+logging handlers will be connected to the module. See the [Python documentation
+for more details](https://docs.python.org/2/library/logging.html)
+
+If the game cannot read the log config file, it will default to using the
+logging module's default setup, logging messages at level DEBUG to "ss.log".
+
+It is worth mentioning that rospy's log system uses the Python logging module
+on the back end. If you want to mess with the configuration of rosout or any
+other ROS logging, the default config file is generally located at
+"$ROS\_ROOT/../../etc/ros/python\_logging.conf" and follows the general Python
+logging configuration conventions. According to the [rospy logging
+documentation](http://wiki.ros.org/rospy/Overview/Logging#Advanced:_Override_Logging_Configuration),
+you can override the location by setting the ROS\_PYTHON\_LOG\_CONFIG\_FILE
+environment variable. You can also change the ROS log level without messing
+with this config file by passing the `log\_level` parameter to the
+`rospy.init\_node()` call made in "ss\_game\_node.py".
+
+By default, ROS saves a node's log files to "~/.ros/log/" or $ROS\_ROOT/log.
+Note that rosout only gets log messages after the node is fully initialized, so
+the ROS rosout log file will likely be missing the initial messages. See the
+[rospy logging documentation](http://wiki.ros.org/rospy/Overview/Logging) for
+more.
+
+
 ### Demo Version
 
 To run the demo version of the game, run without arguments (the argument
@@ -56,6 +98,13 @@ number, and/or enter "DEMO" as the participant string.
 
 The demo game uses the config file "ss\_config.demo.json" and game scripts
 located in the "game\_scripts/" directory.
+
+### Graphics
+
+The game, including the demo version, requires a set of graphics to be added to
+the Opal device that is paired with this node. The full set of graphics
+required for the game is available on request from students in the Personal
+Robots Group. Please email students in the group to inquire.
 
 ## ROS messages
 
@@ -252,9 +301,7 @@ Please report all bugs and issues on the [sar\_social\_stories github issues
 page](https://github.com/personal-robots/sar_social_stories/issues).
 
 ## TODO
-- Select scripts
+
+- Add personalization, select scripts to play
 - Consider listing the mapping of session script files to sessions in a config
   file.
-- Add personalization
-- Add logger
-- Start game, play scripts

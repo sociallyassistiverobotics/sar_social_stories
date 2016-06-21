@@ -16,3 +16,4 @@ ROBOT	DO	"Let's play a story game."
 REPEAT	MAX_STORIES	demo-story.txt
 PAUSE	1
 ROBOT	DO	"That was fun. <happy> Let's play again sometime! Bye!"
+OPAL	CLEAR

@@ -29,8 +29,8 @@ import sys # exit and argv
 import json # for reading config file
 import rospy # ROS
 import argparse # to parse command line arguments
-import signal # for catching SIGINT signal
-from ss_logger import ss_logger # for logging data
+import signal # catching SIGINT signal
+import logging # log messages
 from ss_script_handler import ss_script_handler # plays back script lines
 from ss_ros import ss_ros
 
@@ -51,10 +51,30 @@ class ss_game_node():
     # address of this node, so the user doesn't have to remember 
     # to do this before starting the node.
     ros_node = rospy.init_node('social_story_game', anonymous=True)
-
+            # we could set the ROS log level here if we want
+            # the rest of our logging is set up in the log config file
+            #log_level=rospy.DEBUG)
 
     def __init__(self):
         """ Initialize anything that needs initialization """
+        # set up logger
+        self.logger = logging.getLogger(__name__)
+        # configure logging
+        try:
+            config_file = "ss_log_config.json"
+            with open(config_file) as json_file:
+                json_data = json.load(json_file)
+                logging.config.dictConfig(json_data)
+                self.logger.debug("==============================\n" +
+                    "STARTING\nLogger configuration:\n %s", json_data)
+        except Exception as e:
+            # could not read config file -- use basic configuration
+            logging.basicConfig(filename="ss.log", 
+                    level=logging.DEBUG)
+            self.logger.exception("ERROR! Could not read your json log " 
+                + "config file \"" + config_file + "\". Does the file "
+                + "exist? Is it valid json?\n\nUsing default log setup to "
+                + "log to \"ss.log\". Will not be logging to rosout!")
 
 
     def parse_arguments_and_launch(self):
@@ -78,7 +98,7 @@ class ss_game_node():
 
         # parse the args we got, and print them out
         args = parser.parse_args()
-        print(args)
+        self.logger.debug("Args received: %s", args)
 
         # give the session number and participant ID to the game launcher
         # where they will be used to load appropriate game scripts
@@ -94,11 +114,12 @@ class ss_game_node():
 
     def launch_game(self, session, participant):
         """ Load game based on the current session and participant """
-        # set up logger
-        self.logger = ss_logger(session, participant)
+        # log session and participant ID
+        self.logger.info("==============================\nSOCIAL STORIES " +
+            "GAME\nSession: %s, Participant ID: %s", session, participant)
 
         # setup ROS node publisher and subscriber
-        self.ros_ss = ss_ros(self.ros_node, self.logger)
+        self.ros_ss = ss_ros(self.ros_node)
 
         # read config file to get relative file path to game scripts
         try:
@@ -106,12 +127,11 @@ class ss_game_node():
                     else "ss_config.json"
             with open(config_file) as json_file:
                 json_data = json.load(json_file)
-                self.logger.log("Reading config file... it says:")
-                self.logger.log(json_data)
+                self.logger.debug("Reading game config file...: %s", json_data)
                 if ("script_path" in json_data):
                     self.script_path = json_data["script_path"]
                 else:
-                    self.logger.log("Could not read relative path to game "
+                    self.logger.error("Could not read relative path to game "
                         + "scripts! Expected option \"script_path\" to be in "
                         + "the config file. Exiting because we need the "
                         + "scripts to run the game.")
@@ -119,7 +139,7 @@ class ss_game_node():
                 if ("story_script_path" in json_data):
                     self.story_script_path = json_data["story_script_path"]
                 else:
-                    self.logger.log("Could not read path to story scripts! "
+                    self.logger.error("Could not read path to story scripts! "
                         + "Expected option \"story_script_path\" to be in "
                         + "config file. Assuming story scripts are in the main"
                         + " game script directory and not a sub-directory.")
@@ -127,28 +147,25 @@ class ss_game_node():
                 if ("session_script_path" in json_data):
                     self.session_script_path = json_data["session_script_path"]
                 else:
-                    self.logger.log("Could not read path to session scripts! "
+                    self.logger.error("Could not read path to session scripts! "
                         + "Expected option \"session_script_path\" to be in config"
                         + "config file. Assuming session scripts are in the main"
                         + "game script directory and not a sub-directory.")
                     self.session_script_path = None
         except Exception as e:
-            self.logger.log("Could not read your json config file \"" 
+            self.logger.exception("Could not read your json config file \"" 
                 + config_file + "\". Does the file exist? Is it valid json?"
                 + " Exiting because we need the config file to run the game.")
-            self.logger.log(e)
             return
 
         # start game
         try: 
-            self.script_handler = ss_script_handler(self.logger, self.ros_ss,
-                session, participant, self.script_path, self.story_script_path,
+            self.script_handler = ss_script_handler(self.ros_ss, session,
+                participant, self.script_path, self.story_script_path,
                 self.session_script_path)
         except IOError as e:
-            self.logger.log("Did not load the session script... exiting "
+            self.logger.exception("Did not load the session script... exiting "
                 + "because we need the session script to run the game.")
-            self.logger.log(e)
-            
         else:
             # flag to indicate whether we should exit
             self.stop = False
@@ -156,18 +173,19 @@ class ss_game_node():
             # set up signal handler to catch SIGINT (e.g., ctrl-c)
             signal.signal(signal.SIGINT, self.signal_handler)
 
-            while (True):
+            while (not self.stop):
                 try:
                     self.script_handler.iterate_once()
+
                 except StopIteration:
-                    self.logger.log("Finished script!")
+                    self.logger.info("Finished script!")
                     break
 
 
     def signal_handler(self, sig, frame):
         """ Handle signals caught """
         if sig == signal.SIGINT:
-            self.logger.log("Got keyboard interrupt! Exiting.")
+            self.logger.info("Got keyboard interrupt! Exiting.")
             self.stop = True
             exit("Interrupted by user.")
 
@@ -180,6 +198,6 @@ if __name__ == '__main__':
 
     # if roscore isn't running or shuts down unexpectedly
     except rospy.ROSInterruptException: 
-        print ('ROS node shutdown')
+        self.logger.exception('ROS node shutdown')
         pass
 
