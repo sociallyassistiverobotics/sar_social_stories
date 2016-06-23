@@ -307,12 +307,12 @@ class ss_script_handler():
                         self.logger.debug("... Got " 
                                 + str(len(self.correct_responses)))
 
-                    elif "YES_RESPONSES" in elements[1]:
-                        self.yes_responses = self.read_list_from_file(
+                    elif "START_RESPONSES" in elements[1]:
+                        self.start_responses = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
                                 elements[2])
                         self.logger.debug("... Got " 
-                                + str(len(self.yes_responses)))
+                                + str(len(self.start_responses)))
                     elif "NO_RESPONSES" in elements[1]:
                         self.no_responses = self.read_list_from_file(
                                 self.script_path + self.session_script_path +
@@ -467,7 +467,7 @@ class ss_script_handler():
             # if response was NO, randomly select a robot response to
             # the user selecting no 
             elif "NO" in response or ("TIMEOUT" in response
-                    and "YES_NO" in response_to_get):
+                    and "START" in response_to_get):
                 try:
                     self.ros_node.send_robot_command("DO",
                             self.no_responses[random.randint(0,
@@ -501,16 +501,16 @@ class ss_script_handler():
                             + "feedback because none were loaded!")
                 break
 
-            # if response was YES, randomly select a robot response to
-            # the user selecting yes, and break out of response loop 
-            elif "YES" in response:
+            # if response was START, randomly select a robot response to
+            # the user selecting START, and break out of response loop 
+            elif "START" in response:
                     try:
                         self.ros_node.send_robot_command("DO", 
-                                self.yes_responses[random.randint(0,
-                                    len(self.yes_responses)-1)])
+                                self.start_responses[random.randint(0,
+                                    len(self.start_responses)-1)])
                     except AttributeError:
-                        self.logger.exception("Could not play response to user's"
-                                + "YES because none were loaded!")
+                        self.logger.exception("Could not play response to"
+                            + "user's START because none were loaded!")
                     break
 
         # we exhausted our allowed number of user responses, so have
@@ -533,10 +533,10 @@ class ss_script_handler():
                     self.logger.exception("Could not play robot's answer"
                             + " feedback because none were loaded!")
             
-            # if user never selects YES (which is used to ask the user 
+            # if user never selects START (which is used to ask the user 
             # if they are ready to play), stop all stories and repeating
             # scripts, continue with main script so we go to the end
-            elif "YES" in response_to_get:
+            elif "START" in response_to_get:
                 self.repeating = False
                 self.story = False
 

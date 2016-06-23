@@ -1,2 +1,2 @@
-"Touch yes when you're ready."
-"Okay. When you're ready, touch yes."
+"Touch START when you're ready for the next story."
+"Okay. When you're ready for the next story, touch START."

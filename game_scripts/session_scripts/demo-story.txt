@@ -1,8 +1,8 @@
 OPAL	CLEAR
-OPAL	SETUP_STORY_SCENE	{"numScenes":"2", "scenesInOrder":"true", "numAnswers":"0"}
+OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
 OPAL	LOAD_ALL	demo-yesno-scene.txt
-ROBOT	DO	"Are you ready to hear the story? <anticipate>"
-WAIT	YES_NO	10
+ROBOT	DO	"Touch start when you are ready to hear the story!<anticipate>"
+WAIT	START	300
 OPAL	CLEAR
 PAUSE	1
 OPAL	LOAD_STORY

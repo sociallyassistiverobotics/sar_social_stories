@@ -219,7 +219,7 @@ class ss_ros():
         # Currently, we are only using OpalAction messages to get
         # responses from the user. So we only care whether the action
         # was a PRESS and whether it was on an object that is used as
-        # a YES or NO button or is a CORRECT or INCORRECT response 
+        # a START button or is a CORRECT or INCORRECT response 
         # object. When we do get one of these messages, set the 
         # relevant flag.
         if "tap" in data.action:
@@ -227,9 +227,9 @@ class ss_ros():
             pass
         elif "press" in data.action:
             # objectName, position
-            # check if YES or NO was in the message
-            if "YES" in data.message or "NO" in data.message:
-                self.yes_no_response_received = True
+            # check if START was in the message
+            if "START" in data.message:
+                self.start_response_received = True
                 self.response_received = data.message
             # check if CORRECT was in the message
             if "CORRECT" in data.message:
@@ -273,20 +273,20 @@ class ss_ros():
         # check what response to wait for, set that response received
         # flag to false
         # valid responses are:
-        # YES_NO, CORRECT_INCORRECT, ROBOT_NOT_SPEAKING
-        if "YES_NO" in response:
-            self.yes_no_response_received = False
-            self.waiting_for_yes_no = True
+        # START, CORRECT_INCORRECT, ROBOT_NOT_SPEAKING
+        if "START" in response:
+            self.start_response_received = False
+            self.waiting_for_start = True
             self.waiting_for_correct_incorrect = False
             self.waiting_for_robot_speaking = False
         elif "CORRECT" in response:
             self.correct_incorrect_response_received = False
-            self.waiting_for_yes_no = False
+            self.waiting_for_start = False
             self.waiting_for_correct_incorrect = True
             self.waiting_for_robot_speaking = False
         elif "ROBOT_NOT_SPEAKING" in response:
             self.robot_speaking = False
-            self.waiting_for_yes_no = False
+            self.waiting_for_start = False
             self.waiting_for_correct_incorrect = False
             self.waiting_for_robot_speaking = True
         else:
@@ -301,20 +301,20 @@ class ss_ros():
             time.sleep(0.1)
             # check periodically whether we've received the response we
             # were waiting for, and if so, we're done waiting 
-            if (self.waiting_for_yes_no and self.yes_no_response_received) \
+            if (self.waiting_for_start and self.start_response_received) \
                     or (self.waiting_for_correct_incorrect and \
                         self.correct_incorrect_response_received) \
                     or (self.waiting_for_robot_speaking \
                     and not self.robot_speaking):
                 self.logger.info("Got response! "
                         + self.response_received)
-                self.waiting_for_yes_no = False
+                self.waiting_for_start = False
                 self.waiting_for_correct_incorrect = False
                 self.waiting_for_robot_speaking = False
                 return self.response_received
         # if we don't get the response we were waiting for, we're done
         # waiting and timed out
-        self.waiting_for_yes_no = False
+        self.waiting_for_start = False
         self.waiting_for_correct_incorrect = False
         self.waiting_for_robot_speaking = False
         self.logger.info("Timed out! Moving on...")

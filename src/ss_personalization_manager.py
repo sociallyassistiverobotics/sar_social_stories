@@ -73,8 +73,8 @@ class ss_personalization_manager():
         num_answers = 4
 
         self.logger.debug("TODO get story details - using DEMO set:\nScenes: "
-                + scenes + "\nIn order: " + in_order + "\nNum answers: " +
-                num_answers)
+                + str(scenes) + "\nIn order: " + str(in_order) 
+                + "\nNum answers: " + str(num_answers))
 
         # return the story information
         return scenes, in_order, num_answers

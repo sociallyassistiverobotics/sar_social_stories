@@ -1,7 +1,7 @@
 ADD	INCORRECT_RESPONSES	demo-incorrect.txt
 ADD	CORRECT_RESPONSES	demo-correct.txt
 SET	MAX_INCORRECT_RESPONSES	3
-ADD	YES_RESPONSES	demo-yes.txt
+ADD	START_RESPONSES	demo-start.txt
 ADD	ANSWER_FEEDBACK	demo-answer-feedback.txt
 ADD	NO_RESPONSES	demo-no.txt
 ADD	STORY_INTROS	demo-story_intro.txt
