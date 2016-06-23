@@ -176,7 +176,7 @@ Currently, the following lists can be added:
 - INCORRECT\_RESPONSES: Responses to incorrect user actions
 - ANSWER\_FEEDBACK: Responses indicating which action was correct (regardless
   of whether the user performed a correct or incorrect action)
-- YES\_RESPONSES: Responses to the user selecting a "yes" button
+- START\_RESPONSES: Responses to the user selecting a "start" button
 - NO\_RESPONSES: Responses to the user selecting a "no" button
 - STORY\_INTROS: Introductory comment before telling a story
 - STORY\_CLOSINGS: Closing comment after telling a story
@@ -248,9 +248,9 @@ WAIT is used to wait for a response from the user via a particular trigger
 before proceeding in the game. A timeout is specified so that if no response is
 received, script playback will continue after that amount of time. The timeout
 should be specified in seconds. For example, the following would wait for a
-response to a YES or NO button press and would timeout after 10 seconds:
+response to a START button press and would timeout after 10 seconds:
 
-`WAIT    YES_NO  10`
+`WAIT    START  10`
 
 #### REPEAT
 
