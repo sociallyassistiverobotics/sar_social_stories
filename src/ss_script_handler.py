@@ -45,6 +45,9 @@ class ss_script_handler():
     # time to pause after showing answer feedback and playing robot
     # feedback speech before moving on to the next question
     ANSWER_FEEDBACK_PAUSE_TIME = 3
+    # time to wait for robot to finish speaking or acting before
+    # moving on to the next script line (in seconds)
+    WAIT_TIME = 30
 
     def __init__(self, ros_node, session, participant, script_path,
             story_script_path, session_script_path):
@@ -227,17 +230,26 @@ class ss_script_handler():
                 self.logger.debug("ROBOT")
                 # play a randomly selected story intro from the list
                 if "STORY_INTRO" in elements[1]:
-                    self.ros_node.send_robot_command("DO", self.story_intros[
+                    self.ros_node.send_robot_command_and_wait("DO", 
+                            "ROBOT_NOT_SPEAKING",
+                            datetime.timedelta(seconds=int(self.WAIT_TIME)),
+                            self.story_intros[
                         random.randint(0,len(self.story_intros)-1)])
 
                 # play a randomly selected story closing from the list
                 elif "STORY_CLOSING" in elements[1]:
-                    self.ros_node.send_robot_command("DO", self.story_closings[
+                    self.ros_node.send_robot_command_and_wait("DO",
+                            "ROBOT_NOT_SPEAKING",
+                            datetime.timedelta(seconds=int(self.WAIT_TIME)),
+                            self.story_closings[
                         random.randint(0,len(self.story_closings)-1)])
                 
                 # send a command to the robot, with properties
                 elif len(elements) > 2:
-                    self.ros_node.send_robot_command(elements[1], elements[2])
+                    self.ros_node.send_robot_command_and_wait(elements[1],
+                            "ROBOT_NOT_SPEAKING",
+                            datetime.timedelta(seconds=int(self.WAIT_TIME)),
+                            elements[2])
 
                 # send a command to the robot, without properties
                 else:
@@ -457,7 +469,9 @@ class ss_script_handler():
             if ("INCORRECT" in response) or ("TIMEOUT" in response 
                     and "CORRECT" in response_to_get):
                 try:
-                    self.ros_node.send_robot_command("DO",
+                    self.ros_node.send_robot_command_and_wait("DO",
+                            "ROBOT_NOT_SPEAKING",
+                            datetime.timedelta(seconds=int(self.WAIT_TIME)),
                             self.incorrect_responses[random.randint(0, \
                                 len(self.incorrect_responses)-1)])
                 except AttributeError:
@@ -469,7 +483,9 @@ class ss_script_handler():
             elif "NO" in response or ("TIMEOUT" in response
                     and "START" in response_to_get):
                 try:
-                    self.ros_node.send_robot_command("DO",
+                    self.ros_node.send_robot_command_and_wait("DO",
+                            "ROBOT_NOT_SPEAKING",
+                            datetime.timedelta(seconds=int(self.WAIT_TIME)),
                             self.no_responses[random.randint(0,
                                 len(self.no_responses)-1)])
                 except AttributeError:
@@ -483,13 +499,13 @@ class ss_script_handler():
                 try:
                     self.ros_node.send_robot_command_and_wait("DO",
                             "ROBOT_NOT_SPEAKING",
-                            datetime.timedelta(seconds=int(10)),
+                            datetime.timedelta(seconds=int(self.WAIT_TIME)),
                             self.correct_responses[random.randint(0,
                                 len(self.correct_responses)-1)])
                     self.ros_node.send_opal_command("SHOW_CORRECT")
                     self.ros_node.send_robot_command_and_wait("DO",
                             "ROBOT_NOT_SPEAKING",
-                            datetime.timedelta(seconds=int(10)),
+                            datetime.timedelta(seconds=int(self.WAIT_TIME)),
                             self.answer_feedback[random.randint(0,
                                 len(self.answer_feedback)-1)])
                     # pause after speaking before hiding correct again
@@ -505,7 +521,9 @@ class ss_script_handler():
             # the user selecting START, and break out of response loop 
             elif "START" in response:
                     try:
-                        self.ros_node.send_robot_command("DO", 
+                        self.ros_node.send_robot_command_and_wait("DO", 
+                            "ROBOT_NOT_SPEAKING",
+                            datetime.timedelta(seconds=int(self.WAIT_TIME)),
                                 self.start_responses[random.randint(0,
                                     len(self.start_responses)-1)])
                     except AttributeError:
@@ -523,7 +541,7 @@ class ss_script_handler():
                     self.ros_node.send_opal_command("SHOW_CORRECT")
                     self.ros_node.send_robot_command_and_wait("DO",
                             "ROBOT_NOT_SPEAKING", 
-                            datetime.timedelta(seconds=int(10)),
+                            datetime.timedelta(seconds=int(self.WAIT_TIME)),
                             self.answer_feedback[random.randint(0,
                                 len(self.answer_feedback)-1)])
                     # pause after speaking before hiding correct again
@@ -581,7 +599,10 @@ class ss_script_handler():
                     " out of time! Skipping and ending now.")
             self.doing_story = False
             try:
-                self.ros_node.send_robot_command("DO", self.max_stories_reached
+                self.ros_node.send_robot_command_and_wait("DO",
+                            "ROBOT_NOT_SPEAKING",
+                            datetime.timedelta(seconds=int(self.WAIT_TIME)),
+                        self.max_stories_reached
                         [random.randint(0, len(self.no_responses)-1)])
             except AttributeError:
                 self.logger.exception("Could not play a max stories reached "

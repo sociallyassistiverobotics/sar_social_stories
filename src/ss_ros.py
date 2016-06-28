@@ -305,7 +305,8 @@ class ss_ros():
                     or (self.waiting_for_correct_incorrect and \
                         self.correct_incorrect_response_received) \
                     or (self.waiting_for_robot_speaking \
-                    and not self.robot_speaking):
+                    and not self.robot_speaking \
+                    and not self.robot_doing_action):
                 self.logger.info("Got response! "
                         + self.response_received)
                 self.waiting_for_start = False
