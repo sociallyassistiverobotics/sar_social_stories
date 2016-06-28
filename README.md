@@ -67,7 +67,7 @@ be saved, the general format of each log message, and the log level to record
 to each log location. We also list the modules that are logging stuff, since we
 can set their individual log levels if we so desire as well as list which
 logging handlers will be connected to the module. See the [Python documentation
-for more details](https://docs.python.org/2/library/logging.html)
+for more details](https://docs.python.org/2/library/logging.html).
 
 If the game cannot read the log config file, it will default to using the
 logging module's default setup, logging messages at level DEBUG to "ss.log".
@@ -80,8 +80,9 @@ logging configuration conventions. According to the [rospy logging
 documentation](http://wiki.ros.org/rospy/Overview/Logging#Advanced:_Override_Logging_Configuration),
 you can override the location by setting the ROS\_PYTHON\_LOG\_CONFIG\_FILE
 environment variable. You can also change the ROS log level without messing
-with this config file by passing the `log\_level` parameter to the
-`rospy.init\_node()` call made in "ss\_game\_node.py".
+with this config file by passing the `log_level` parameter to the
+`rospy.init_node()` call made in "ss\_game\_node.py". Currently, the log level
+DEBUG is passed in to the init\_node call.
 
 By default, ROS saves a node's log files to "~/.ros/log/" or $ROS\_ROOT/log.
 Note that rosout only gets log messages after the node is fully initialized, so
@@ -207,7 +208,7 @@ robot should do, following the format for RobotCommand messages defined in
 "/sar_robot_command_msgs"). For example, the following would send a command to
 the robot to say "Hi, I am a robot" while smiling:
 
-`ROBOT   DO "Hi &lt;smile&rt;, I am a robot!"`
+`ROBOT   DO "Hi <smile> I am a robot!"`
 
 You can also send other RobotCommand messages, for example:
 
@@ -292,7 +293,7 @@ This program was developed and tested with:
 - [sar\_opal\_msgs](https://github.com/personal-robots/sar_opal_msgs
   "/sar_opal_msgs") 4.0.0
 - [sar\_robot\_command\_msgs](https://github.com/personal-robots/sar_robot_command_msgs
-  "/sar_robot_command_msgs") 1.0.0
+  "/sar_robot_command_msgs") 2.0.0
 - Ubuntu 14.04 LTS (64-bit)
 
 ## Bugs and issues
