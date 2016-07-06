@@ -32,14 +32,18 @@ from sar_opal_msgs.msg import OpalAction # ROS msgs for game actions
 from sar_robot_command_msgs.msg import RobotCommand # ROS msgs for robot cmd
 from sar_robot_command_msgs.msg import RobotState # ROS msgs for robot state
 from std_msgs.msg import Header # standard ROS msg header
+from sar_game_command_msgs.msg import GameState # ROS msgs for game state
+from sar_game_command_msgs.msg import GameCommand # ROS msgs for game commands
 
 class ss_ros():
     # ROS node
     # set up rostopics we publish: commands to the game (on a tablet or on a
-    # PC/touchscreen), and commands to the robot
-    game_pub = rospy.Publisher('opal_tablet_command', OpalCommand,
+    # PC/touchscreen), commands to the robot, and game state messages
+    game_pub = rospy.Publisher('/sar/opal_command', OpalCommand,
             queue_size = 10)
-    robot_pub = rospy.Publisher('robot_command', RobotCommand, queue_size = 10)
+    robot_pub = rospy.Publisher('/sar/robot_command', RobotCommand,
+            queue_size = 10)
+    state_pub = rospy.Publisher('/sar/game_state', GameState, queue_size = 10)
 
 
     def __init__(self, ros_node):
@@ -50,14 +54,18 @@ class ss_ros():
 
         # set up logger
         self.logger = logging.getLogger(__name__)
-        self.logger.info("Subscribing to topics: opal_tablet_action, " +
-            "robot_state")
+        self.logger.info("Subscribing to topics: /sar/opal_action, " +
+            "/sar/robot_state, /sar/game_command")
 
         # subscribe to messages from opal game
-        rospy.Subscriber('opal_tablet_action', OpalAction, 
+        rospy.Subscriber('/sar/opal_action', OpalAction, 
                 self.on_opal_action_msg)
         # subscribe to messages about the robot's state
-        rospy.Subscriber('robot_state', RobotState, self.on_robot_state_msg)
+        rospy.Subscriber('/sar/robot_state', RobotState, self.on_robot_state_msg)
+        # subscribe to game commands (commands we are sent to start, pause,
+        # and stop the game)
+        rospy.Subscriber('/sar/game_command', GameCommand,
+                self.on_game_command_msg)
 
 
     def send_opal_command(self, command, properties=None):
@@ -200,7 +208,7 @@ class ss_ros():
                 return
         # send message
         self.robot_pub.publish(msg)
-        rospy.loginfo(msg)
+        self.logger.debug(msg)
 
 
     def send_robot_command_and_wait(self, command, response, timeout,
@@ -209,6 +217,57 @@ class ss_ros():
         # timeout should be a datetime.timedelta object
         self.send_robot_command(command, properties)
         self.wait_for_response(response, timeout) 
+
+
+    def send_game_state(self, state):
+        """ Publish a game state message """
+        self.logger.info("Sending game state: " + str(state))
+        # build message
+        msg = GameState()
+        # add header
+        msg.header = Header()
+        msg.header.stamp = rospy.Time.now()
+        # add constant indicating which game we are
+        msg.game = GameState.STORYTELLING
+        # add appropriate state
+        if "START" in state:
+            msg.field = GameState.START
+        if "IN_PROGRESS" in state:
+            msg.field = GameState.IN_PROGRESS
+        if "PAUSED" in state:
+            msg.field = GameState.PAUSED
+        if "TIMEOUT" in state:
+            msg.field = GameState.TIMEOUT
+        if "END" in state:
+            msg.field = GameState.END
+        # send message
+        self.state_pub.publish(msg)
+        self.logger.debug(msg)
+
+
+    def on_game_command_msg(self, data):
+        """ Called when we receive GameCommand messages """
+        self.logger.info("Received GameCommand message: GAME=" +
+                data.game + ", COMMAND=" + data.command)
+        # if the game field doesn't list the constant referring to this
+        # game, we can ignore the message.
+        if GameCommand.STORYTELLING not in data.game:
+            self.logger.info("Not for us... ignoring.")
+            return
+        
+        # we need to act based on the game commands:
+        if GameCommand.START in data.command:
+            self.logger.info("Starting game!")
+            # TODO start reading in script to play game
+        if GameCommand.PAUSE in data.command:
+            self.logger.info("Pausing game!")
+            # TODO pause reading script to pause game
+        if GameCommand.CONTINUE in data.command:
+            self.logger.info("Resuming game!")
+            # TODO continue reading script to resume game
+        if GameCommand.END in data.command:
+            self.logger.info("Ending game!")
+            # TODO end at next reasonable point (don't exit abruptly)
 
 
     def on_opal_action_msg(self, data):
