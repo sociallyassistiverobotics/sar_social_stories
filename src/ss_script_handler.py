@@ -83,9 +83,10 @@ class ss_script_handler():
         self.stories_told = 0
 
         # when we start, we are not currently telling a story or 
-        # repeating a script
+        # repeating a script, or at the end of the game
         self.doing_story = False
         self.repeating = False
+        self.end_game = False
 
         # set up script parser
         self.script_parser = ss_script_parser()
@@ -146,6 +147,7 @@ class ss_script_handler():
                 # of game time, go back to the main session script (set
                 # the repeating flag to false)
                 if (self.repetitions >= self.max_repetitions) \
+                        or self.end_game \
                         or (datetime.datetime.now() - self.start_time \
                         >= self.max_game_time):
                     self.logger.info("Done repeating!")
@@ -559,6 +561,17 @@ class ss_script_handler():
                 self.story = False
 
 
+    def end_game(self):
+        ''' End the game gracefully -- stop any stories or repeating
+        scripts, go back to main session script and finish.
+        '''
+        # For now, we just need to set a flag indicating we should end
+        # the game. When we check whether we should load another story
+        # or repeat a repeating script, this flag will be used to skip
+        # back to the main session script, to the end of the game.
+        self.end_game = True
+
+
     def load_answers(self, answer_list):
         ''' Load the answer graphics for this story '''
         # We are given a list of words that indicate what the answer
@@ -593,7 +606,8 @@ class ss_script_handler():
         # were told to load one -- instead, play error message from 
         # robot saying we have to be done now
         if self.stories_told >= self.max_stories or \
-            datetime.datetime.now() - self.start_time >= self.max_game_time:
+            datetime.datetime.now() - self.start_time >= self.max_game_time \
+            or self.end_game:
             self.logger.info("We were told to load another story, but we've "
                     + "already played the maximum number of stories or we ran"
                     " out of time! Skipping and ending now.")
@@ -639,4 +653,3 @@ class ss_script_handler():
             toload["draggable"] = False if in_order else True
             toload["isAnswerSlot"] = False
             self.ros_node.send_opal_command("LOAD_OBJECT", json.dumps(toload))
-

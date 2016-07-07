@@ -241,15 +241,15 @@ class ss_ros():
         msg.game = GameState.STORYTELLING
         # add appropriate state
         if "START" in state:
-            msg.field = GameState.START
+            msg.state = GameState.START
         if "IN_PROGRESS" in state:
-            msg.field = GameState.IN_PROGRESS
+            msg.state = GameState.IN_PROGRESS
         if "PAUSED" in state:
-            msg.field = GameState.PAUSED
+            msg.state = GameState.PAUSED
         if "TIMEOUT" in state:
-            msg.field = GameState.TIMEOUT
+            msg.state = GameState.TIMEOUT
         if "END" in state:
-            msg.field = GameState.END
+            msg.state = GameState.END
         # send message
         self.state_pub.publish(msg)
         self.logger.debug(msg)
@@ -373,7 +373,8 @@ class ss_ros():
                     or (self.waiting_for_robot_speaking \
                     and not self.robot_speaking \
                     and not self.robot_doing_action):
-                self.logger.info("Got response! " + self.response_received)
+                self.logger.info("Got response! "
+                        + str(self.response_received))
                 # reset waiting flags
                 self.waiting_for_start = False
                 self.waiting_for_correct_incorrect = False

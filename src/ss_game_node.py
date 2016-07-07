@@ -32,6 +32,7 @@ import argparse # to parse command line arguments
 import signal # catching SIGINT signal
 import logging # log messages
 import Queue # for getting messages from ROS callback threads
+import datetime # for getting time deltas for timeouts
 from ss_script_handler import ss_script_handler # plays back script lines
 from ss_ros import ss_ros
 
@@ -121,7 +122,7 @@ class ss_game_node():
         self.logger.info("==============================\nSOCIAL STORIES " +
             "GAME\nSession: %s, Participant ID: %s", session, participant)
 
-        # setup ROS node publisher and subscriber
+        # set up ROS node publishers and subscribers
         self.ros_ss = ss_ros(self.ros_node, self.queue)
 
         # read config file to get relative file path to game scripts
@@ -161,7 +162,7 @@ class ss_game_node():
                 + " Exiting because we need the config file to run the game.")
             return
 
-        # start game
+        # load script
         try: 
             self.script_handler = ss_script_handler(self.ros_ss, session,
                 participant, self.script_path, self.story_script_path,
@@ -169,37 +170,90 @@ class ss_game_node():
         except IOError as e:
             self.logger.exception("Did not load the session script... exiting "
                 + "because we need the session script to run the game.")
+            return
         else:
             # flag to indicate whether we should exit
             self.stop = False
+
+            # flags for game control
+            started = False
+            paused = False
+            log_timer = datetime.datetime.now()
 
             # set up signal handler to catch SIGINT (e.g., ctrl-c)
             signal.signal(signal.SIGINT, self.signal_handler)
 
             while (not self.stop):
                 try:
-                    # get data from queue if any is there
-                    msg = self.queue.get()
-                    if "START" in msg:
-                        self.logger.info("Got queued message: " + msg)
-                        #TODO start game
-                    if "PAUSE" in msg:
-                        self.logger.info("Got queued message: " + msg)
-                        #TODO pause game
-                    if "CONTINUE" in msg:
-                        self.logger.info("Got queued message: " + msg)
-                        # TODO continue game
-                    if "END" in msg:
-                        self.logger.info("Got queued message: " + msg)
-                        #TODO on END, stop all repeating scripts and 
-                        # story scripts, go directly to the end...
+                    try: 
+                        # get data from queue if any is there, but don't
+                        # wait if there isn't
+                        msg = self.queue.get(False)
+                    except Queue.Empty:
+                        # no data yet!
+                        pass
+                    else:
+                        # Got a message! Parse:
+                        # wait for START command before starting to
+                        # iterate over the script
+                        if "START" in msg and not started:
+                            self.logger.info("Starting game!")
+                            started = True
+                            # announce the game is starting
+                            self.ros_ss.send_game_state("START")
+                            self.ros_ss.send_game_state("IN_PROGRESS")
 
-                    #TODO if started and not paused...
-                    self.script_handler.iterate_once()
+                        # if we get a PAUSE command, pause iteration over
+                        # the script
+                        if "PAUSE" in msg and not paused:
+                            self.logger.info("Game paused!")
+                            log_timer = datetime.datetime.now()
+                            paused = True
+                            # announce the game is pausing
+                            self.ros_ss.send_game_state("PAUSE")
+
+                        # If we are paused and get a CONTINUE command,
+                        # we can resume iterating over the script. If
+                        # we're not paused, ignore.
+                        if "CONTINUE" in msg and paused:
+                            self.logger.info("Resuming game!")
+                            paused = False
+                            # announce the game is resuming
+                            self.ros_ss.send_game_state("IN_PROGRESS")
+
+                        # When we receive an END command, we need to
+                        # exit gracefully. Stop all repeating scripts
+                        # and story scripts, go directly to the end.
+                        if "END" in msg and started:
+                            self.logger.info("Ending game!")
+                            self.script_handler.end_game()
+
+                    # if the game has been started and is not paused,
+                    # parse and handle the next script line
+                    if started and not paused:
+                        self.script_handler.iterate_once()
+
+                    elif not started or paused:
+                        # print a log message periodically stating that
+                        # we are waiting for a command to continue
+                        if (datetime.datetime.now() - log_timer > \
+                                datetime.timedelta(seconds=int(5))):
+                            if paused:
+                                self.logger.info("Game paused... waiting for "
+                                + "command to continue.")
+                            elif not started:
+                                self.logger.info("Waiting for command to "
+                                    + "start.")
+                            log_timer = datetime.datetime.now()
 
                 except StopIteration:
                     self.logger.info("Finished script!")
+                    # send message to announce the game is over
+                    self.ros_ss.send_game_state("END")
                     break
+
+            # TODO wait after exiting this loop for the main
+            # SessionManager to close the process??
 
 
     def signal_handler(self, sig, frame):
