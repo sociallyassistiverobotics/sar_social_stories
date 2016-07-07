@@ -31,6 +31,7 @@ import rospy # ROS
 import argparse # to parse command line arguments
 import signal # catching SIGINT signal
 import logging # log messages
+import Queue # for getting messages from ROS callback threads
 from ss_script_handler import ss_script_handler # plays back script lines
 from ss_ros import ss_ros
 
@@ -57,6 +58,8 @@ class ss_game_node():
 
     def __init__(self):
         """ Initialize anything that needs initialization """
+        # set up queue that we use to get messages from ROS callbacks
+        self.queue = Queue.Queue()
         # set up logger
         self.logger = logging.getLogger(__name__)
         # configure logging
@@ -119,7 +122,7 @@ class ss_game_node():
             "GAME\nSession: %s, Participant ID: %s", session, participant)
 
         # setup ROS node publisher and subscriber
-        self.ros_ss = ss_ros(self.ros_node)
+        self.ros_ss = ss_ros(self.ros_node, self.queue)
 
         # read config file to get relative file path to game scripts
         try:
@@ -175,6 +178,23 @@ class ss_game_node():
 
             while (not self.stop):
                 try:
+                    # get data from queue if any is there
+                    msg = self.queue.get()
+                    if "START" in msg:
+                        self.logger.info("Got queued message: " + msg)
+                        #TODO start game
+                    if "PAUSE" in msg:
+                        self.logger.info("Got queued message: " + msg)
+                        #TODO pause game
+                    if "CONTINUE" in msg:
+                        self.logger.info("Got queued message: " + msg)
+                        # TODO continue game
+                    if "END" in msg:
+                        self.logger.info("Got queued message: " + msg)
+                        #TODO on END, stop all repeating scripts and 
+                        # story scripts, go directly to the end...
+
+                    #TODO if started and not paused...
                     self.script_handler.iterate_once()
 
                 except StopIteration:
