@@ -468,6 +468,10 @@ class ss_script_handler():
 
             # if we received no user response before timing out, treat
             # as either NO or INCORRECT
+            # TODO send GameCommand.TIMEOUT message when we time out
+            # waiting for a user response. May need to revise how we
+            # deal with timeouts based on how this TIMEOUT message is
+            # used.
 
             # if response was INCORRECT, randomly select a robot 
             # response to an incorrect user action
