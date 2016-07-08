@@ -27,37 +27,55 @@ import rospy # ROS
 import datetime # for header times and timeouts
 import time # for sleep
 import logging # log messages
+import Queue # for queuing messages for the main game loop
 from sar_opal_msgs.msg import OpalCommand # ROS msgs to talk to game
 from sar_opal_msgs.msg import OpalAction # ROS msgs for game actions 
 from sar_robot_command_msgs.msg import RobotCommand # ROS msgs for robot cmd
 from sar_robot_command_msgs.msg import RobotState # ROS msgs for robot state
 from std_msgs.msg import Header # standard ROS msg header
+from sar_game_command_msgs.msg import GameState # ROS msgs for game state
+from sar_game_command_msgs.msg import GameCommand # ROS msgs for game commands
 
 class ss_ros():
     # ROS node
     # set up rostopics we publish: commands to the game (on a tablet or on a
-    # PC/touchscreen), and commands to the robot
-    game_pub = rospy.Publisher('opal_tablet_command', OpalCommand,
+    # PC/touchscreen), commands to the robot, and game state messages
+    game_pub = rospy.Publisher('/sar/opal_command', OpalCommand,
             queue_size = 10)
-    robot_pub = rospy.Publisher('robot_command', RobotCommand, queue_size = 10)
+    robot_pub = rospy.Publisher('/sar/robot_command', RobotCommand,
+            queue_size = 10)
+    state_pub = rospy.Publisher('/sar/game_state', GameState, queue_size = 10)
 
 
-    def __init__(self, ros_node):
+    def __init__(self, ros_node, queue):
         """ Initialize ROS """
-        # we get a reference to the main ros node so we can do callbacks
-        # to publish messages, and subscribe to stuff
+        # we get a reference to the main ROS node so we can do callbacks
+        # to publish messages, and subscribe to stuff # TODO being used?
         self.ros_node = ros_node
+        # we get a reference to the main game node's queue so we can
+        # give it messages
+        self.game_node_queue = queue
 
         # set up logger
         self.logger = logging.getLogger(__name__)
-        self.logger.info("Subscribing to topics: opal_tablet_action, " +
-            "robot_state")
+        self.logger.info("Subscribing to topics: /sar/opal_action, " +
+            "/sar/robot_state, /sar/game_command")
+
+        # initialize the flags we use to track responses from the robot
+        # and from the user
+        self.robot_doing_action = False
+        self.robot_speaking = False
+        self.response_received = None
 
         # subscribe to messages from opal game
-        rospy.Subscriber('opal_tablet_action', OpalAction, 
+        rospy.Subscriber('/sar/opal_action', OpalAction, 
                 self.on_opal_action_msg)
         # subscribe to messages about the robot's state
-        rospy.Subscriber('robot_state', RobotState, self.on_robot_state_msg)
+        rospy.Subscriber('/sar/robot_state', RobotState, self.on_robot_state_msg)
+        # subscribe to game commands (commands we are sent to start, pause,
+        # and stop the game)
+        rospy.Subscriber('/sar/game_command', GameCommand,
+                self.on_game_command_msg)
 
 
     def send_opal_command(self, command, properties=None):
@@ -198,9 +216,10 @@ class ss_ros():
                 self.logger.warning("Did not get properties for a DO command! "
                         + "Not sending empty command.")
                 return
+        msg.interrupt = False
         # send message
         self.robot_pub.publish(msg)
-        rospy.loginfo(msg)
+        self.logger.debug(msg)
 
 
     def send_robot_command_and_wait(self, command, response, timeout,
@@ -209,6 +228,54 @@ class ss_ros():
         # timeout should be a datetime.timedelta object
         self.send_robot_command(command, properties)
         self.wait_for_response(response, timeout) 
+
+
+    def send_game_state(self, state):
+        """ Publish a game state message """
+        self.logger.info("Sending game state: " + str(state))
+        # build message
+        msg = GameState()
+        # add header
+        msg.header = Header()
+        msg.header.stamp = rospy.Time.now()
+        # add constant indicating which game we are
+        msg.game = GameState.STORYTELLING
+        # add appropriate state
+        if "START" in state:
+            msg.state = GameState.START
+        if "IN_PROGRESS" in state:
+            msg.state = GameState.IN_PROGRESS
+        if "PAUSED" in state:
+            msg.state = GameState.PAUSED
+        if "TIMEOUT" in state:
+            msg.state = GameState.TIMEOUT
+        if "END" in state:
+            msg.state = GameState.END
+        # send message
+        self.state_pub.publish(msg)
+        self.logger.debug(msg)
+
+
+    def on_game_command_msg(self, data):
+        """ Called when we receive GameCommand messages """
+        self.logger.info("Received GameCommand message: GAME=" +
+                str(data.game) + ", COMMAND=" + str(data.command))
+        # if the game field doesn't list the constant referring to this
+        # game, we can ignore the message.
+        if GameCommand.STORYTELLING is not data.game:
+            self.logger.info("Not for us... ignoring.")
+            return
+        
+        # We need to act based on the game commands - queue up the
+        # command received so the main game loop can take action.
+        if data.command is GameCommand.START:
+            self.game_node_queue.put("START")
+        if data.command is GameCommand.PAUSE:
+            self.game_node_queue.put("PAUSE")
+        if data.command is GameCommand.CONTINUE:
+            self.game_node_queue.put("CONTINUE")
+        if data.command is GameCommand.END:
+            self.game_node_queue.put("END")
 
 
     def on_opal_action_msg(self, data):
@@ -285,7 +352,7 @@ class ss_ros():
             self.waiting_for_correct_incorrect = True
             self.waiting_for_robot_speaking = False
         elif "ROBOT_NOT_SPEAKING" in response:
-            self.robot_speaking = False
+            self.robot_speaking = True
             self.waiting_for_start = False
             self.waiting_for_correct_incorrect = False
             self.waiting_for_robot_speaking = True
@@ -307,8 +374,8 @@ class ss_ros():
                     or (self.waiting_for_robot_speaking \
                     and not self.robot_speaking \
                     and not self.robot_doing_action):
-                self.logger.info("Got response! "
-                        + self.response_received)
+                self.logger.info("Got " + response + " response!")
+                # reset waiting flags
                 self.waiting_for_start = False
                 self.waiting_for_correct_incorrect = False
                 self.waiting_for_robot_speaking = False
