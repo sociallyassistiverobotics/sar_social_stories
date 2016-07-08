@@ -216,6 +216,7 @@ class ss_ros():
                 self.logger.warning("Did not get properties for a DO command! "
                         + "Not sending empty command.")
                 return
+        msg.interrupt = False
         # send message
         self.robot_pub.publish(msg)
         self.logger.debug(msg)
@@ -351,7 +352,7 @@ class ss_ros():
             self.waiting_for_correct_incorrect = True
             self.waiting_for_robot_speaking = False
         elif "ROBOT_NOT_SPEAKING" in response:
-            self.robot_speaking = False
+            self.robot_speaking = True
             self.waiting_for_start = False
             self.waiting_for_correct_incorrect = False
             self.waiting_for_robot_speaking = True
@@ -373,8 +374,7 @@ class ss_ros():
                     or (self.waiting_for_robot_speaking \
                     and not self.robot_speaking \
                     and not self.robot_doing_action):
-                self.logger.info("Got response! "
-                        + str(self.response_received))
+                self.logger.info("Got " + response + " response!")
                 # reset waiting flags
                 self.waiting_for_start = False
                 self.waiting_for_correct_incorrect = False
