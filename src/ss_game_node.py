@@ -209,6 +209,7 @@ class ss_game_node():
                             self.logger.info("Game paused!")
                             log_timer = datetime.datetime.now()
                             paused = True
+                            self.script_handler.pause_game_timer()
                             # announce the game is pausing
                             self.ros_ss.send_game_state("PAUSE")
 
@@ -218,6 +219,7 @@ class ss_game_node():
                         if "CONTINUE" in msg and paused:
                             self.logger.info("Resuming game!")
                             paused = False
+                            self.script_handler.resume_game_timer()
                             # announce the game is resuming
                             self.ros_ss.send_game_state("IN_PROGRESS")
 
@@ -226,7 +228,7 @@ class ss_game_node():
                         # and story scripts, go directly to the end.
                         if "END" in msg and started:
                             self.logger.info("Ending game!")
-                            self.script_handler.end_game()
+                            self.script_handler.set_end_game()
 
                     # if the game has been started and is not paused,
                     # parse and handle the next script line
@@ -271,7 +273,7 @@ if __name__ == '__main__':
         game_node.parse_arguments_and_launch()
 
     # if roscore isn't running or shuts down unexpectedly
-    except rospy.ROSInterruptException: 
+    except rospy.ROSInterruptException:
         self.logger.exception('ROS node shutdown')
         pass
 

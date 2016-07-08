@@ -106,6 +106,9 @@ class ss_script_handler():
         # save start time so we can check whether we've run out of time
         self.start_time = datetime.datetime.now()
 
+        # initialize total time paused
+        self.total_time_paused = datetime.timedelta(seconds=0)
+
 
     def iterate_once(self):
         """ Play the next commands from the script """
@@ -148,8 +151,8 @@ class ss_script_handler():
                 # the repeating flag to false)
                 if (self.repetitions >= self.max_repetitions) \
                         or self.end_game \
-                        or (datetime.datetime.now() - self.start_time \
-                        >= self.max_game_time):
+                        or ((datetime.datetime.now() - self.start_time) \
+                        - self.total_time_paused >= self.max_game_time):
                     self.logger.info("Done repeating!")
                     self.repeating = False
             # otherwise we're at the end of the main script
@@ -561,7 +564,7 @@ class ss_script_handler():
                 self.story = False
 
 
-    def end_game(self):
+    def set_end_game(self):
         ''' End the game gracefully -- stop any stories or repeating
         scripts, go back to main session script and finish.
         '''
@@ -570,6 +573,22 @@ class ss_script_handler():
         # or repeat a repeating script, this flag will be used to skip
         # back to the main session script, to the end of the game.
         self.end_game = True
+
+
+    def pause_game_timer(self):
+        ''' Track how much time we spend paused so when we check
+        whether we have reached the max game time, we don't include
+        time spent paused.
+        '''
+        self.pause_start_time = datetime.datetime.now()
+
+
+    def resume_game_timer(self):
+        ''' Add how much time we spent paused to our total time spent
+        paused.
+        '''
+        self.total_time_paused += datetime.datetime.now() \
+           - self.pause_start_time
 
 
     def load_answers(self, answer_list):
@@ -605,9 +624,9 @@ class ss_script_handler():
         # the max game time, don't load another story even though we 
         # were told to load one -- instead, play error message from 
         # robot saying we have to be done now
-        if self.stories_told >= self.max_stories or \
-            datetime.datetime.now() - self.start_time >= self.max_game_time \
-            or self.end_game:
+        if self.stories_told >= self.max_stories \
+            or ((datetime.datetime.now() - self.start_time) \
+            - self.total_time_paused >= self.max_game_time) or self.end_game:
             self.logger.info("We were told to load another story, but we've "
                     + "already played the maximum number of stories or we ran"
                     " out of time! Skipping and ending now.")
