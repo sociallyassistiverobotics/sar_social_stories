@@ -29,6 +29,20 @@ class ss_db_manager():
     """ Interface to database for storing personalization information. """
    
     def __init__(self):
+        """ Initialize database connection. """
+        # Set up logger
+        self.logger = logging.getLogger(__name__)
+
+        #TODO init db connection
+
+
+    def insert_to_db(self):
+        """ Insert data into database. """
+        #TODO
         pass
 
  
+    def read_from_db(self):
+        """ Read data from database. """
+        #TODO
+        pass
