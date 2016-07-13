@@ -29,6 +29,7 @@ import time # for sleep
 import json # for packing ros message properties
 import random # for picking robot responses and shuffling answer options
 import logging # log messages
+from SS_Errors import NoStoryFound # custom exception when no stories found
 from ss_script_parser import ss_script_parser
 from ss_personalization_manager import ss_personalization_manager
 from ss_ros import ss_ros
@@ -227,6 +228,12 @@ class ss_script_handler():
                                 + "story script because no script was loaded! "
                                 + "Skipping STORY line.")
                         self.doing_story = False
+                    except NoStoryFound:
+                        self.logger.exception("Script parser could not get \
+                                the next story script because no script was \
+                                found by the personalization manager! \
+                                Skipping STORY line.")
+                        self.doing_story = False
 
             # line has 2+ elements, so check the other commands
             #########################################################
@@ -277,7 +284,7 @@ class ss_script_handler():
                 # get the next story and load graphics into game
                 elif "LOAD_STORY" in elements[1]:
                     self.load_next_story()
-
+                    
                 # load answers for game
                 elif "LOAD_ANSWERS" in elements[1] and len(elements) >= 3:
                     self.load_answers(elements[2])
@@ -654,9 +661,16 @@ class ss_script_handler():
             self.repeating = False
             return
 
-        # get the next story
-        scenes, in_order, num_answers = \
-            self.personalization_manager.get_next_story_details()
+        # get the details for the next story
+        try:
+            scenes, in_order, num_answers = \
+                self.personalization_manager.get_next_story_details()
+        except NoStoryFound:
+            # If no story was found, we can't load the story!
+            self.logger.exception("Cannot load story - no story to load was \
+                    found!")
+            self.doing_story = False
+            return
 
         # set up the story scene in the game
         setup = {}

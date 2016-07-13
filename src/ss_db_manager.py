@@ -35,14 +35,48 @@ class ss_db_manager():
 
         #TODO init db connection
 
-
-    def insert_to_db(self):
-        """ Insert data into database. """
+    def get_most_recent_level(self, participant, current_session):
+        """ Get the level at which the participant played during the
+        previous session.
+        """
         #TODO
         pass
 
+
+    def get_most_recent_percent_correct_responses(self, participant,
+            current_session):
+        """ Get the percentage of the participant's question responses
+        from the previous session that were correct.
+        """
+        #TODO
+        pass
+
+
+    def get_most_recent_incorrect_emotions(self, participant, current_session):
+        """ Get a list of the target emotions for all questions from
+        the last session where the participant responded incorrectly.
+        """
+        #TODO
+        pass
+
+
+    def get_next_new_story(self, participant, current_session, emotions):
+        """ Get the next unplayed story from the story table with at
+        least one of the listed emotions present in the story. If no
+        unplayed story has the desired emotions or if there are no
+        desired emotions, return the next unplayed story. If there are
+        no more unplayed stories, return None.
+        """
+        #TODO
+        pass
  
-    def read_from_db(self):
-        """ Read data from database. """
+
+    def get_next_review_story(self, participant, current_session, emotions):
+        """ Get a review story with at least one of the listed emotions
+        present in the story that wasn't played in the current session.
+        If no played stories have the desired emotions, return the
+        story heard least recently and least often. If there are no
+        stories we can review, return None.
+        """
         #TODO
         pass

@@ -24,11 +24,11 @@
 # SOFTWARE.
 import logging # log messages
 from ss_db_manager import ss_db_manager
+from SS_Errors import NoStoryFound
 
 class ss_personalization_manager():
     """ Determine personalization for a participant, given their past 
     performance and the current session """ 
-
 
     def __init__(self, participant, session):
         """ Initialize stuff """
@@ -50,11 +50,23 @@ class ss_personalization_manager():
         # Get the level for this session.
         self.level = self.get_level_for_session()
 
+        # In each session, alternate between telling new stories and
+        # telling previously told stories (if possible -- obviously in
+        # the earlier sessions, there is less review available). Start
+        # with a new story.
+        self.tell_new_story = True
+
+        # We don't have a current story yet
+        self.current_story = None
+
         # We can't get a queue of stories, because we don't know how
         # many we would need to queue up. Instead, get a list of the
         # emotions that the participant needs the most practice with
         # that should be present in the stories this session.
         self.emotion_list = self.get_emotion_list()
+        # Need emotion questions incorrect for the past session(s).
+        self.emotion_list = self.db_man.get_most_recent_incorrect_emotions(
+            self.participant, self.session)
 
 
     def get_level_for_session(self):
@@ -63,37 +75,80 @@ class ss_personalization_manager():
         """
         # Data for this participant's last session is in the database.
         # Use their past performance to decide whether to level up.
-        #TODO
         # need last time's level, number of questions correct last time
-        # if 75%-80% correct, level up
-        self.logger.warn("TODO get level")
-
-
-    def get_emotion_list(self):
-        """ Determine which stories will be told this session, based
-        on which stories have already been heard.
-        """
-        # Data for this participant's last session is in the database.
-        # Use this participant's past performance to determine which
-        # emotions they need more practice with. We can use this info
-        # to load appropriate stories this session.
-        #TODO
-        # need emotion questions incorrect for the past session(s)
-        # need list of all emotions
-        self.logger.warn("TODO get emotion list")
+        level = self.db_man.get_most_recent_level(self.participant,
+            self.session)
+        # if participant got 75%-80% questions correct last time, level up
+        #TODO total performance or just last time's performance?
+        if(self.db_man.get_most_recent_percent_correct_responses(
+            self.participant, self.session) > 0.75):
+            self.logger.info("Participant got >75% questions correct last \
+                time, so we can level up! Level will be " + str(level+1) + ".")
+            return level + 1
+        else:
+            self.logger.info("Participant got <75% questions correct last \
+                time, so we don't level up. Level will be " + str(level) + ".")
+            return level
 
 
     def get_next_story_script(self):
-        """ Determine which story should be heard next. """
+        """ Determine which story should be heard next. We have 40
+        stories. Alternate telling new stories and telling review
+        stories. Earlier sessions will use more new stories since there
+        isn't much to review. Return name of the next script file, based
+        on which emotions should be present in the stories, which
+        stories have already been heard, whether we should tell a review
+        story, and the current level.
+        """
+        # If this is a demo session, use the demo script.
         if (self.session == -1):
             self.logger.debug("Using DEMO script.")
             return "demo-story-1.txt"
-        else:
-            # TODO Return name of the next script file, based on which
-            # emotions should be present in the stories, which stories
-            # have already been heard, and how much review to do.
-            # need: list of stories heard, emotion list
+
+        # If we should tell a new story, get the next new story that
+        # has one of the emotions to practice in it. If there aren't
+        # any stories with one of those emotions, just get the next new
+        # story.
+        elif self.tell_new_story:
             self.logger.warn("TODO return next script file name!")
+            story = self.db_man.get_next_new_story(self.participant,
+                self.session, self.emotion_list)
+
+        # If there are no more new stories to tell, or if we need to
+        # tell a review story next, get a review story that has one of
+        # the emotions to practice in it. If there aren't any with
+        # those emotions, get the oldest, least played review story.
+        if (story is None) or not self.tell_new_story:
+            story = self.db_man.get_next_review_story(self.participant,
+                self.session, self.emotion_list)
+
+        # If there are no review stories available, get a new story
+        # instead (this may happen if we are supposed to tell a review
+        # story but haven't told very many stories yet).
+        if (story is None):
+            story = self.db_man.get_next_new_story(self.participant,
+                self.session, self.emotion_list)
+
+        # If we still don't have a story, then for some reason there
+        # are no new stories and no review stories we can tell. This is
+        # a problem.
+        if (story is None):
+            self.logger.error("We were supposed to get the next story \
+                but could not find a new or a review story that we \
+                can play.")
+            raise NoStoryFound("Could not find new or review story to play.",
+                    self.participant, self.session)
+
+        # Toggle flag for telling new versus telling previously heard
+        # stories (since we alternate).
+        self.tell_new_story = not self.tell_new_story
+
+        # save current story so we can provide story details later
+        self.current_story = story
+
+        # return name of story script: story name + level + file extension
+        #TODO this assumes scripts are text files -- put in database too?
+        return story + str(self.level) + ".txt"
 
 
     def get_next_story_details(self):
@@ -115,12 +170,21 @@ class ss_personalization_manager():
             self.logger.debug("DEMO story:\nScenes: " + str(scenes)
                     + "\nIn order: " + str(in_order)
                     + "\nNum answers: " + str(num_answers))
+
+        # If the current story isn't set, throw exception.
+        elif (self.current_story is None):
+           self.logger.error("We were asked for story details, but we \
+                haven't picked the next story yet!")
+           raise NoStoryFound("No current story is set.", self.participant,
+               self.session)
+
+        # Otherwise, we have the current story.
         else:
-            # TODO Get list of scene graphics names.
-            # TODO Determine whether the scenes are shown in order.
-            # TODO Determine how many answer options there are per
-            # question at this story level.
-            self.logger.warn("TODO get story details")
+           # TODO Get list of scene graphics names.
+           # TODO Determine whether the scenes are shown in order.
+           # TODO Determine how many answer options there are per
+           # question at this story level.
+           self.logger.warn("TODO get story details")
 
         # Return the story information.
         return scenes, in_order, num_answers
