@@ -78,7 +78,7 @@ class ss_personalization_manager():
         # need last time's level, number of questions correct last time
         level = self.db_man.get_most_recent_level(self.participant,
             self.session)
-        # if participant got 75%-80% questions correct last time, level up
+        # If participant got 75%-80% questions correct last time, level up
         #TODO total performance or just last time's performance?
         if(self.db_man.get_most_recent_percent_correct_responses(
             self.participant, self.session) > 0.75):
@@ -143,11 +143,10 @@ class ss_personalization_manager():
         # stories (since we alternate).
         self.tell_new_story = not self.tell_new_story
 
-        # save current story so we can provide story details later
+        # Save current story so we can provide story details later.
         self.current_story = story
 
-        # return name of story script: story name + level + file extension
-        #TODO this assumes scripts are text files -- put in database too?
+        # Return name of story script: story name + level + file extension.
         return story + str(self.level) + ".txt"
 
 
@@ -158,7 +157,7 @@ class ss_personalization_manager():
         # If this is a demo session, load a demo scene.
         if (self.session == -1):
             # Demo set:
-            scenes = ["scenes/CR1-scene1.png", "scenes/CR1-scene2.png", 
+            graphic_names = ["scenes/CR1-scene1.png", "scenes/CR1-scene2.png", 
                     "scenes/CR1-scene3.png", "scenes/CR1-scene4.png"]
 
             # Demo story has scenes in order.
@@ -180,14 +179,23 @@ class ss_personalization_manager():
 
         # Otherwise, we have the current story.
         else:
-           # TODO Get list of scene graphics names.
-           # TODO Determine whether the scenes are shown in order.
-           # TODO Determine how many answer options there are per
-           # question at this story level.
-           self.logger.warn("TODO get story details")
+            # Get story information from the database: scene graphics
+            # names, whether the scenes are shown in order, how many
+            # answer options there are per question at this level.
+            graphic_names = self.db_man.get_graphics(self.current_story,
+                self.level)
+            in_order, num_answers = self.db_man.get_level_info(self.level)
 
         # Return the story information.
-        return scenes, in_order, num_answers
+        return graphic_names, in_order, num_answers
+
+
+    def record_story_loaded(self):
+        """ Record that we loaded a story, and that this participant is
+        playing this story.
+        """
+        #TODO call database and give info for stories_played table
+        pass
 
 
     def get_joint_attention_level(self):

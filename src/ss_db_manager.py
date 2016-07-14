@@ -64,8 +64,8 @@ class ss_db_manager():
         """ Get the next unplayed story from the story table with at
         least one of the listed emotions present in the story. If no
         unplayed story has the desired emotions or if there are no
-        desired emotions, return the next unplayed story. If there are
-        no more unplayed stories, return None.
+        desired emotions, return the name of the next unplayed story.
+        If there are no more unplayed stories, return None.
         """
         #TODO
         pass
@@ -75,8 +75,26 @@ class ss_db_manager():
         """ Get a review story with at least one of the listed emotions
         present in the story that wasn't played in the current session.
         If no played stories have the desired emotions, return the
-        story heard least recently and least often. If there are no
-        stories we can review, return None.
+        name of the story heard least recently and least often. If there
+        are no stories we can review, return None.
+        """
+        #TODO
+        pass
+
+
+    def get_level_info(self, level):
+        """ Get information about stories at this level: whether the
+        scenes are presented in order or not, and how many answer 
+        options are shown when questions are asked.
+        """
+        #TODO
+        #return in_order, num_answers
+        pass
+
+
+    def get_graphics(self, story, level):
+        """ Get the list of names of graphics for the scenes in a story
+        at the specified level.
         """
         #TODO
         pass
