@@ -195,6 +195,18 @@ class ss_personalization_manager():
         playing this story.
         """
         #TODO call database and give info for stories_played table
+        if (self.participant and self.session and self.level and
+                self.current_story):
+            self.db_man.record_story_played(self.participant, self.session,
+                    self.level, self.current_story)
+        pass
+
+
+    def record_user_response(self):
+        """ Record that the participant responded to one of the story
+        questions.
+        """
+        self.db_man.record_response() #TODO fill in necessary arguments
         pass
 
 

@@ -98,3 +98,20 @@ class ss_db_manager():
         """
         #TODO
         pass
+
+
+    def record_story_played(participant, session, level, story):
+        """ Insert the participant ID, session number, story level,
+        current date and time, and a reference to the current story
+        into the stories_played table.
+        """
+        #TODO
+        pass
+
+
+    def record_response(): #TODO fill in necessary arguments
+        """ Insert a user response into the responses table: we need
+        the question ID, stories_played ID, and the actual response.
+        """
+        #TODO
+        pass

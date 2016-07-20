@@ -691,3 +691,7 @@ class ss_script_handler():
             toload["draggable"] = False if in_order else True
             toload["isAnswerSlot"] = False
             self.ros_node.send_opal_command("LOAD_OBJECT", json.dumps(toload))
+
+        # tell the personalization manager that we loaded the story so
+        # it can keep track of which stories have been played
+        self.personalization_manager.record_story_loaded()
