@@ -91,7 +91,7 @@ def ss_init_db():
             FOREIGN KEY(story_id) REFERENCES stories(id),
             FOREIGN KEY(level_id) REFERENCES levels(level)
             )''')
-    
+
     conn.commit()
     conn.close()
 

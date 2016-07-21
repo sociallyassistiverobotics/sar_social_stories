@@ -78,6 +78,9 @@ class ss_personalization_manager():
         # need last time's level, number of questions correct last time
         level = self.db_man.get_most_recent_level(self.participant,
             self.session)
+        # If there is no previous data, start at level 1.
+        if (level is None):
+            return 1
         # If participant got 75%-80% questions correct last time, level up
         #TODO total performance or just last time's performance?
         if(self.db_man.get_most_recent_percent_correct_responses(
@@ -195,11 +198,8 @@ class ss_personalization_manager():
         playing this story.
         """
         #TODO call database and give info for stories_played table
-        if (self.participant and self.session and self.level and
-                self.current_story):
-            self.db_man.record_story_played(self.participant, self.session,
-                    self.level, self.current_story)
-        pass
+        self.db_man.record_story_played(self.participant, self.session,
+            self.level, self.current_story)
 
 
     def record_user_response(self):
@@ -207,7 +207,6 @@ class ss_personalization_manager():
         questions.
         """
         self.db_man.record_response() #TODO fill in necessary arguments
-        pass
 
 
     def get_joint_attention_level(self):
