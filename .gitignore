@@ -139,3 +139,6 @@ src/*.json
 
 # ignore databse files
 *.db
+
+# ignore .ods spreadsheets
+*.ods

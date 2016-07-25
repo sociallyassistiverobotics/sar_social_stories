@@ -38,7 +38,7 @@ def ss_init_db():
     # create tables
     cursor.execute(''' CREATE TABLE stories (
             id       integer     PRIMARY KEY,
-            story_name  text        NOT NULL
+            story_name  text        NOT NULL   UNIQUE
             )''')
 
     cursor.execute(''' CREATE TABLE levels (
