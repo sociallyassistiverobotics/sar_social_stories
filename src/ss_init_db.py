@@ -62,12 +62,14 @@ def ss_init_db():
             question_num    integer NOT NULL,
             question_type   text    NOT NULL,
             target_response text    NOT NULL,
-            FOREIGN KEY(stories_id) REFERENCES stories(id)
+            level           integer NOT NULL,
+            FOREIGN KEY(stories_id) REFERENCES stories(id),
+            FOREIGN KEY(level) REFERENCES levels(level)
             )''')
 
     cursor.execute('''CREATE TABLE responses_in_question (
             questions_id    integer NOT NULL,
-            response         text    NOT NULL,
+            response        text    NOT NULL,
             FOREIGN KEY(questions_id) REFERENCES questions(id)
             )''')
 

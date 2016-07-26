@@ -29,6 +29,7 @@ import sqlite3 # store game info and personalization
 import argparse # to parse command line arguments
 import pyexcel # for reading in .ods spreadsheets
 from collections import OrderedDict # spreadsheets read into OrderedDicts
+import re # regex for parsing data in spreadsheet cells
 
 def gen_stories_from_ods():
     """ Using the story info and scripts in the .ods spreadsheets,
@@ -60,6 +61,11 @@ def gen_stories_from_ods():
     conn = sqlite3.connect(args.db)
     cursor = conn.cursor()
 
+    # Reset any tables that shouldn't have duplicate data.
+    cursor.execute("DELETE FROM questions")
+    cursor.execute("DELETE FROM responses_in_question")
+    cursor.execute("VACUUM")
+
     # Fill levels table since it doesn't depend on the spreadsheets.
     fill_levels_table(conn)
 
@@ -76,12 +82,81 @@ def gen_stories_from_ods():
         # Add list of story names to story table (from sheet names).
         insert_to_stories_table(conn, book.sheet_names())
 
-        # For each sheet, read in story, generate scripts, input info to db
+        # For each sheet, read in story, generate scripts, input info
+        # about stories, questions, and emotions to DB.
         for sheet in book:
             print("Processing sheet: " + sheet.name)
             sheet.name_columns_by_row(0)
             print("Has columns: " + str(sheet.colnames))
-            # TODO parse sheet
+            # For each level, generate story.
+            # Rows are 0-indexed but levels are 1-indexed.
+            for level in range(0,10):
+                # Use story to generate game script for robot
+                generate_script_for_story(sheet.name, level+1,
+                        sheet[level, "Story"])
+
+            sheet_dict = sheet.to_dict()
+            # Add each question to the DB.
+            for key in sheet_dict.keys():
+                # For each question, get question text without the
+                # answer list.
+                if "question" in key.lower() and not "correct" in key.lower():
+                    print("Adding question: " + key)
+                    # Get the number of the question, if it has one
+                    try:
+                        question_num = re.findall(r'\d+', key)[0]
+                    except:
+                        # If there is no number in the question's label,
+                        # there is probably only one such question, so
+                        # label it question 1.
+                        question_num = 1
+                    # Get the type of question
+                    if "midway" in key.lower():
+                        question_type = "ToM"
+                    elif "order" in key.lower():
+                        question_type = "order"
+                    else:
+                        question_type = "emotion"
+
+                    # Find responses column for the question by looping
+                    # through the keys and finding the one that matches
+                    # the question we're on.
+                    responses = None
+                    for k in sheet_dict.keys():
+                        if key.lower() in k.lower() and "correct" in k.lower():
+                            responses = k
+                            break
+
+                    if (responses is None):
+                        print("Error! Did not find responses.")
+                        break
+
+                    for level in range(0,10):
+                        # Skip empty cells.
+                        if (sheet_dict[responses][level] == "") \
+                                or (sheet_dict[responses][level] == "-") \
+                                or (sheet_dict[responses][level] == ["-"]):
+                            print("Skipping empty cell")
+                            continue
+
+                        # Add question to questions table at this level.
+                        insert_to_questions_table(conn, sheet.name, level+1,
+                            question_num, question_type,
+                            # Target response is the first in the list
+                            # of response options
+                            sheet_dict[responses][level].split(',')[0].strip())
+
+                        # Add responses to emotions_in_question table
+                        # at this level
+                        insert_to_responses_table(conn, sheet.name, level+1,
+                            question_num, question_type,
+                            sheet_dict[responses][level].split(','))
+
+                # Add graphics filenames to DB.
+
+            # Commit after each story
+            conn.commit()
+
 
     # Close database connection.
     conn.close()
@@ -96,9 +171,8 @@ def insert_to_stories_table(conn, story_names):
             cursor.execute("INSERT INTO stories (story_name) VALUES (?)",
                 (name,)) 
         except sqlite3.IntegrityError as e:
-            print("Error adding story " + name + " to db! It may already "
+            print("Error adding story " + name + " to DB! It may already "
                 "exist. Exception: " + str(e))
-    conn.commit()
 
 
 def insert_to_graphics_table(conn, story_name, level, scene, graphic):
@@ -110,31 +184,53 @@ def insert_to_graphics_table(conn, story_name, level, scene, graphic):
     cursor = conn.cursor()
     cursor.execute('''INSERT INTO graphics
             (stories_id, level_id, scene, graphic) VALUES (
-            (SELECT id from stories WHERE type=(?)),
-            (SELECT level from levels WHERE type=(?)),
+            (SELECT id FROM stories WHERE type=(?)),
+            (SELECT level FROM levels WHERE type=(?)),
             (?),
             (?))''',
-            (story_name,), (level,), (scene,), (graphic,))
-    conn.commit()
+            (story_name, level, scene, graphic))
 
 
-def insert_to_questions_table(conn):
+def insert_to_questions_table(conn, story, level, question_num, question_type,
+        target_response):
     """ Add a question to the questions table."""
+    # story = Story this question belongs to
+    # level = Level of the story (some levels have more questions)
     # question_num = Number of question in the story (1,2,3).
     # question_type = Emotion, order, or midway ToM question. 
     # target_response = Correct answer (emotion or scene name).
+    print("ADD QUESTION: " + story + "-" + str(level) + " " + question_type +
+        " " + str(question_num) + ": " + target_response)
     cursor = conn.cursor()
-    # TODO fill in command -- example: INSERT INTO questions (stories_id, question_num, question_type, target_response) VALUES ((SELECT id from stories WHERE type="test1"), "1", "emotion", "angry");
-    conn.commit()
+    cursor.execute('''INSERT INTO questions (stories_id, level, question_num,
+        question_type, target_response) VALUES (
+        (SELECT id FROM stories WHERE story_name=(?)),
+        (SELECT level FROM levels WHERE level=(?)),
+        (?),
+        (?),
+        (?))''',
+        (story, level, question_num, question_type, target_response))
 
 
-def insert_to_emotions_table(conn):
-    """ Add a question-emotion pair to the emotions_in_question table. """
+def insert_to_responses_table(conn, story, level, question_num, question_type,
+        responses):
+    """ Add a question-response pair to the responses table. """
     # question_id = The id of the question in the questions table.
     # emotion = Emotion string.
+    print("ADD RESPONSES: " + story + "-" + str(level) + " " + question_type +
+        " " + str(question_num) + ": " + str(responses))
     cursor = conn.cursor()
-    #cursor.execute('''INSERT INTO emotions_in_question (question_id, emotion) VALUES''', question, emotion) #TODO
-    conn.commit()
+    for response in responses:
+        resp = response.strip().replace(" ", "")
+        if (resp == ""):
+            continue
+        cursor.execute('''INSERT INTO responses_in_question (questions_id,
+            response) VALUES (
+            (SELECT id FROM questions WHERE level=(?) and question_num=(?) and
+            question_type=(?) and stories_id IN (SELECT id FROM stories WHERE
+            story_name=(?))),
+            (?))''',
+            (level, question_num, question_type, story, resp))
 
 
 def fill_levels_table(conn):
@@ -159,10 +255,18 @@ def fill_levels_table(conn):
             ("11", "4", "0"),
             ("12", "4", "0")
             ''')
-        conn.commit()
     except sqlite3.IntegrityError as e:
-        print("Error adding levels to db! They may already exist. Exception: "
+        print("Error adding levels to DB! They may already exist. Exception: "
                 + str(e))
+
+
+def generate_script_for_story(story_name, level, story):
+    """ Using the provided story text, generate a game script with the
+    instructions for loading and playing the story with a robot.
+    """
+    #TODO
+    print("TODO: Generate game script for story: " + story_name + "-" +
+        str(level))
 
 
 if __name__ == '__main__':
