@@ -31,7 +31,7 @@ import pyexcel # for reading in .ods spreadsheets
 from collections import OrderedDict # spreadsheets read into OrderedDicts
 import re # regex for parsing data in spreadsheet cells
 
-def gen_stories_from_ods():
+def ss_process_story_ods():
     """ Using the story info and scripts in the .ods spreadsheets,
     generate story script .txt files and fill the database with initial
     information about the stories, questions asked about stories, and
@@ -64,6 +64,7 @@ def gen_stories_from_ods():
     # Reset any tables that shouldn't have duplicate data.
     cursor.execute("DELETE FROM questions")
     cursor.execute("DELETE FROM responses_in_question")
+    cursor.execute("DELETE FROM graphics")
     cursor.execute("VACUUM")
 
     # Fill levels table since it doesn't depend on the spreadsheets.
@@ -90,8 +91,7 @@ def gen_stories_from_ods():
             print("Has columns: " + str(sheet.colnames))
            
             sheet_dict = sheet.to_dict()
-            graphics_list = [""] * 4
-            scene_keys = [""] * 4
+            question_list = {}
             # Add each question to the DB. Loop through columns.
             for key in sheet_dict.keys():
                 # For each question column, get question text without
@@ -148,6 +148,12 @@ def gen_stories_from_ods():
                             question_num, question_type,
                             sheet_dict[responses][level].split(','))
 
+                        # Make dict of level: question text, responses
+                        if level not in question_list.keys():
+                            question_list[level] = []
+                        question_list[level].append(sheet_dict[level][key],
+                            sheet_dict[responses][level].split(','))
+
                 # If this is a Scene column, add the graphics filenames
                 # to the DB.
                 if "scene" in key.lower() and "graphic" in key.lower():
@@ -182,8 +188,7 @@ def gen_stories_from_ods():
             for level in range(0,10):
                 # Use story to generate game script for robot
                 generate_script_for_story(sheet.name, level+1,
-                        sheet[level, "Story"])
-                #TODO also give question info to story gen function!
+                        sheet[level, "Story"], question_list[level])
 
             # Commit after each story
             conn.commit()
@@ -295,7 +300,7 @@ def fill_levels_table(cursor):
                 + str(e))
 
 
-def generate_script_for_story(story_name, level, story):
+def generate_script_for_story(story_name, level, story, questions):
     """ Using the provided story text, generate a game script with the
     instructions for loading and playing the story with a robot.
     """
@@ -303,6 +308,40 @@ def generate_script_for_story(story_name, level, story):
     print("TODO: Generate game script for story: " + story_name + "-" +
         str(level))
 
+    # Split story into sentences
+    story.split(".")
+
+    # Open file for game script for this story
+    with open(story_name + ".txt") as f:
+        # For each sentence, strip whitespace and add to script
+        for sentence in story:
+            f.write("ROBOT\tDO\t\"" + sentence.strip() + "\"\n")
+
+        # Add "The end" and a pause
+        f.write("ROBOT\tDO\t\"The end.\"\n"
+            + "PAUSE\t2\n")
+
+        # Then add questions!
+        for question in questions:
+            # [(text, [response,response]), (text, [response,response]), ...]
+            pass
+            #TODO
+            # Find character this question is about
+            # f.write("OPAL\tLOAD_ANSWERS\t")
+            # for response in responses:
+            #     + "answers/" + char + "_" + response + ".png"
+
+            # Set the correct and incorrect responses
+            # f.write("OPAL\tSET_CORRECT\t{"correct":["lisa_sad"],...]}
+
+            # Robot will say the question text next
+            f.write("ROBOT\tDO\t\"" + text + "\"\n")
+
+            # Add wait, clear, and pause lines
+            f.write("WAIT\tCORRECT_INCORRECT\t10\n"
+                + "OPAL\tCLEAR\tANSWERS\n"
+                + "PAUSE\t1\n")
+
 
 if __name__ == '__main__':
-    gen_stories_from_ods()
+    ss_process_story_ods()
