@@ -58,12 +58,12 @@ def ss_init_db():
 
     cursor.execute('''CREATE TABLE questions (
             id              integer PRIMARY KEY,
-            stories_id      integer NOT NULL,
+            story_id        integer NOT NULL,
             question_num    integer NOT NULL,
             question_type   text    NOT NULL,
             target_response text    NOT NULL,
             level           integer NOT NULL,
-            FOREIGN KEY(stories_id) REFERENCES stories(id),
+            FOREIGN KEY(story_id) REFERENCES stories(id),
             FOREIGN KEY(level) REFERENCES levels(level)
             )''')
 

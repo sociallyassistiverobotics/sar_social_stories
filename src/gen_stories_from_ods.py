@@ -148,54 +148,35 @@ def gen_stories_from_ods():
                             question_num, question_type,
                             sheet_dict[responses][level].split(','))
 
-                # If this is a Scene column, collect the graphics
-                # descriptions at level 10 (0-index).
+                # If this is a Scene column, add the graphics filenames
+                # to the DB.
                 if "scene" in key.lower() and "graphic" in key.lower():
                     # Get the number of the scene
                     try:
                         scene_num = int(re.findall(r'\d+', key)[0])
-                        graphics_list[scene_num-1] = sheet_dict[key][9].lower()
-                        scene_keys[scene_num-1] = key
-
-                        # TODO some descriptions are different at different
-                        # levels, so we have to list the graphics in the ods
-                        # spreadsheets instead of automatically figuring
-                        # them out...
-                        #insert_to_graphics_table(cursor, sheet.name, level,
-                        #    scene_num + 1, sheet[level,key].lower())
-
                     except Exception as e:
                         # If there is no number in the scene's label,
                         # that's a problem.
                         print("Error! No scene number found!\n" + str(e))
                         return
-
-            # Add graphics filenames to DB.
-            # At each level, the graphic to load in the scene1 slot is
-            # the index of the level 10 graphic description that matches
-            # the description in that level's scene1 slot.
-            # If no match, print an error!
-            # Graphics file names:
-            #     [env][story_num]-[background_type]-[scene_num].png
-            #     e.g., LR1-B-1.png or CF1-P-4.png
-            # Levels 1-5: tag P for plain background.
-            # Levels 6-10: tag B for complex background.
-            for level in range(0,10):
-                for key in scene_keys:
-                    try:
-                        # Find index of graphic description text at the
-                        # level for graphic number; check scene_keys to
-                        # get index of scene to load graphic into (both
-                        # are 1-indexed).
-                        insert_to_graphics_table(cursor, sheet.name, level,
-                            scene_keys.index(key)+1,
-                            graphics_list.index(sheet[level,key].lower())+1)
-                    except:
-                        print("Error! Could not find scene number matching "
-                            + "the graphics description! " + sheet.name +
-                            " " + str(level) + " " + str(key))
-                        return
-
+                    else:
+                        # Graphics may have different descriptions at
+                        # different levels, so we cannot automatically
+                        # figure out which description matches which
+                        # graphics tag. Instead, there are columns that
+                        # list the tag of the graphic to load for that
+                        # scene, for that level, for that story.
+                        for level in range(0,10):
+                            # Skip empty cells.
+                            if (sheet[level,key] == "") \
+                                or (sheet[level,key] == "-") \
+                                or (sheet[level,key] == ["-"]):
+                                print("Skipping empty cell")
+                                continue
+                            insert_to_graphics_table(cursor, sheet.name,
+                                level + 1, scene_num + 1,
+                                sheet[level,key].lower())
+                    
             # For each level, generate story.
             # Rows are 0-indexed but levels are 1-indexed.
             for level in range(0,10):
@@ -223,20 +204,25 @@ def insert_to_stories_table(cursor, story_names):
                 "exist. Exception: " + str(e))
 
 
-def insert_to_graphics_table(cursor, story_name, level, scene, graphic_num):
+def insert_to_graphics_table(cursor, story_name, level, scene, graphic_tag):
     """ Add a list of graphics names to the graphics table."""
     # story_id = The id from the stories table for this story.
     # level_id = The level number from the levels table for this level.
     # scene = Scene number (1,2,3,4) to load this graphic into.
-    # graphic_num = Number of graphic to load for the scene (1,2,3,4).
-    print("ADD GRAPHIC: " + story_name + "-" + str(level) + " scene" +
-            str(scene) + " graphic" + graphic_num)
+    # graphic_tag = Tag of graphic to load (lowercase letter).
+    print("ADD GRAPHIC: " + story_name + "-" + str(level+1) + " scene" +
+            str(scene) + " " + graphic_tag)
+    # Graphics file names:
+    #     [env][story_num]-[background_type]-[tag].png
+    #     e.g., LR1-B-a.png or CF1-P-f.png
+    # Levels 1-5: tag P for plain background.
+    # Levels 6-10: tag B for complex background.
     graphic_name = story_name.replace("Story-","") + "-" + \
-        ("P" if level < 6 else "B") + "-" + str(graphic_num) + ".png"
+        ("P" if level < 6 else "B") + "-" + graphic_tag + ".png"
     cursor.execute('''INSERT INTO graphics
-            (stories_id, level_id, scene, graphic) VALUES (
-            (SELECT id FROM stories WHERE type=(?)),
-            (SELECT level FROM levels WHERE type=(?)),
+            (story_id, level_id, scene_num, graphic) VALUES (
+            (SELECT id FROM stories WHERE story_name=(?)),
+            (SELECT level FROM levels WHERE level=(?)),
             (?),
             (?))''',
             (story_name, level, scene, graphic_name))
@@ -252,7 +238,7 @@ def insert_to_questions_table(cursor, story, level, question_num, question_type,
     # target_response = Correct answer (emotion or scene name).
     print("ADD QUESTION: " + story + "-" + str(level) + " " + question_type +
         " " + str(question_num) + ": " + target_response)
-    cursor.execute('''INSERT INTO questions (stories_id, level, question_num,
+    cursor.execute('''INSERT INTO questions (story_id, level, question_num,
         question_type, target_response) VALUES (
         (SELECT id FROM stories WHERE story_name=(?)),
         (SELECT level FROM levels WHERE level=(?)),
@@ -276,7 +262,7 @@ def insert_to_responses_table(cursor, story, level, question_num, question_type,
         cursor.execute('''INSERT INTO responses_in_question (questions_id,
             response) VALUES (
             (SELECT id FROM questions WHERE level=(?) and question_num=(?) and
-            question_type=(?) and stories_id IN (SELECT id FROM stories WHERE
+            question_type=(?) and story_id IN (SELECT id FROM stories WHERE
             story_name=(?))),
             (?))''',
             (level, question_num, question_type, story, resp))
