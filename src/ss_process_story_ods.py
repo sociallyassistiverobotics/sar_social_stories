@@ -6,17 +6,17 @@
 # The MIT License (MIT)
 #
 # Copyright (c) 2016 Personal Robots Group
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -52,6 +52,10 @@ def ss_process_story_ods():
     parser.add_argument('ods_files', action='store',
            nargs='+', type=str, help="""A list of .ods spreadsheets containing
            stories for the SAR Social Stories game.""")
+    parser.add_argument('-o', '--output_dir', dest='out_dir', action='store',
+            nargs='?', type=str, default="", help='''The output directory where
+            generated story scripts will be saved. Defaults to the current
+            directory.''')
 
     # Parse the args we got, and print them out.
     args = parser.parse_args()
@@ -76,7 +80,7 @@ def ss_process_story_ods():
 
         # Open file and get data.
         book = pyexcel.get_book(file_name=ods, name_columns_by_row=0)
-        
+
         # Print out general info about the spreadsheet.
         print("Found " + str(book.number_of_sheets()) + " sheets.")
 
@@ -89,7 +93,7 @@ def ss_process_story_ods():
             print("Processing sheet: " + sheet.name)
             sheet.name_columns_by_row(0)
             print("Has columns: " + str(sheet.colnames))
-           
+
             sheet_dict = sheet.to_dict()
             question_list = {}
             # Add each question to the DB. Loop through columns.
@@ -151,8 +155,8 @@ def ss_process_story_ods():
                         # Make dict of level: question text, responses
                         if level not in question_list.keys():
                             question_list[level] = []
-                        question_list[level].append(sheet_dict[level][key],
-                            sheet_dict[responses][level].split(','))
+                        question_list[level].append([sheet_dict[key][level],
+                            sheet_dict[responses][level].split(',')])
 
                 # If this is a Scene column, add the graphics filenames
                 # to the DB.
@@ -182,12 +186,12 @@ def ss_process_story_ods():
                             insert_to_graphics_table(cursor, sheet.name,
                                 level + 1, scene_num + 1,
                                 sheet[level,key].lower())
-                    
+
             # For each level, generate story.
             # Rows are 0-indexed but levels are 1-indexed.
             for level in range(0,10):
                 # Use story to generate game script for robot
-                generate_script_for_story(sheet.name, level+1,
+                generate_script_for_story(args.out_dir, sheet.name, level+1,
                         sheet[level, "Story"], question_list[level])
 
             # Commit after each story
@@ -197,13 +201,13 @@ def ss_process_story_ods():
     conn.close()
 
 
-def insert_to_stories_table(cursor, story_names):    
+def insert_to_stories_table(cursor, story_names):
     """ Add a story to the stories table. """
     # story_name = The story's unique tag string.
     for name in story_names:
         try:
             cursor.execute("INSERT INTO stories (story_name) VALUES (?)",
-                (name,)) 
+                (name,))
         except sqlite3.IntegrityError as e:
             print("Error adding story " + name + " to DB! It may already "
                 "exist. Exception: " + str(e))
@@ -215,7 +219,7 @@ def insert_to_graphics_table(cursor, story_name, level, scene, graphic_tag):
     # level_id = The level number from the levels table for this level.
     # scene = Scene number (1,2,3,4) to load this graphic into.
     # graphic_tag = Tag of graphic to load (lowercase letter).
-    print("ADD GRAPHIC: " + story_name + "-" + str(level+1) + " scene" +
+    print("ADD GRAPHIC: " + story_name + "-" + str(level) + " scene" +
             str(scene) + " " + graphic_tag)
     # Graphics file names:
     #     [env][story_num]-[background_type]-[tag].png
@@ -239,7 +243,7 @@ def insert_to_questions_table(cursor, story, level, question_num, question_type,
     # story = Story this question belongs to
     # level = Level of the story (some levels have more questions)
     # question_num = Number of question in the story (1,2,3).
-    # question_type = Emotion, order, or midway ToM question. 
+    # question_type = Emotion, order, or midway ToM question.
     # target_response = Correct answer (emotion or scene name).
     print("ADD QUESTION: " + story + "-" + str(level) + " " + question_type +
         " " + str(question_num) + ": " + target_response)
@@ -300,47 +304,75 @@ def fill_levels_table(cursor):
                 + str(e))
 
 
-def generate_script_for_story(story_name, level, story, questions):
+def generate_script_for_story(output_dir, story_name, level, story, questions):
     """ Using the provided story text, generate a game script with the
     instructions for loading and playing the story with a robot.
     """
-    #TODO
-    print("TODO: Generate game script for story: " + story_name + "-" +
-        str(level))
-
-    # Split story into sentences
-    story.split(".")
+    print("Generating script for story: " + story_name + "-" + str(level))
 
     # Open file for game script for this story
-    with open(story_name + ".txt") as f:
-        # For each sentence, strip whitespace and add to script
-        for sentence in story:
-            f.write("ROBOT\tDO\t\"" + sentence.strip() + "\"\n")
+    with open(output_dir + story_name + "-" + str(level) + ".txt", "w+") as f:
+        # Add story to script as one line for the robot to say.
+        # We can't split on sentences because splitting by period may
+        # make some quoted speech in the stories be split onto multiple
+        # lines, since periods may be inside of the quotations...
+        f.write("ROBOT\tDO\t" + story.strip() + "\n")
+
+        # TODO find * and add midway question here
+        # TODO remove midway question from later question list
 
         # Add "The end" and a pause
-        f.write("ROBOT\tDO\t\"The end.\"\n"
+        f.write("ROBOT\tDO\tThe end.\n"
             + "PAUSE\t2\n")
 
         # Then add questions!
         for question in questions:
-            # [(text, [response,response]), (text, [response,response]), ...]
-            pass
-            #TODO
             # Find character this question is about
-            # f.write("OPAL\tLOAD_ANSWERS\t")
-            # for response in responses:
-            #     + "answers/" + char + "_" + response + ".png"
+            character = find_character(question[0].split())
 
-            # Set the correct and incorrect responses
-            # f.write("OPAL\tSET_CORRECT\t{"correct":["lisa_sad"],...]}
+            # Load answers line
+            f.write("OPAL\tLOAD_ANSWERS\t")
+            # Make a string so we can deal with commas
+            s = ""
+            for response in question[1]:
+                s += "answers/" + character + "_" + response.lower() \
+                    + ".png, "
+            # Remove last comma before adding ending punctuation and
+            # writing the rest of the line to the file
+            f.write(s[:-2] + "\n")
+
+            # Set correct line
+            f.write("OPAL\tSET_CORRECT\t{\"correct\":[\"" + character + "_"
+                    + question[1][0] + "\"], \"incorrect\":[")
+            # Make a string so we can deal with commas
+            s = ""
+            for i in range (1, len(question[1])):
+                s += "\"" + character + "_" + question[1][i] + "\","
+            # Remove last comma before adding ending punctuation and
+            # writing the rest of the line to the file
+            f.write(s[:-1] + "]}" + "\n")
 
             # Robot will say the question text next
-            f.write("ROBOT\tDO\t\"" + text + "\"\n")
+            f.write("ROBOT\tDO\t" + question[0] + "\n")
 
             # Add wait, clear, and pause lines
             f.write("WAIT\tCORRECT_INCORRECT\t10\n"
                 + "OPAL\tCLEAR\tANSWERS\n"
                 + "PAUSE\t1\n")
+
+
+def find_character(words):
+    """ Find the name of the character that the question is about. """
+    # The name of the character that this question is about is the
+    # second capitalized word in the sentence.
+    first = True
+    for word in words:
+        if not word.islower():
+            # Has at least one uppercase letter
+            if first:
+                first = False
+            else:
+                return word.lower()
 
 
 if __name__ == '__main__':
