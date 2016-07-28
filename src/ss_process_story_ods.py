@@ -96,6 +96,7 @@ def ss_process_story_ods():
 
             sheet_dict = sheet.to_dict()
             question_list = {}
+            midway_question_list = {}
             # Add each question to the DB. Loop through columns.
             for key in sheet_dict.keys():
                 # For each question column, get question text without
@@ -155,8 +156,19 @@ def ss_process_story_ods():
                         # Make dict of level: question text, responses
                         if level not in question_list.keys():
                             question_list[level] = []
-                        question_list[level].append([sheet_dict[key][level],
-                            sheet_dict[responses][level].split(',')])
+                        if level not in midway_question_list.keys():
+                            midway_question_list[level] = []
+                        # Save theory of mind questions separately
+                        # because they are asked midway through the
+                        # story.
+                        if "ToM" in question_type:
+                            midway_question_list[level].append(
+                                [sheet_dict[key][level],
+                                sheet_dict[responses][level].split(',')])
+                        else:
+                            question_list[level].append(
+                                [sheet_dict[key][level],
+                                sheet_dict[responses][level].split(',')])
 
                 # If this is a Scene column, add the graphics filenames
                 # to the DB.
@@ -192,7 +204,8 @@ def ss_process_story_ods():
             for level in range(0,10):
                 # Use story to generate game script for robot
                 generate_script_for_story(args.out_dir, sheet.name, level+1,
-                        sheet[level, "Story"], question_list[level])
+                        sheet[level, "Story"], question_list[level],
+                        midway_question_list[level])
 
             # Commit after each story
             conn.commit()
@@ -304,7 +317,8 @@ def fill_levels_table(cursor):
                 + str(e))
 
 
-def generate_script_for_story(output_dir, story_name, level, story, questions):
+def generate_script_for_story(output_dir, story_name, level, story, questions,
+        midway_questions):
     """ Using the provided story text, generate a game script with the
     instructions for loading and playing the story with a robot.
     """
@@ -316,10 +330,22 @@ def generate_script_for_story(output_dir, story_name, level, story, questions):
         # We can't split on sentences because splitting by period may
         # make some quoted speech in the stories be split onto multiple
         # lines, since periods may be inside of the quotations...
-        f.write("ROBOT\tDO\t" + story.strip() + "\n")
+        if "*" in story:
+            # There's a question to ask partway through the story, so
+            # we need to tell half the story, ask the question, then
+            # tell the second half.
+            story = story.split("*")
+            # Add first half of story.
+            f.write("ROBOT\tDO\t" + story[0].strip() + "\n")
 
-        # TODO find * and add midway question here
-        # TODO remove midway question from later question list
+            # Add midway question
+            add_question_to_script(midway_questions[0], f)
+
+            # Add second half of story.
+            f.write("ROBOT\tDO\t" + story[1].strip() + "\n")
+
+        else:
+            f.write("ROBOT\tDO\t" + story.strip() + "\n")
 
         # Add "The end" and a pause
         f.write("ROBOT\tDO\tThe end.\n"
@@ -327,38 +353,7 @@ def generate_script_for_story(output_dir, story_name, level, story, questions):
 
         # Then add questions!
         for question in questions:
-            # Find character this question is about
-            character = find_character(question[0].split())
-
-            # Load answers line
-            f.write("OPAL\tLOAD_ANSWERS\t")
-            # Make a string so we can deal with commas
-            s = ""
-            for response in question[1]:
-                s += "answers/" + character + "_" + response.lower() \
-                    + ".png, "
-            # Remove last comma before adding ending punctuation and
-            # writing the rest of the line to the file
-            f.write(s[:-2] + "\n")
-
-            # Set correct line
-            f.write("OPAL\tSET_CORRECT\t{\"correct\":[\"" + character + "_"
-                    + question[1][0] + "\"], \"incorrect\":[")
-            # Make a string so we can deal with commas
-            s = ""
-            for i in range (1, len(question[1])):
-                s += "\"" + character + "_" + question[1][i] + "\","
-            # Remove last comma before adding ending punctuation and
-            # writing the rest of the line to the file
-            f.write(s[:-1] + "]}" + "\n")
-
-            # Robot will say the question text next
-            f.write("ROBOT\tDO\t" + question[0] + "\n")
-
-            # Add wait, clear, and pause lines
-            f.write("WAIT\tCORRECT_INCORRECT\t10\n"
-                + "OPAL\tCLEAR\tANSWERS\n"
-                + "PAUSE\t1\n")
+            add_question_to_script(question, f)
 
 
 def find_character(words):
@@ -373,6 +368,43 @@ def find_character(words):
                 first = False
             else:
                 return word.lower()
+
+
+def add_question_to_script(question, outfile):
+    """ Add a question to a game script. """
+    # Find character this question is about
+    character = find_character(question[0].split())
+
+    # Load answers line
+    outfile.write("OPAL\tLOAD_ANSWERS\t")
+    # Make a string so we can deal with commas
+    s = ""
+    for response in question[1]:
+        s += "answers/" + character + "_" + response.lower() \
+            + ".png, "
+    # Remove last comma before adding ending punctuation and
+    # writing the rest of the line to the file
+    outfile.write(s[:-2] + "\n")
+
+    # Set correct line
+    outfile.write("OPAL\tSET_CORRECT\t{\"correct\":[\"" + character + "_"
+            + question[1][0] + "\"], \"incorrect\":[")
+    # Make a string so we can deal with commas
+    s = ""
+    for i in range (1, len(question[1])):
+        s += "\"" + character + "_" + question[1][i] + "\","
+    # Remove last comma before adding ending punctuation and
+    # writing the rest of the line to the file
+    outfile.write(s[:-1] + "]}" + "\n")
+
+    # Robot will say the question text next
+    outfile.write("ROBOT\tDO\t" + question[0] + "\n")
+
+    # Add wait, clear, and pause lines
+    outfile.write("WAIT\tCORRECT_INCORRECT\t10\n"
+        + "OPAL\tCLEAR\tANSWERS\n"
+        + "PAUSE\t1\n")
+
 
 
 if __name__ == '__main__':
