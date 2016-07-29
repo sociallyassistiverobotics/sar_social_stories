@@ -4,17 +4,17 @@
 # The MIT License (MIT)
 #
 # Copyright (c) 2016 Personal Robots Group
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,20 +27,39 @@ import sqlite3 # store game info and personalization
 
 class ss_db_manager():
     """ Interface to database for storing personalization information. """
-   
-    def __init__(self):
+
+    def __init__(self, database):
         """ Initialize database connection. """
         # Set up logger
         self.logger = logging.getLogger(__name__)
 
-        #TODO init db connection
+        # Get connection to database.
+        try:
+            self.conn = sqlite3.connect(database)
+            self.cursor = conn.cursor()
+        except:
+            self.logger.exception("Could not connect to database: " +
+                database)
+            raise
+
 
     def get_most_recent_level(self, participant, current_session):
         """ Get the level at which the participant played during the
         previous session.
         """
-        #TODO
-        pass
+        # If there wasn't a previous session, we can't get its level.
+        if (current_session < 1):
+            return None
+
+        try:
+            return self.cursor.execute("""SELECT level_id FROM stories_played
+                WHERE participant=(?) and session=(?) LIMIT 1""",
+                participant, (current_session-1))
+        except:
+            self.logger.exception("Could not find level of previous session"
+                + " for " + participant + " for session " + current_session
+                + " in the database!")
+            return None
 
 
     def get_most_recent_percent_correct_responses(self, participant,
@@ -69,7 +88,7 @@ class ss_db_manager():
         """
         #TODO
         pass
- 
+
 
     def get_next_review_story(self, participant, current_session, emotions):
         """ Get a review story with at least one of the listed emotions
@@ -84,7 +103,7 @@ class ss_db_manager():
 
     def get_level_info(self, level):
         """ Get information about stories at this level: whether the
-        scenes are presented in order or not, and how many answer 
+        scenes are presented in order or not, and how many answer
         options are shown when questions are asked.
         """
         #TODO

@@ -4,17 +4,17 @@
 # The MIT License (MIT)
 #
 # Copyright (c) 2016 Personal Robots Group
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,10 +27,10 @@ from ss_db_manager import ss_db_manager
 from SS_Errors import NoStoryFound
 
 class ss_personalization_manager():
-    """ Determine personalization for a participant, given their past 
-    performance and the current session """ 
+    """ Determine personalization for a participant, given their past
+    performance and the current session """
 
-    def __init__(self, participant, session):
+    def __init__(self, participant, session, database):
         """ Initialize stuff """
         # Set up logger
         self.logger = logging.getLogger(__name__)
@@ -39,13 +39,13 @@ class ss_personalization_manager():
             + "using DEMO setup")
 
         # Save participant and session so we can use them to get their
-        # past performance from the database, which we will use to 
-        # determine which stories to present and what level to use. 
+        # past performance from the database, which we will use to
+        # determine which stories to present and what level to use.
         self.participant = participant
         self.session = session
 
         # Get database manager.
-        self.db_man = ss_db_manager()
+        self.db_man = ss_db_manager(database)
 
         # Get the level for this session.
         self.level = self.get_level_for_session()
@@ -160,7 +160,7 @@ class ss_personalization_manager():
         # If this is a demo session, load a demo scene.
         if (self.session == -1):
             # Demo set:
-            graphic_names = ["scenes/CR1-scene1.png", "scenes/CR1-scene2.png", 
+            graphic_names = ["scenes/CR1-scene1.png", "scenes/CR1-scene2.png",
                     "scenes/CR1-scene3.png", "scenes/CR1-scene4.png"]
 
             # Demo story has scenes in order.
@@ -210,7 +210,7 @@ class ss_personalization_manager():
 
 
     def get_joint_attention_level(self):
-        """ Determine what level of joint attention scaffolding to provide 
+        """ Determine what level of joint attention scaffolding to provide
         each time it is required.
         """
         self.logger.debug("TODO determine joint attention level")
