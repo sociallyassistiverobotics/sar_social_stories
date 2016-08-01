@@ -40,26 +40,41 @@ class ss_db_manager():
         except:
             self.logger.exception("Could not connect to database: " +
                 database)
+            # Pass on exception for now.
             raise
 
 
     def get_most_recent_level(self, participant, current_session):
         """ Get the level at which the participant played during the
-        previous session.
+        previous session (return None if no previous session).
         """
         # If there wasn't a previous session, we can't get its level.
         if (current_session < 1):
             return None
 
         try:
-            return self.cursor.execute("""SELECT level_id FROM stories_played
-                WHERE participant=(?) and session=(?) LIMIT 1""",
-                participant, (current_session-1))
-        except:
+            result = self.cursor.execute("""
+                SELECT level_id
+                FROM stories_played
+                    WHERE participant=(?)
+                    AND session=(?)
+                    ORDER BY time DESC
+                    LIMIT 1""",
+                    (participant, (current_session-1))).fetchone()
+            if result is None:
+                self.logger.warn("Could not find level of previous session"
+                    + " for " + participant + " for session " + current_session
+                    + " in the database!")
+                return None
+            else:
+                # Database gives us a tuple, so return the first element.
+                return result[0]
+        except Exception as e:
             self.logger.exception("Could not find level of previous session"
-                + " for " + participant + " for session " + current_session
-                + " in the database!")
-            return None
+                    + " for " + participant + " for session " + current_session
+                    + " in the database!")
+            # Pass on exception for now.
+            raise
 
 
     def get_most_recent_percent_correct_responses(self, participant,
@@ -67,16 +82,65 @@ class ss_db_manager():
         """ Get the percentage of the participant's question responses
         from the previous session that were correct.
         """
-        #TODO
-        pass
+        try:
+            result = self.cursor.execute("""
+                SELECT ...
+                FROM ...
+                WHERE ... """, (participant, (current_session-1)))
+            #TODO fill in query!
+            if result is None:
+                self.logger.warn("Could not find any responses for "
+                    + participant + " for session " + (current_session-1)
+                    + " in the database!")
+                return None
+            else:
+                # TODO Return percent responses correct.
+                pass
+        except Exception as e:
+            self.logger.exception("Could not find any responses for "
+                + participant + " for session " + (current_session-1)
+                + " in the database!")
+            # Pass on exception for now.
+            raise
 
 
     def get_most_recent_incorrect_emotions(self, participant, current_session):
         """ Get a list of the target emotions for all questions from
         the last session where the participant responded incorrectly.
         """
-        #TODO
-        pass
+        # May not be able to use ORDER BY in the subquery - if this is
+        # a problem, fix later.
+        try:
+            result = self.cursor.execute("""
+                SELECT DISTINCT responses.response, questions.target_response
+                FROM responses
+                JOIN questions
+                   ON questions.id = responses.questions_id
+                   WHERE questions.target_response <> responses.response
+                   AND responses.stories_played_id = (
+                       SELECT id
+                       FROM stories_played
+                       WHERE participant = (?)
+                          AND session = (?)
+                       ORDER BY time DESC
+                       LIMIT 1)
+                """, (participant, current_session))
+
+            if result is None:
+                self.logger.warn("Could not find any incorrect responses for "
+                    + participant + " for session " + (current_session-1)
+                    + " in the database!")
+                return None
+            else:
+                # Database gives us a list of tuples, so convert to a
+                # a list before returning.
+                return [emotion[0] for emotion in result]
+        except Exception as e:
+            self.logger.exception("Could not find any incorrect responses for "
+                + participant + " for session " + (current_session-1)
+                + " in the database!")
+            # Pass on exception for now.
+            raise
 
 
     def get_next_new_story(self, participant, current_session, emotions):
@@ -86,8 +150,27 @@ class ss_db_manager():
         desired emotions, return the name of the next unplayed story.
         If there are no more unplayed stories, return None.
         """
-        #TODO
-        pass
+        try:
+            result = self.cursor.execute("""
+                SELECT ...
+                FROM ...
+                WHERE ... """, (participant, current_session))
+            #TODO fill in query!
+            if result is None:
+                self.logger.warn("Could not find any unplayed stories for "
+                    + participant + " for session " + current_session +
+                    " with emotions " + emotions + " in the database!")
+                return None
+            else:
+                # TODO Return the name of a new story to play.
+                pass
+        except Exception as e:
+            self.logger.exception("Could not find any unplayed stories for "
+                    + participant + " for session " + current_session +
+                    " with emotions " + emotions + " in the database!")
+            # Pass on exception for now.
+            raise
+
 
 
     def get_next_review_story(self, participant, current_session, emotions):
@@ -97,8 +180,26 @@ class ss_db_manager():
         name of the story heard least recently and least often. If there
         are no stories we can review, return None.
         """
-        #TODO
-        pass
+        try:
+            result = self.cursor.execute("""
+                SELECT ...
+                FROM ...
+                WHERE ... """, (participant, current_session))
+            #TODO fill in query!
+            if result is None:
+                self.logger.warn("Could not find any stories to review for "
+                    + participant + " for session " + current_session +
+                    + " with emotions " + emotions + " in the database!")
+                return None
+            else:
+                # TODO Return a story to review.
+                pass
+        except Exception as e:
+            self.logger.exception("Could not find any stories to review for "
+                    + participant + " for session " + current_session +
+                    + " with emotions " + emotions + " in the database!")
+            # Pass on exception for now.
+            raise
 
 
     def get_level_info(self, level):
@@ -106,17 +207,55 @@ class ss_db_manager():
         scenes are presented in order or not, and how many answer
         options are shown when questions are asked.
         """
-        #TODO
-        #return in_order, num_answers
-        pass
+        try:
+            result = self.cursor.execute("""
+                SELECT num_answers, in_order
+                FROM levels
+                WHERE level=(?)
+                """, (level,))
+            if result is None:
+                self.logger.warn("Could not find info for level " + level
+                        + " in the database!")
+                return None
+            else:
+                # Database gives us a tuple, so return first element as
+                # the number of answers and convert the second element
+                # to a boolean.
+                return result[0], (True if result[1] == 1 else False)
+        except Exception as e:
+            self.logger.exception("Could not find info for level " + level
+                    + " in the database!")
+            # Pass on exception for now.
+            raise
 
 
     def get_graphics(self, story, level):
         """ Get the list of names of graphics for the scenes in a story
         at the specified level.
         """
-        #TODO
-        pass
+        try:
+            result = self.cursor.execute("""
+                SELECT graphic
+                FROM graphics
+                WHERE level_id=(?)
+                AND story_id=(
+                    SELECT id
+                    FROM stories
+                    WHERE story_name=(?))
+                """, (level, story)).fetchall()
+            if result is None:
+                self.logger.warn("Could not find graphics for story " + story
+                    + " at level " + level + " in the database!")
+                return None
+            else:
+                # Database gives us a list of tuples of graphic names,
+                # so make this into a list of graphic names.
+                return [name[0] for name in result]
+        except Exception as e:
+            self.logger.exception("Could not find graphics for story " + story
+                    + " at level " + level + " in the database!")
+            # Pass on exception for now.
+            raise
 
 
     def record_story_played(participant, session, level, story):
@@ -124,13 +263,72 @@ class ss_db_manager():
         current date and time, and a reference to the current story
         into the stories_played table.
         """
-        #TODO
-        pass
+        try:
+            self.cursor.execute("""
+                INSERT INTO stories_played (participant, session,
+                    level_id, story_id)
+                VALUES (
+                (?),
+                (?),
+                (SELECT id
+                    FROM stories
+                    WHERE story_name=(?)),
+                (SELECT level
+                    FROM levels
+                    WHERE level=(?)))
+                """, (participant, session, story, level))
+        except Exception as e:
+            self.logger.exception("Could not insert record into stories_played"
+                + " table in database! Tried to insert: participant=" +
+                participant + ", session=" + session + ", level=" + level +
+                ", story=" + story)
+            # Pass on exception for now.
+            raise
 
 
-    def record_response(): #TODO fill in necessary arguments
+    def record_response(participant, session, level, story, question_num,
+            question_type, response):
         """ Insert a user response into the responses table: we need
         the question ID, stories_played ID, and the actual response.
         """
-        #TODO
-        pass
+        try:
+            self.cursor.execute("""
+                INSERT INTO responses (stories_played_id, questions_id,
+                    response
+                VALUES (
+                (SELECT id from stories_played
+                    WHERE participant=(?)
+                    AND session=(?)
+                    AND level_id=(
+                        SELECT level
+                        FROM levels
+                        WHERE level=(?))
+                    AND story_id=(
+                        SELECT id
+                            FROM stories
+                            WHERE story_name=(?))
+                    ORDER BY time DESC
+                    LIMIT 1),
+                (SELECT id
+                    FROM questions
+                    WHERE question_num=(?)
+                    AND question_type=(?)
+                    AND level=(
+                        SELECT level
+                        FROM levels
+                        WHERE level=(?))
+                    AND story_id=(
+                        SELECT id
+                        FROM stories
+                        WHERE story_name=(?))),
+                (?))
+                """, (participant, session, level, story, question_num,
+                    question_type, level, story, response))
+        except Exception as e:
+            self.logger.exception("Could not insert record into questions"
+                + " table in database! Tried to insert: participant=" +
+                participant + ", session=" + session + ", level=" + level +
+                ", story=" + story + ", question_num=" + question_num +
+                ", question_type=" + question_type + ", response=" + response)
+            # Pass on exception for now.
+            raise

@@ -145,15 +145,16 @@ def ss_process_story_ods():
                             question_num, question_type,
                             # Target response is the first in the list
                             # of response options
-                            sheet_dict[responses][level].split(',')[0].strip())
+                            sheet_dict[responses][level].split(',')[0]
+                                .strip().lower())
 
                         # Add responses to emotions_in_question table
-                        # at this level
+                        # at this level.
                         insert_to_responses_table(cursor, sheet.name, level+1,
                             question_num, question_type,
                             sheet_dict[responses][level].split(','))
 
-                        # Make dict of level: question text, responses
+                        # Make dict of level: question text, responses.
                         if level not in question_list.keys():
                             question_list[level] = []
                         if level not in midway_question_list.keys():
@@ -207,7 +208,7 @@ def ss_process_story_ods():
                         sheet[level, "Story"], question_list[level],
                         midway_question_list[level])
 
-            # Commit after each story
+            # Commit after each story.
             conn.commit()
 
     # Close database connection.
@@ -219,8 +220,10 @@ def insert_to_stories_table(cursor, story_names):
     # story_name = The story's unique tag string.
     for name in story_names:
         try:
-            cursor.execute("INSERT INTO stories (story_name) VALUES (?)",
-                (name,))
+            cursor.execute("""
+                INSERT INTO stories (story_name)
+                VALUES (?)
+                """, (name,))
         except sqlite3.IntegrityError as e:
             print("Error adding story " + name + " to DB! It may already "
                 "exist. Exception: " + str(e))
@@ -241,17 +244,18 @@ def insert_to_graphics_table(cursor, story_name, level, scene, graphic_tag):
     # Levels 6-10: tag B for complex background.
     graphic_name = story_name.replace("Story-","") + "-" + \
         ("P" if level < 6 else "B") + "-" + graphic_tag + ".png"
-    cursor.execute('''INSERT INTO graphics
-            (story_id, level_id, scene_num, graphic) VALUES (
+    cursor.execute("""
+        INSERT INTO graphics (story_id, level_id, scene_num, graphic)
+        VALUES (
             (SELECT id FROM stories WHERE story_name=(?)),
             (SELECT level FROM levels WHERE level=(?)),
             (?),
-            (?))''',
-            (story_name, level, scene, graphic_name))
+            (?))
+        """, (story_name, level, scene, graphic_name))
 
 
-def insert_to_questions_table(cursor, story, level, question_num, question_type,
-        target_response):
+def insert_to_questions_table(cursor, story, level, question_num,
+        question_type, target_response):
     """ Add a question to the questions table."""
     # story = Story this question belongs to
     # level = Level of the story (some levels have more questions)
@@ -260,18 +264,24 @@ def insert_to_questions_table(cursor, story, level, question_num, question_type,
     # target_response = Correct answer (emotion or scene name).
     print("ADD QUESTION: " + story + "-" + str(level) + " " + question_type +
         " " + str(question_num) + ": " + target_response)
-    cursor.execute('''INSERT INTO questions (story_id, level, question_num,
-        question_type, target_response) VALUES (
-        (SELECT id FROM stories WHERE story_name=(?)),
-        (SELECT level FROM levels WHERE level=(?)),
-        (?),
-        (?),
-        (?))''',
-        (story, level, question_num, question_type, target_response))
+    cursor.execute("""
+        INSERT INTO questions (story_id, level, question_num, question_type,
+            target_response)
+        VALUES (
+            (SELECT id
+                FROM stories
+                WHERE story_name=(?)),
+            (SELECT level
+                FROM levels
+                WHERE level=(?)),
+            (?),
+            (?),
+            (?))
+        """, (story, level, question_num, question_type, target_response))
 
 
-def insert_to_responses_table(cursor, story, level, question_num, question_type,
-        responses):
+def insert_to_responses_table(cursor, story, level, question_num,
+        question_type, responses):
     """ Add a question-response pair to the responses table. """
     # question_id = The id of the question in the questions table.
     # emotion = Emotion string.
@@ -281,23 +291,33 @@ def insert_to_responses_table(cursor, story, level, question_num, question_type,
         resp = response.strip().replace(" ", "")
         if (resp == ""):
             continue
-        cursor.execute('''INSERT INTO responses_in_question (questions_id,
-            response) VALUES (
-            (SELECT id FROM questions WHERE level=(?) and question_num=(?) and
-            question_type=(?) and story_id IN (SELECT id FROM stories WHERE
-            story_name=(?))),
-            (?))''',
-            (level, question_num, question_type, story, resp))
+        cursor.execute("""
+            INSERT INTO responses_in_question (questions_id, response)
+            VALUES (
+                (SELECT id
+                    FROM questions
+                    WHERE level=(?)
+                    AND question_num=(?)
+                    AND question_type=(?)
+                    AND story_id
+                        IN (
+                        SELECT id
+                        FROM stories
+                        WHERE story_name=(?))),
+                (?))
+            """, (level, question_num, question_type, story, resp))
 
 
 def fill_levels_table(cursor):
     """ Initialize levels table. """
     # level = The level number.
-    # num_scenes = The number of scenes in the story at this level.
+    # num_answers = The number of answer options for questions asked
+    # about the story this level.
     # in_order = Whether the scenes for stories at that level are shown
     # in order (1=True) or out of order (0=False).
     try:
-        cursor.execute('''INSERT INTO levels (level, num_scenes, in_order)
+        cursor.execute("""
+            INSERT INTO levels (level, num_answers, in_order)
             VALUES
             ("1", "1", "1"),
             ("2", "2", "1"),
@@ -311,7 +331,7 @@ def fill_levels_table(cursor):
             ("10", "4", "0"),
             ("11", "4", "0"),
             ("12", "4", "0")
-            ''')
+            """)
     except sqlite3.IntegrityError as e:
         print("Error adding levels to DB! They may already exist. Exception: "
                 + str(e))
@@ -324,7 +344,7 @@ def generate_script_for_story(output_dir, story_name, level, story, questions,
     """
     print("Generating script for story: " + story_name + "-" + str(level))
 
-    # Open file for game script for this story
+    # Open file for game script for this story.
     with open(output_dir + story_name + "-" + str(level) + ".txt", "w+") as f:
         # Add story to script as one line for the robot to say.
         # We can't split on sentences because splitting by period may
@@ -347,7 +367,7 @@ def generate_script_for_story(output_dir, story_name, level, story, questions,
         else:
             f.write("ROBOT\tDO\t" + story.strip() + "\n")
 
-        # Add "The end" and a pause
+        # Add "The end" and a pause.
         f.write("ROBOT\tDO\tThe end.\n"
             + "PAUSE\t2\n")
 
@@ -363,7 +383,7 @@ def find_character(words):
     first = True
     for word in words:
         if not word.islower():
-            # Has at least one uppercase letter
+            # Has at least one uppercase letter.
             if first:
                 first = False
             else:
@@ -372,35 +392,35 @@ def find_character(words):
 
 def add_question_to_script(question, outfile):
     """ Add a question to a game script. """
-    # Find character this question is about
+    # Find character this question is about.
     character = find_character(question[0].split())
 
-    # Load answers line
+    # Load answers line.
     outfile.write("OPAL\tLOAD_ANSWERS\t")
-    # Make a string so we can deal with commas
+    # Make a string so we can deal with commas.
     s = ""
     for response in question[1]:
         s += "answers/" + character + "_" + response.lower() \
             + ".png, "
     # Remove last comma before adding ending punctuation and
-    # writing the rest of the line to the file
+    # writing the rest of the line to the file.
     outfile.write(s[:-2] + "\n")
 
-    # Set correct line
+    # Set correct line.
     outfile.write("OPAL\tSET_CORRECT\t{\"correct\":[\"" + character + "_"
             + question[1][0] + "\"], \"incorrect\":[")
-    # Make a string so we can deal with commas
+    # Make a string so we can deal with commas.
     s = ""
     for i in range (1, len(question[1])):
         s += "\"" + character + "_" + question[1][i] + "\","
     # Remove last comma before adding ending punctuation and
-    # writing the rest of the line to the file
+    # writing the rest of the line to the file.
     outfile.write(s[:-1] + "]}" + "\n")
 
-    # Robot will say the question text next
+    # Robot will say the question text next.
     outfile.write("ROBOT\tDO\t" + question[0] + "\n")
 
-    # Add wait, clear, and pause lines
+    # Add wait, clear, and pause lines.
     outfile.write("WAIT\tCORRECT_INCORRECT\t10\n"
         + "OPAL\tCLEAR\tANSWERS\n"
         + "PAUSE\t1\n")

@@ -32,7 +32,7 @@ class ss_personalization_manager():
 
     def __init__(self, participant, session, database):
         """ Initialize stuff """
-        # Set up logger
+        # Set up logger.
         self.logger = logging.getLogger(__name__)
 
         self.logger.info("TODO initialize personalization manager - "
@@ -56,7 +56,7 @@ class ss_personalization_manager():
         # with a new story.
         self.tell_new_story = True
 
-        # We don't have a current story yet
+        # We don't have a current story yet.
         self.current_story = None
 
         # We can't get a queue of stories, because we don't know how
@@ -187,7 +187,7 @@ class ss_personalization_manager():
             # answer options there are per question at this level.
             graphic_names = self.db_man.get_graphics(self.current_story,
                 self.level)
-            in_order, num_answers = self.db_man.get_level_info(self.level)
+            num_answers, in_order = self.db_man.get_level_info(self.level)
 
         # Return the story information.
         return graphic_names, in_order, num_answers
@@ -202,11 +202,12 @@ class ss_personalization_manager():
             self.level, self.current_story)
 
 
-    def record_user_response(self):
+    def record_user_response(self, question_num, question_type, response):
         """ Record that the participant responded to one of the story
         questions.
         """
-        self.db_man.record_response() #TODO fill in necessary arguments
+        self.db_man.record_response(self.participant, self.session, self.level,
+                self.current_story, question_num, question_type, response)
 
 
     def get_joint_attention_level(self):
