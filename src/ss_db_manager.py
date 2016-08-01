@@ -139,6 +139,7 @@ class ss_db_manager():
     def get_most_recent_incorrect_emotions(self, participant, current_session):
         """ Get a list of the target emotions for all questions from
         the last session where the participant responded incorrectly.
+        Return an empty list if none are found.
         """
         # May not be able to use ORDER BY in the subquery - if this is
         # a problem, fix later.
@@ -155,13 +156,12 @@ class ss_db_manager():
                        WHERE participant = (?)
                           AND session = (?)
                        ORDER BY time DESC)
-                """, (participant, current_session))
-
-            if result is None:
+                """, (participant, current_session)).fetchall()
+            if result is None or result == []:
                 self.logger.warn("Could not find any incorrect responses for "
                     + participant + " for session " + (current_session-1)
                     + " in the database!")
-                return None
+                return []
             else:
                 # Database gives us a list of tuples, so convert to a
                 # a list before returning.
@@ -182,26 +182,77 @@ class ss_db_manager():
         If there are no more unplayed stories, return None.
         """
         try:
+            # Parameters are the list of emotions, participant, session.
+            # We have to put all the parameters into the same list so
+            # we can give the query just one list. We can't supply a
+            # list and a couple other things, because SQLite doesn't
+            # know how to deal with a list parameter. So we add
+            # correct number of ?'s into the query for the number of
+            # emotions and supply a list with a matching number of
+            # parameters.
+            params = emotions
+            params.append(participant)
+            params.append(current_session)
+
             result = self.cursor.execute("""
-                SELECT ...
-                FROM ...
-                WHERE ... """, (participant, current_session))
-            #TODO fill in query!
-            if result is None:
+                SELECT DISTINCT stories.story_name
+                FROM stories
+                JOIN questions
+                    ON questions.story_id = stories.id
+                JOIN stories_played
+                    ON stories_played.story_id = stories.id
+                WHERE questions.target_response IN (%s)
+                AND stories.id
+                    NOT IN (
+                        SELECT stories_played.story_id
+                        FROM stories_played
+                        WHERE stories_played.participant = (?)
+                        AND stories_played.session = (?))
+                ORDER BY stories.id
+                LIMIT 1
+                """ % ",".join("?"*len(emotions)), params).fetchall()
+
+            if result is None or result == []:
                 self.logger.warn("Could not find any unplayed stories for "
                     + participant + " for session " + current_session +
-                    " with emotions " + emotions + " in the database!")
-                return None
-            else:
-                # TODO Return the name of a new story to play.
-                pass
+                    " with emotions " + emotions + " in the database!" +
+                    " Will try to find any unplayed story...")
+
+                # Query again, but look for any unplayed stories, not
+                # just unplayed stories with particular emotions.
+                result = self.cursor.execute("""
+                    SELECT DISTINCT stories.story_name
+                    FROM stories
+                    JOIN stories_played
+                        ON stories_played.story_id = stories.id
+                    WHERE stories.id
+                        NOT IN (
+                            SELECT stories_played.story_id
+                            FROM stories_played
+                            WHERE stories_played.participant = (?)
+                            AND stories_played.session = (?))
+                    ORDER BY stories.id
+                    LIMIT 1
+                    """ , (participant, session)).fetchall()
+
+                if result is None or result == []:
+                    self.logger.warn("Could not find any unplayed stories for "
+                    + participant + " for session " + current_session +
+                    " in the database!")
+                    return None
+
+            # We either found an unplayed story with the right emotions
+            # or didn't, and found an unplayed story without them.
+            # Return the name of a new story to play. The DB gives
+            # us the name of the story in a tuple.
+            return result[0]
+
         except Exception as e:
             self.logger.exception("Could not find any unplayed stories for "
                     + participant + " for session " + current_session +
                     " with emotions " + emotions + " in the database!")
             # Pass on exception for now.
             raise
-
 
 
     def get_next_review_story(self, participant, current_session, emotions):
@@ -212,19 +263,76 @@ class ss_db_manager():
         are no stories we can review, return None.
         """
         try:
+            # Parameters are the list of emotions, participant, session.
+            # We have to put all the parameters into the same list so
+            # we can give the query just one list. We can't supply a
+            # list and a couple other things, because SQLite doesn't
+            # know how to deal with a list parameter. So we add
+            # correct number of ?'s into the query for the number of
+            # emotions and supply a list with a matching number of
+            # parameters.
+            params = emotions
+            params.append(participant)
+            params.append(current_session)
+
+            # This gives us a randomly picked story from a list of
+            # stories played not this session with at least one of the
+            # desired emotions.
             result = self.cursor.execute("""
-                SELECT ...
-                FROM ...
-                WHERE ... """, (participant, current_session))
-            #TODO fill in query!
+                SELECT DISTINCT stories.story_name
+                FROM stories
+                JOIN questions
+                    ON questions.story_id = stories.id
+                JOIN stories_played
+                    ON stories_played.story_id = stories.id
+                WHERE questions.target_response IN (%s)
+                AND stories.id
+                    IN (
+                        SELECT stories_played.story_id
+                        FROM stories_played
+                        WHERE stories_played.participant = (?)
+                        AND stories_played.session <> (?))
+                ORDER BY RANDOM()
+                LIMIT 1
+                """ % ",".join("?"*len(emotions)), params).fetchone()
+
             if result is None:
                 self.logger.warn("Could not find any stories to review for "
                     + participant + " for session " + current_session +
-                    + " with emotions " + emotions + " in the database!")
-                return None
-            else:
-                # TODO Return a story to review.
-                pass
+                    + " with emotions " + emotions + " in the database!"
+                    + " Looking for a story without those emotions...")
+
+                # If no stories have the desired emotions to review,
+                # find and return the story heard least recently and
+                # least often. Sort results by stories heard least
+                # often, then by the least recent. If there is a tie,
+                # pick the least recent.
+                result = self.cursor.execute("""
+                    SELECT stories.story_name
+                    FROM stories_played
+                    JOIN stories
+                        ON stories_played.story_id = stories.id
+                    WHERE stories_played.participant = (?)
+                    AND stories_played.session <> (?)
+                    GROUP BY stories_played.story_id
+                    ORDER BY count(stories_played.story_id) ASC,
+                        stories_played.time ASC
+                    LIMIT 1
+                    """, (participant, session)).fetchone()
+
+                if result is None or result == []:
+                    self.logger.warn("Could not find any review stories for "
+                    + participant + " for session " + current_session +
+                    " in the database!")
+                    return None
+
+            # We found a review story with the right emotions, or
+            # we didn't find any with the right emotions, so we
+            # found the story told least often and least recently.
+            # Return the name of a review story to play. The DB
+            # gives us the name of the story in a tuple.
+            return result[0]
+
         except Exception as e:
             self.logger.exception("Could not find any stories to review for "
                     + participant + " for session " + current_session +

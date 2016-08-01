@@ -46,6 +46,8 @@ class ss_personalization_manager():
 
         # Get database manager.
         self.db_man = ss_db_manager(database)
+        # TODO Either add DEMO information to database or else don't
+        # require a database for a DEMO session!
 
         # Get the level for this session.
         self.level = self.get_level_for_session()
@@ -62,9 +64,8 @@ class ss_personalization_manager():
         # We can't get a queue of stories, because we don't know how
         # many we would need to queue up. Instead, get a list of the
         # emotions that the participant needs the most practice with
-        # that should be present in the stories this session.
-        self.emotion_list = self.get_emotion_list()
-        # Need emotion questions incorrect for the past session(s).
+        # that should be present in the stories this session. These
+        # will be the emotions gotten incorrect in the past session.
         self.emotion_list = self.db_man.get_most_recent_incorrect_emotions(
             self.participant, self.session)
 
@@ -114,7 +115,6 @@ class ss_personalization_manager():
         # any stories with one of those emotions, just get the next new
         # story.
         elif self.tell_new_story:
-            self.logger.warn("TODO return next script file name!")
             story = self.db_man.get_next_new_story(self.participant,
                 self.session, self.emotion_list)
 
@@ -198,7 +198,6 @@ class ss_personalization_manager():
         """ Record that we loaded a story, and that this participant is
         playing this story.
         """
-        #TODO call database and give info for stories_played table
         self.db_man.record_story_played(self.participant, self.session,
             self.level, self.current_story)
 
