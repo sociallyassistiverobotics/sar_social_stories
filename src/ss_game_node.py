@@ -152,21 +152,28 @@ class ss_game_node():
                     self.session_script_path = json_data["session_script_path"]
                 else:
                     self.logger.error("Could not read path to session scripts! "
-                        + "Expected option \"session_script_path\" to be in config"
+                        + "Expected option \"session_script_path\" to be in "
                         + "config file. Assuming session scripts are in the main"
                         + "game script directory and not a sub-directory.")
                     self.session_script_path = None
+                if ("database") in json_data:
+                    database = json_data["database"]
+                else:
+                    self.logger.error("""Could not read name of database!
+                        Expected option \"database\" to be in the config file.
+                        Assuming database is named \"socialstories.db\"""")
+                    database = "socialstories.db"
         except Exception as e:
-            self.logger.exception("Could not read your json config file \"" 
+            self.logger.exception("Could not read your json config file \""
                 + config_file + "\". Does the file exist? Is it valid json?"
                 + " Exiting because we need the config file to run the game.")
             return
 
         # load script
-        try: 
+        try:
             self.script_handler = ss_script_handler(self.ros_ss, session,
                 participant, self.script_path, self.story_script_path,
-                self.session_script_path)
+                self.session_script_path, database)
         except IOError as e:
             self.logger.exception("Did not load the session script... exiting "
                 + "because we need the session script to run the game.")
