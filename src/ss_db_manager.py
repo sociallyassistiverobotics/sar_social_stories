@@ -83,19 +83,51 @@ class ss_db_manager():
         from the previous session that were correct.
         """
         try:
-            result = self.cursor.execute("""
-                SELECT ...
-                FROM ...
-                WHERE ... """, (participant, (current_session-1)))
-            #TODO fill in query!
-            if result is None:
+            # Get the number of correct responses (i.e., the questions
+            # from the participant's last session where their response
+            # was equal to the target response).
+            total_correct = self.cursor.execute("""
+                SELECT COUNT(responses.response)
+                FROM responses
+                JOIN questions
+                    ON questions.id = responses.questions_id
+                    WHERE questions.target_response = responses.response
+                    AND responses.stories_played_id in (
+                        SELECT id
+                        FROM stories_played
+                        WHERE participant = (?)
+                           AND session = (?)
+                        ORDER BY time DESC)
+                """, (participant, (current_session-1))).fetchone()
+            if total_correct is None:
+                self.logger.warn("Could not find any correct responses for "
+                    + participant + " for session " + (current_session-1)
+                    + " in the database!")
+                total_correct = 0
+            # Get the total number of responses made by the participant
+            # in the last session.
+            total_responses = self.cursor.execute("""
+                SELECT COUNT(responses.response)
+                FROM responses
+                JOIN questions
+                    ON questions.id = responses.questions_id
+                    WHERE responses.stories_played_id in (
+                        SELECT id
+                        FROM stories_played
+                        WHERE participant = (?)
+                           AND session = (?)
+                        ORDER BY time DESC)
+                """, (participant, (current_session-1))).fetchone()
+            if total_responses is None or total_responses[0] is 0:
                 self.logger.warn("Could not find any responses for "
                     + participant + " for session " + (current_session-1)
                     + " in the database!")
-                return None
+                total_responses = 0
+                return 0
             else:
-                # TODO Return percent responses correct.
-                pass
+                # Return percent responses correct (database gave us
+                # these values in tuples).
+                return float(correct_responses[0]) / total_responses[0]
         except Exception as e:
             self.logger.exception("Could not find any responses for "
                 + participant + " for session " + (current_session-1)
@@ -117,13 +149,12 @@ class ss_db_manager():
                 JOIN questions
                    ON questions.id = responses.questions_id
                    WHERE questions.target_response <> responses.response
-                   AND responses.stories_played_id = (
+                   AND responses.stories_played_id in (
                        SELECT id
                        FROM stories_played
                        WHERE participant = (?)
                           AND session = (?)
-                       ORDER BY time DESC
-                       LIMIT 1)
+                       ORDER BY time DESC)
                 """, (participant, current_session))
 
             if result is None:

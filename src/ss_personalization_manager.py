@@ -81,7 +81,8 @@ class ss_personalization_manager():
         # If there is no previous data, start at level 1.
         if (level is None):
             return 1
-        # If participant got 75%-80% questions correct last time, level up
+        # If participant got 75%-80% questions correct last time, level
+        # up. If no responses were found, do not level up.
         #TODO total performance or just last time's performance?
         if(self.db_man.get_most_recent_percent_correct_responses(
             self.participant, self.session) > 0.75):
