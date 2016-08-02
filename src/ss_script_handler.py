@@ -23,16 +23,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import sys # for getting generic exception info
-import datetime # for getting time deltas for timeouts
-import time # for sleep
-import json # for packing ros message properties
-import random # for picking robot responses and shuffling answer options
-import logging # log messages
-from SS_Errors import NoStoryFound # custom exception when no stories found
-from ss_script_parser import ss_script_parser
+import sys # For getting generic exception info
+import datetime # For getting time deltas for timeouts
+import time # For sleep
+import json # For packing ros message properties
+import random # For picking robot responses and shuffling answer options
+import logging # Log messages
+from SS_Errors import NoStoryFound # Custom exception when no stories found
+from ss_script_parser import ss_script_parser # Parses scripts
 from ss_personalization_manager import ss_personalization_manager
-from ss_ros import ss_ros
+from ss_ros import ss_ros # Our ROS connection
 
 class ss_script_handler():
     """ Social stories script handler parses and deals with script lines. Uses
@@ -42,12 +42,12 @@ class ss_script_handler():
     in text files).
     """
 
-    # constants for script playback
-    # time to pause after showing answer feedback and playing robot
-    # feedback speech before moving on to the next question
+    # Constants for script playback:
+    # Time to pause after showing answer feedback and playing robot
+    # feedback speech before moving on to the next question.
     ANSWER_FEEDBACK_PAUSE_TIME = 3
-    # time to wait for robot to finish speaking or acting before
-    # moving on to the next script line (in seconds)
+    # Time to wait for robot to finish speaking or acting before
+    # moving on to the next script line (in seconds).
     WAIT_TIME = 30
 
     def __init__(self, ros_node, session, participant, script_path,
@@ -55,14 +55,14 @@ class ss_script_handler():
         """ Save references to ROS connection and logger, get scripts and
         set up to read script lines
         """
-        # set up logger
+        # Set up logger.
         self.logger = logging.getLogger(__name__)
         self.logger.info("Setting up script handler...")
 
-        # save reference to our ros node so we can publish messages
+        # Save reference to our ros node so we can publish messages.
         self.ros_node = ros_node
 
-        # save script paths so we can load scripts later
+        # Save script paths so we can load scripts later.
         self.script_path = script_path
 
         if (story_script_path is None):
@@ -75,91 +75,91 @@ class ss_script_handler():
         else:
             self.session_script_path = session_script_path
 
-        # set up personalization manager so we can get personalized
-        # stories for this participant
+        # Set up personalization manager so we can get personalized
+        # stories for this participant.
         self.personalization_manager = ss_personalization_manager(session,
                 participant, database)
 
-        # set up counter for how many stories have been told this session
+        # Set up counter for how many stories have been told this session.
         self.stories_told = 0
 
-        # when we start, we are not currently telling a story or
-        # repeating a script, or at the end of the game
+        # When we start, we are not currently telling a story or
+        # repeating a script, or at the end of the game.
         self.doing_story = False
         self.repeating = False
         self.end_game = False
 
-        # set up script parser
+        # Set up script parser.
         self.script_parser = ss_script_parser()
 
-        # get session script from script parser and story scripts from
-        # the personalization manager, and give to the script parser
+        # Get session script from script parser and story scripts from
+        # the personalization manager, and give to the script parser.
         try:
             self.script_parser.load_script(self.script_path
                     + self.session_script_path
                     + self.script_parser.get_session_script(session))
         except IOError:
             self.logger.exception("Script parser could not open session script!")
-            # pass exception up so whoever wanted a script handler knows
-            # they didn't get a script
+            # Pass exception up so whoever wanted a script handler knows
+            # they didn't get a script.
             raise
 
-        # save start time so we can check whether we've run out of time
+        # Save start time so we can check whether we've run out of time.
         self.start_time = datetime.datetime.now()
 
-        # initialize total time paused
+        # Initialize total time paused.
         self.total_time_paused = datetime.timedelta(seconds=0)
 
 
     def iterate_once(self):
         """ Play the next commands from the script """
         try:
-            # we check whether we've reached the game time limit when
+            # We check whether we've reached the game time limit when
             # we load new stories or when we are about to start a
-            # repeating script over again
+            # repeating script over again.
 
-            # get next line from story script
+            # Get next line from story script.
             if self.doing_story:
                 self.logger.debug("Getting next line from story script.")
                 line = self.story_parser.next_line()
-            # if not in a story, get next line from repeating script
+            # If not in a story, get next line from repeating script.
             elif self.repeating:
                 self.logger.debug("Getting next line from repeating script.")
                 line = self.repeat_parser.next_line()
-            # if not repeating, get next line from main session script
+            # If not repeating, get next line from main session script.
             else:
                 self.logger.debug("Getting next line from main session script.")
                 line = self.script_parser.next_line()
 
-        # we didn't read a line!
-        # if we get a stop iteration exception, we're at the end of the
-        # file and will stop iterating over lines
+        # We didn't read a line!
+        # If we get a stop iteration exception, we're at the end of the
+        # file and will stop iterating over lines.
         except StopIteration:
-            # if we were doing a story, now we're done, go back to
-            # the previous script
+            # If we were doing a story, now we're done, go back to
+            # the previous script.
             if self.doing_story:
                 self.logger.info("Finished story " + str(self.stories_told + 1)
                         + " of " + str(self.max_stories) + "!")
                 self.doing_story = False
                 self.stories_told += 1
-            # if we were repeating a script, increment counter
+            # If we were repeating a script, increment counter.
             elif self.repeating:
                 self.repetitions += 1
                 self.logger.info("Finished repetition " + str(self.repetitions)
                     + " of " + str(self.max_repetitions) + "!")
-                # if we've done enough repetitions, or if we've run out
+                # If we've done enough repetitions, or if we've run out
                 # of game time, go back to the main session script (set
-                # the repeating flag to false)
+                # the repeating flag to false).
                 if (self.repetitions >= self.max_repetitions) \
                         or self.end_game \
                         or ((datetime.datetime.now() - self.start_time) \
                         - self.total_time_paused >= self.max_game_time):
                     self.logger.info("Done repeating!")
                     self.repeating = False
-            # otherwise we're at the end of the main script
+            # Otherwise we're at the end of the main script.
             else:
                 self.logger.info("No more script lines to get!")
-                # pass on the stop iteration exception
+                # Pass on the stop iteration exception.
                 raise
 
         except ValueError:
@@ -173,13 +173,13 @@ class ss_script_handler():
             if self.repeating:
                 self.repeating = False
 
-        # oh no got some unexpected error! raise it again so we can
-        # figure out what happened and deal with it during debugging
+        # Oh no got some unexpected error! Raise it again so we can
+        # figure out what happened and deal with it during debugging.
         except Exception as e:
             self.logger.exception("Unexpected exception! Error: %s", e)
             raise
 
-        # we got a line: parse it!
+        # We got a line: parse it!
         else:
             # Make sure we got a line before we try parsing it. We
             # might not get a line if the file has closed or if
@@ -189,11 +189,11 @@ class ss_script_handler():
                     + "but got None!")
                 return
 
-            # got a line - print for debugging
+            # Got a line - print for debugging.
             self.logger.debug("LINE: " + repr(line))
 
-            # parse line!
-            # split on tabs
+            # Parse line!
+            # Split on tabs.
             elements = line.rstrip().split('\t')
             self.logger.debug("... " + str(len(elements)) + " elements: \n... "
                     + str(elements))
@@ -202,18 +202,18 @@ class ss_script_handler():
                 self.logger.info("Line had no elements! Going to next line...")
                 return
 
-            # do different stuff depending on what the first element is
+            # Do different stuff depending on what the first element is.
             #########################################################
-            # only STORY lines have only one part to the command
+            # only STORY lines have only one part to the command.
             elif len(elements) == 1:
-                # for STORY lines, play back the next story for this
-                # participant
+                # For STORY lines, play back the next story for this
+                # participant.
                 if "STORY" in elements[0]:
                     self.logger.debug("STORY")
-                    # if line indicates we need to start a story, do so
+                    # If line indicates we need to start a story, do so.
                     self.doing_story = True
-                    # create a script parser for the filename provided,
-                    # assume it is in the session_scripts directory
+                    # Create a script parser for the filename provided,
+                    # assume it is in the session_scripts directory.
                     self.story_parser = ss_script_parser()
                     try:
                         self.story_parser.load_script(self.script_path
@@ -236,12 +236,12 @@ class ss_script_handler():
                                 Skipping STORY line.")
                         self.doing_story = False
 
-            # line has 2+ elements, so check the other commands
+            # Line has 2+ elements, so check the other commands.
             #########################################################
-            # for ROBOT lines, send command to the robot
+            # For ROBOT lines, send command to the robot.
             elif "ROBOT" in elements[0]:
                 self.logger.debug("ROBOT")
-                # play a randomly selected story intro from the list
+                # Play a randomly selected story intro from the list.
                 if "STORY_INTRO" in elements[1]:
                     self.ros_node.send_robot_command_and_wait("DO",
                             "ROBOT_NOT_SPEAKING",
@@ -249,7 +249,7 @@ class ss_script_handler():
                             self.story_intros[
                         random.randint(0,len(self.story_intros)-1)])
 
-                # play a randomly selected story closing from the list
+                # Play a randomly selected story closing from the list.
                 elif "STORY_CLOSING" in elements[1]:
                     self.ros_node.send_robot_command_and_wait("DO",
                             "ROBOT_NOT_SPEAKING",
@@ -257,50 +257,50 @@ class ss_script_handler():
                             self.story_closings[
                         random.randint(0,len(self.story_closings)-1)])
 
-                # send a command to the robot, with properties
+                # Send a command to the robot, with properties.
                 elif len(elements) > 2:
                     self.ros_node.send_robot_command_and_wait(elements[1],
                             "ROBOT_NOT_SPEAKING",
                             datetime.timedelta(seconds=int(self.WAIT_TIME)),
                             elements[2])
 
-                # send a command to the robot, without properties
+                # Send a command to the robot, without properties.
                 else:
                     self.ros_node.send_robot_command(elements[1], "")
 
             #########################################################
-            # for OPAL lines, send command to Opal game
+            # For OPAL lines, send command to Opal game
             elif "OPAL" in elements[0]:
                 self.logger.debug("OPAL")
                 if "LOAD_ALL" in elements[1] and len(elements) >= 3:
-                    # load all objects listed in file -- the file is
+                    # Load all objects listed in file -- the file is
                     # assumed to have properties for one object on each
-                    # line
+                    # line.
                     to_load = self.read_list_from_file(
                             self.script_path + self.session_script_path +
                             elements[2])
                     for obj in to_load:
                         self.ros_node.send_opal_command("LOAD_OBJECT", obj)
 
-                # get the next story and load graphics into game
+                # Get the next story and load graphics into game.
                 elif "LOAD_STORY" in elements[1]:
                     self.load_next_story()
 
-                # load answers for game
+                # Load answers for game.
                 elif "LOAD_ANSWERS" in elements[1] and len(elements) >= 3:
                     self.load_answers(elements[2])
 
-                # send an opal command, with properties
+                # Send an opal command, with properties.
                 elif len(elements) > 2:
                     self.ros_node.send_opal_command(elements[1], elements[2])
 
-                # send an opal command, without properties
+                # Send an opal command, without properties.
                 else:
                     self.ros_node.send_opal_command(elements[1])
 
             #########################################################
             # For PAUSE lines, sleep for the specified number of
-            # seconds before continuing script playback
+            # seconds before continuing script playback.
             elif "PAUSE" in elements[0] and len(elements) >= 2:
                 self.logger.debug("PAUSE")
                 try:
@@ -310,14 +310,14 @@ class ss_script_handler():
                         + "given an invalid argument (should be an int)!")
 
             #########################################################
-            # for ADD lines, get a list of robot commands that can be
+            # For ADD lines, get a list of robot commands that can be
             # used in response to particular triggers from the specified
             # file and save them for later use -- all ADD lines should
-            # have 3 elements
+            # have 3 elements.
             elif "ADD" in elements[0] and len(elements) >= 3:
                 self.logger.debug("ADD")
-                # read list of responses from the specified file into the
-                # appropriate variable
+                # Read list of responses from the specified file into the
+                # appropriate variable.
                 try:
                     if "INCORRECT_RESPONSES" in elements[1]:
                         self.incorrect_responses = self.read_list_from_file(
@@ -380,7 +380,7 @@ class ss_script_handler():
                     self.logger.info("Added " + elements[1])
 
             #########################################################
-            # for SET lines, set the specified constant
+            # For SET lines, set the specified constant.
             elif "SET" in elements[0] and len(elements) >= 3:
                 self.logger.debug("SET")
                 if "MAX_INCORRECT_RESPONSES" in elements[1]:
@@ -398,20 +398,19 @@ class ss_script_handler():
             #########################################################
             # For WAIT lines, wait for the specified user response,
             # or for a timeout.
-            # if no response is received
             elif "WAIT" in elements[0] and len(elements) >= 3:
                 self.logger.debug("WAIT")
                 self.wait_for_response(elements[1], int(elements[2]))
 
             #########################################################
-            # for REPEAT lines, repeat lines in the specified script
-            # file the specified number of times
+            # For REPEAT lines, repeat lines in the specified script
+            # file the specified number of times.
             elif "REPEAT" in elements[0] and len(elements) >= 3:
                 self.logger.debug("REPEAT")
                 self.repeating = True
                 self.repetitions = 0
-                # create a script parser for the filename provided,
-                # assume it is in the session_scripts directory
+                # Create a script parser for the filename provided,
+                # assume it is in the session_scripts directory.
                 self.repeat_parser = ss_script_parser()
                 try:
                     self.repeat_parser.load_script(self.script_path
@@ -423,7 +422,7 @@ class ss_script_handler():
                     self.repeating = False
                     return
 
-                # figure out how many times we should repeat the script
+                # Figure out how many times we should repeat the script.
                 if "MAX_STORIES" in elements[1]:
                     try:
                         self.max_repetitions = self.max_stories
@@ -442,14 +441,14 @@ class ss_script_handler():
         ''' Read a list of robot responses from a file, return a list
         of the lines from the file
         '''
-        # open script for reading
+        # Open script for reading.
         try:
             fh = open(filename, "r")
             return fh.readlines()
         except IOError as e:
             self.logger.exception("Cannot open file: " + filename)
-            # pass exception up so anyone trying to add a response list
-            # from a script knows it didn't work
+            # Pass exception up so anyone trying to add a response list
+            # from a script knows it didn't work.
             raise
 
 
@@ -460,29 +459,29 @@ class ss_script_handler():
         '''
         for i in range(0, self.max_incorrect_responses):
             self.logger.info("Waiting for user response...")
-            # wait for the specified type of response, or until the
-            # specified time has elapsed
+            # Wait for the specified type of response, or until the
+            # specified time has elapsed.
             response = self.ros_node.wait_for_response(response_to_get,
                     datetime.timedelta(seconds=int(timeout)))
 
-            # after waiting for a response, need to play back an
-            # appropriate robot response
+            # After waiting for a response, need to play back an
+            # appropriate robot response.
 
-            # if we didn't receive a response, then it was probably
-            # because we didn't send a valid response to wait for
+            # If we didn't receive a response, then it was probably
+            # because we didn't send a valid response to wait for.
             if not response:
                 self.logger.info("Done waiting -- did not get valid response!")
                 return
 
-            # if we received no user response before timing out, treat
-            # as either NO or INCORRECT
-            # TODO send GameCommand.TIMEOUT message when we time out
+            # If we received no user response before timing out, treat
+            # as either NO or INCORRECT.
+            # TODO Send GameCommand.TIMEOUT message when we time out
             # waiting for a user response. May need to revise how we
             # deal with timeouts based on how this TIMEOUT message is
             # used.
 
-            # if response was INCORRECT, randomly select a robot
-            # response to an incorrect user action
+            # If response was INCORRECT, randomly select a robot
+            # response to an incorrect user action.
             if ("INCORRECT" in response) or ("TIMEOUT" in response
                     and "CORRECT" in response_to_get):
                 try:
@@ -495,8 +494,8 @@ class ss_script_handler():
                     self.logger.exception("Could not play an incorrect "
                             + "response because none were loaded!")
 
-            # if response was NO, randomly select a robot response to
-            # the user selecting no
+            # If response was NO, randomly select a robot response to
+            # the user selecting no.
             elif "NO" in response or ("TIMEOUT" in response
                     and "START" in response_to_get):
                 try:
@@ -509,9 +508,9 @@ class ss_script_handler():
                     self.logger.exception("Could not play a response to "
                             + "user's NO because none were loaded!")
 
-            # if response was CORRECT, randomly select a robot response
+            # If response was CORRECT, randomly select a robot response
             # to a correct user action, highlight the correct answer,
-            # and break out of response loop
+            # and break out of response loop.
             elif "CORRECT" in response:
                 try:
                     self.ros_node.send_robot_command_and_wait("DO",
@@ -525,7 +524,7 @@ class ss_script_handler():
                             datetime.timedelta(seconds=int(self.WAIT_TIME)),
                             self.answer_feedback[random.randint(0,
                                 len(self.answer_feedback)-1)])
-                    # pause after speaking before hiding correct again
+                    # Pause after speaking before hiding correct again
                     time.sleep(self.ANSWER_FEEDBACK_PAUSE_TIME)
                     self.ros_node.send_opal_command("HIDE_CORRECT")
                 except AttributeError:
@@ -534,8 +533,8 @@ class ss_script_handler():
                             + "feedback because none were loaded!")
                 break
 
-            # if response was START, randomly select a robot response to
-            # the user selecting START, and break out of response loop
+            # If response was START, randomly select a robot response to
+            # the user selecting START, and break out of response loop.
             elif "START" in response:
                     try:
                         self.ros_node.send_robot_command_and_wait("DO",
@@ -548,11 +547,11 @@ class ss_script_handler():
                             + "user's START because none were loaded!")
                     break
 
-        # we exhausted our allowed number of user responses, so have
-        # the robot do something
+        # We exhausted our allowed number of user responses, so have
+        # the robot do something.
         else:
-            # if user was never correct, play robot's correct answer
-            # feedback and show which answer was correct in the game
+            # If user was never correct, play robot's correct answer
+            # feedback and show which answer was correct in the game.
             if "CORRECT" in response_to_get:
                 try:
                     self.ros_node.send_opal_command("SHOW_CORRECT")
@@ -561,16 +560,16 @@ class ss_script_handler():
                             datetime.timedelta(seconds=int(self.WAIT_TIME)),
                             self.answer_feedback[random.randint(0,
                                 len(self.answer_feedback)-1)])
-                    # pause after speaking before hiding correct again
+                    # Pause after speaking before hiding correct again.
                     time.sleep(self.ANSWER_FEEDBACK_PAUSE_TIME)
                     self.ros_node.send_opal_command("HIDE_CORRECT")
                 except AttributeError:
                     self.logger.exception("Could not play robot's answer"
                             + " feedback because none were loaded!")
 
-            # if user never selects START (which is used to ask the user
+            # If user never selects START (which is used to ask the user
             # if they are ready to play), stop all stories and repeating
-            # scripts, continue with main script so we go to the end
+            # scripts, continue with main script so we go to the end.
             elif "START" in response_to_get:
                 self.repeating = False
                 self.story = False
@@ -611,16 +610,17 @@ class ss_script_handler():
         # we won't set this now because this convention may not hold.
         # We expect the SET_CORRECT OpalCommand to be used to set
         # which answers are correct or incorrect.
-        # split the list of answers on commas
+        # split the list of answers on commas.
         answers = answer_list.strip().split(',')
 
-        # shuffle answers to display them in a random order
+        # Shuffle answers to display them in a random order.
         random.shuffle(answers)
 
-        # load in the graphic for each answer
+        # Load in the graphic for each answer.
         for answer in answers:
             toload = {}
-            toload["name"] = answer.strip() # remove whitespace from name
+            # Remove whitespace from name before using it.
+            toload["name"] = answer.strip()
             toload["tag"] = "PlayObject"
             toload["slot"] = answers.index(answer) + 1
             toload["draggable"] = False
@@ -632,10 +632,10 @@ class ss_script_handler():
         ''' Get the next story, set up the game scene with scene and
         answer slots, and load scene graphics.
         '''
-        # if we've told the max number of stories, or if we've reached
+        # If we've told the max number of stories, or if we've reached
         # the max game time, don't load another story even though we
         # were told to load one -- instead, play error message from
-        # robot saying we have to be done now
+        # robot saying we have to be done now.
         if self.stories_told >= self.max_stories \
             or ((datetime.datetime.now() - self.start_time) \
             - self.total_time_paused >= self.max_game_time) or self.end_game:
@@ -662,7 +662,7 @@ class ss_script_handler():
             self.repeating = False
             return
 
-        # get the details for the next story
+        # Get the details for the next story.
         try:
             scenes, in_order, num_answers = \
                 self.personalization_manager.get_next_story_details()
@@ -673,14 +673,14 @@ class ss_script_handler():
             self.doing_story = False
             return
 
-        # set up the story scene in the game
+        # Set up the story scene in the game.
         setup = {}
         setup["numScenes"] = len(scenes)
         setup["scenesInOrder"] = in_order
         setup["numAnswers"] = num_answers
         self.ros_node.send_opal_command("SETUP_STORY_SCENE", json.dumps(setup))
 
-        # load the scene graphics
+        # Load the scene graphics.
         for scene in scenes:
             toload = {}
             toload["name"] = scene
@@ -692,6 +692,6 @@ class ss_script_handler():
             toload["isAnswerSlot"] = False
             self.ros_node.send_opal_command("LOAD_OBJECT", json.dumps(toload))
 
-        # tell the personalization manager that we loaded the story so
-        # it can keep track of which stories have been played
+        # Tell the personalization manager that we loaded the story so
+        # it can keep track of which stories have been played.
         self.personalization_manager.record_story_loaded()

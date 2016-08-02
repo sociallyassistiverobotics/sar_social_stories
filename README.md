@@ -8,7 +8,7 @@ game. It uses ROS to communicate with a SAR Opal game (on a tablet or on a PC)
 via a rosbridge\_server websocket connection and with the robot via the
 robot\_command node.
 
-## Usage 
+## Usage
 
 `python ss_game_node.py session participant`
 
@@ -95,7 +95,7 @@ more.
 
 To run the demo version of the game, run without arguments (the argument
 defaults indicate the demo game should be loaded), enter `-1` as the session
-number, and/or enter `DEMO` as the participant string. 
+number, and/or enter `DEMO` as the participant string.
 
 The demo game uses the config file `ss_config.demo.json` and game scripts
 located in the `game_scripts/` directory.
@@ -149,7 +149,7 @@ the `game_scripts/` directory. This directory has two sub-directories:
 By default, the demo session uses the `demo.txt` session script. When you
 specify a particular session, the session script named `session-\[NUMBER\].txt`
 will be used. For example, if you are loading session 2, the session script
-`session-2.txt` will be used. 
+`session-2.txt` will be used.
 
 Script lines should be tab-delimited. Look at the demo script located in
 `session_scripts/demo.txt` for an example.
@@ -229,7 +229,7 @@ The robot commands also include a few special commands that indicate that one
 of the robot commands from the `STORY_INTROS` or `STORY_CLOSINGS` lists should
 be used, such as:
 
-`ROBOT  STORY_INTRO` 
+`ROBOT  STORY_INTRO`
 
 #### OPAL
 
@@ -272,10 +272,10 @@ before continuing on to the next part of the main session script. You also must
 specify how many times the script should be repeated by either providing an
 integer or providing the name of a set constant, such as `MAX_STORIES`. The
 script will be repeated that many times or until the maximum game time has
-elapsed, whichever is reached first. 
+elapsed, whichever is reached first.
 
 The following example would repeat the `demo-stories.txt` script for
-`MAX_STORIES` iterations or until the maximum game time elapsed: 
+`MAX_STORIES` iterations or until the maximum game time elapsed:
 
 `REPEAT  MAX_STORIES    demo-stories.txt`
 
