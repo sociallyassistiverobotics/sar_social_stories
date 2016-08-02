@@ -1,12 +1,15 @@
 # sar\_social\_stories
 
 The SAR Social Stories game node was designed for use during the SAR Year 5
-study. This program loads and launches the social stories game, using
-scripts to list what the robot should be told to do, what stories should be
-loaded in the game, and what to do in response to stuff that happens in the
-game. It uses ROS to communicate with a SAR Opal game (on a tablet or on a PC)
-via a rosbridge\_server websocket connection and with the robot via the
-robot\_command node.
+study. This program loads and launches the social stories game, using scripts
+to list what the robot should be told to do and what to do in response to stuff
+that happens in the game. It uses an SQLite database to store information about
+the stories to tell, as well as to track which stories a player has already
+heard. This information is used to personalize which stories the player should
+hear next based on which story questions they got wrong and which stories
+they've already heard. The program uses ROS to communicate with a SAR Opal game
+(on a tablet or on a PC) via a rosbridge\_server websocket connection and with
+the robot via the robot\_command node.
 
 ## Usage
 
@@ -26,7 +29,7 @@ Arguments:
 
 ### Configuration
 
-#### Game Config
+#### Game config
 
 The game reads in the configuration file `ss_config.json`, which is located in
 the `src/` directory. An example config file named `ss_config.example.json` is
@@ -50,7 +53,12 @@ The options you can set in the config file include:
   the session scripts are in the main script directory specifed by
   `script_path`.
 
-#### Log Config
+- database: The relative path from the `src/` directory to the SQLite database
+  file, plus the filename of the database. For example, the demo game uses the
+  database `socialstories.db` in the `src/` directory. This field is optional.
+  If not set, it is assumed that the database file is `src/socialstories.db`.
+
+#### Log config
 
 The game uses the Python logging module to direct log output to four places:
 
@@ -91,21 +99,21 @@ the ROS rosout log file will likely be missing the initial messages. See the
 more.
 
 
-### Demo Version
+### Demo version
 
 To run the demo version of the game, run without arguments (the argument
 defaults indicate the demo game should be loaded), enter `-1` as the session
 number, and/or enter `DEMO` as the participant string.
 
-The demo game uses the config file `ss_config.demo.json` and game scripts
-located in the `game_scripts/` directory.
+The demo game uses the config file `ss_config.demo.json`, game scripts located
+in the `game_scripts/` directory, and the database file `src/socialstories.db`.
 
 ### Graphics
 
 The game, including the demo version, requires a set of graphics to be added to
-the Opal device that is paired with this node. The full set of graphics
-required for the game is available on request from students in the Personal
-Robots Group. Please email students in the group to inquire.
+the Opal device that is paired with this node. Due to licensing, the full set
+of graphics required for the game is available on request from students in the
+Personal Robots Group. Please email students in the group to inquire.
 
 ## ROS messages
 
@@ -136,7 +144,7 @@ This node publishes
 "/[sar\_game\_command\_msgs](https://github.com/sociallyassistiverobotics/sar_game_command_msgs)/GameState" messages to the topic
 `/sar/game_state`.
 
-## Game Scripts
+## Game scripts
 
 The program will attempt to read interaction scripts from the directory listed
 in the config file. For the demo game, the interaction scripts are located in
@@ -144,7 +152,7 @@ the `game_scripts/` directory. This directory has two sub-directories:
 `session_scripts/`, which contains all session-level scripts, and
 `story_scripts/`, which contains all story-specific scripts.
 
-### Session Scripts
+### Session scripts
 
 By default, the demo session uses the `demo.txt` session script. When you
 specify a particular session, the session script named `session-\[NUMBER\].txt`
@@ -291,12 +299,90 @@ will look like this:
 
 `STORY`
 
-### Story Scripts
+### Story scripts
 
 The story scripts follow the same format as the main session scripts. See the
 example in `story_scripts/demo-story-1.txt`.
 
-## Version Notes
+## Tracking player progress
+
+### Database
+
+The program stores information about the stories, questions asked about
+stories, and stories the player has already played in an SQLite database.
+
+#### Database initialization
+
+You can initialize the database by running the script `ss_init_db.py`:
+
+`python ss_init_db.py`
+
+This script currently takes no arguments and assumes the database will be named
+`socialstories.db`. In the future, the script will take an argument so you can
+provide whatever name you like.
+
+#### Filling the database
+
+The script `ss_process_story_ods.py` will read .ods spreadsheets containing
+story info for the game. It will generate game scripts that will be used to
+load graphics and tell the robot how to read aloud the story, and add
+meta-information about the stories and the questions to ask about each story to
+the database.
+
+ Note that the script assumes a very particular organization of the
+spreadsheet. An example spreadsheet containing two stories is provided in
+`source_ods/story-test-set.ods`.
+
+Run as follows:
+
+`python ss_process_story_ods.py [-h] [-d [DB]] [-o [OUT_DIR]] ods_files
+[ods_files...]`
+
+Positional arguments:
+
+- ods\_files
+    - A list of .ods spreadsheets containing stories for the SAR Social Stories
+      game.
+
+Optional arguments:
+- -h, --help
+    - show this help message and exit
+
+- -d [DB], --database [DB]
+    - The database filename for storing story and question info.
+
+- -o [OUT\_DIR], --output\_dir [OUT\_DIR]
+    - The output directory where generated story scripts will be saved.
+      Defaults to the current directory.
+
+### Personalization
+
+There are two levels of personalization. First is the level of the story
+presented. Players start at level 1. If they get sufficient emotion questions
+correct about the stories they hear, in the next session, they are leveled up.
+The percentage of questions they need to get correct to level up can be set in
+the config file, and defaults to 75%.
+
+Second, we personalize which story a player hears next. This is determined by a
+couple guiding principles:
+
+- The player should hear stories that target emotions that the player needs
+  practice with, as determined by their performance on the story questions
+  (which ask about emotions that characters felt in the story). So if a player
+  has gotten questions about the emotions "sad" and "surprised" incorrect in
+  the last session, we should select stories to play next that target these
+  emotions, if possible.
+- The player should hear at least one new story each session, if possible.
+- If a player has to hear a previously heard story, play a story involving the
+  target emotions, and/or the story that has been heard least often and least
+  recently.
+- The player should never hear the same story twice in the same session (even
+  at different levels).
+
+We query the database to determine the player's past performance and stories
+heard.
+
+## Version notes
 
 This program was developed and tested with:
 
@@ -315,6 +401,6 @@ page](https://github.com/personal-robots/sar_social_stories/issues).
 
 ## TODO
 
-- Add personalization, select scripts to play
+- Select scripts to play based on session and personalization.
 - Consider listing the mapping of session script files to sessions in a config
   file.

@@ -32,6 +32,7 @@ def ss_init_db():
     in the social stories game.
     """
     # Get connection to database.
+    # TODO Make the name of the database an argument to this script!
     conn = sqlite3.connect("socialstories.db")
     cursor = conn.cursor()
 

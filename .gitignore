@@ -142,3 +142,6 @@ src/*.json
 
 # ignore .ods spreadsheets
 *.ods
+
+# but don't ignore the example story spreadsheet
+!source_ods/story-test-set.ods
