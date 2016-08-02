@@ -43,6 +43,12 @@ class ss_db_manager():
             # Pass on exception for now.
             raise
 
+    def __del__(self):
+        """ Destructor. """
+        # Close database connection.
+        self.cursor.close()
+        self.conn.close()
+
 
     def get_most_recent_level(self, participant, current_session):
         """ Get the level at which the participant played during the
@@ -416,6 +422,8 @@ class ss_db_manager():
                     FROM levels
                     WHERE level=(?)))
                 """, (participant, session, story, level))
+            # Commit after recording the story.
+            self.conn.commit()
         except Exception as e:
             self.logger.exception("Could not insert record into stories_played"
                 + " table in database! Tried to insert: participant=" +
@@ -463,6 +471,8 @@ class ss_db_manager():
                 (?))
                 """, (participant, session, level, story, question_num,
                     question_type, level, story, response))
+            # Commit after recording the response.
+            self.conn.commit()
         except Exception as e:
             self.logger.exception("Could not insert record into questions"
                 + " table in database! Tried to insert: participant=" +
