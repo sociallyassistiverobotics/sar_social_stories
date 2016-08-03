@@ -277,7 +277,11 @@ class ss_ros():
         # We need to act based on the game commands - queue up the
         # command received so the main game loop can take action.
         if data.command is GameCommand.START:
-            self.game_node_queue.put("START")
+            # START commands may include the "level" field that can
+            # specify the level the game should start at. Pass this on
+            # if it exists.
+            self.game_node_queue.put("START" +
+                    ("\t" + str(data.level) if data.level is not None else "")
         if data.command is GameCommand.PAUSE:
             self.game_node_queue.put("PAUSE")
         if data.command is GameCommand.CONTINUE:

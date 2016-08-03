@@ -215,8 +215,20 @@ class ss_game_node():
                         # iterate over the script.
                         if "START" in msg and not started:
                             self.logger.info("Starting game!")
+                            # Pass on the start level, if it was given.
+                            msg_parts = msg.split("\t")
+                            if len(msg_parts) > 1:
+                                try:
+                                    self.script_handler.set_start_level(
+                                        int(msg_parts[1]))
+                                    self.logger.info("Got start level: "
+                                        + msg_parts[1])
+                                except ValueError:
+                                    self.logger.warning("Was given a start " +
+                                        "level that wasn't an int! "
+                                        + msg_parts[1])
                             started = True
-                            # announce the game is starting
+                            # Announce the game is starting.
                             self.ros_ss.send_game_state("START")
                             self.ros_ss.send_game_state("IN_PROGRESS")
 

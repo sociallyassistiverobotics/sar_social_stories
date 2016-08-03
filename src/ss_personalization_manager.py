@@ -242,6 +242,20 @@ class ss_personalization_manager():
                 response)
 
 
+    def set_start_level(self, level):
+        """ When the game starts, a level to start at can be provided.
+        We're going to ignore this and use our internal database and
+        personalization algorithm to determine leveling, but we will
+        print out an error if the level we pick is different from the
+        level we are told to start at.
+        """
+        if (level != self.level):
+            self.logger.warning("We were told to play at level " + str(level)
+                + " but our internal personalization algorithm says we should "
+                + "play at level " + str(self.level) + ". We will be playing "
+                + "at level " + str(self.level))
+
+
     def get_joint_attention_level(self):
         """ Determine what level of joint attention scaffolding to provide
         each time it is required.

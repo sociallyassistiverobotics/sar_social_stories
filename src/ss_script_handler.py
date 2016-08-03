@@ -590,6 +590,14 @@ class ss_script_handler():
         self.end_game = True
 
 
+    def set_start_level(self, level):
+        """ When the game starts, a level to start at can be provided.
+        Pass this to the personalization manager to deal with, since it
+        deals with picking the levels of stories to play.
+        """
+        self.personalization_manager.set_start_level(level)
+
+
     def pause_game_timer(self):
         ''' Track how much time we spend paused so when we check
         whether we have reached the max game time, we don't include
