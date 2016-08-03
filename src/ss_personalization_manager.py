@@ -49,10 +49,10 @@ class ss_personalization_manager():
         # the previous session in order to level up in this session, so
         # we can use it to determine whether a player will level up.
         self.percent_correct_to_level = percent_correct_to_level
-        # Get database manager.
-        self.db_man = ss_db_manager(database)
-        # TODO Either add DEMO information to database or else don't
-        # require a database for a DEMO session!
+        # Get database manager, but don't require the database for a
+        # DEMO session!
+        if (session != -1):
+            self.db_man = ss_db_manager(database)
 
         # Get the level for this session.
         self.level = self.get_level_for_session()
@@ -71,14 +71,20 @@ class ss_personalization_manager():
         # emotions that the participant needs the most practice with
         # that should be present in the stories this session. These
         # will be the emotions gotten incorrect in the past session.
-        self.emotion_list = self.db_man.get_most_recent_incorrect_emotions(
-            self.participant, self.session)
+        # Skip this if this is a demo session.
+        if (session != -1):
+            self.emotion_list = self.db_man.get_most_recent_incorrect_emotions(
+                self.participant, self.session)
 
 
     def get_level_for_session(self):
         """ Determine which level the stories told in this session
         should be at.
         """
+        # Use level 1 if this is a demo session.
+        if (self.session == -1):
+            return 1
+
         # Data for this participant's last session is in the database.
         # Use their past performance to decide whether to level up.
         # need last time's level, number of questions correct last time
@@ -207,16 +213,21 @@ class ss_personalization_manager():
         """ Record that we loaded a story, and that this participant is
         playing this story.
         """
-        self.db_man.record_story_played(self.participant, self.session,
-            self.level, self.current_story)
+        # Skip if this is a demo session; otherwise record.
+        if (session != -1):
+            self.db_man.record_story_played(self.participant, self.session,
+                self.level, self.current_story)
 
 
     def record_user_response(self, question_num, question_type, response):
         """ Record that the participant responded to one of the story
         questions.
         """
-        self.db_man.record_response(self.participant, self.session, self.level,
-                self.current_story, question_num, question_type, response)
+        # Skip if this is a demo session; otherwise record.
+        if (session != -1):
+            self.db_man.record_response(self.participant, self.session,
+                self.level, self.current_story, question_num, question_type,
+                response)
 
 
     def get_joint_attention_level(self):
