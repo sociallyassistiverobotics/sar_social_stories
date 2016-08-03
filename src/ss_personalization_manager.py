@@ -30,7 +30,8 @@ class ss_personalization_manager():
     """ Determine personalization for a participant, given their past
     performance and the current session """
 
-    def __init__(self, participant, session, database):
+    def __init__(self, participant, session, database,
+            percent_correct_to_level):
         """ Initialize stuff """
         # Set up logger.
         self.logger = logging.getLogger(__name__)
@@ -44,6 +45,10 @@ class ss_personalization_manager():
         self.participant = participant
         self.session = session
 
+        # Store the percent of questions a player has to get right in
+        # the previous session in order to level up in this session, so
+        # we can use it to determine whether a player will level up.
+        self.percent_correct_to_level = percent_correct_to_level
         # Get database manager.
         self.db_man = ss_db_manager(database)
         # TODO Either add DEMO information to database or else don't
@@ -86,13 +91,17 @@ class ss_personalization_manager():
         # up. If no responses were found, do not level up.
         #TODO total performance or just last time's performance?
         if(self.db_man.get_most_recent_percent_correct_responses(
-            self.participant, self.session) > 0.75):
-            self.logger.info("Participant got >75% questions correct last \
-                time, so we can level up! Level will be " + str(level+1) + ".")
+            self.participant, self.session) > percent_correct_to_level):
+            self.logger.info("Participant got more than " +
+                (percent_correct_to_level*100) + "% questions correct last "
+                + "time, so we can level up! Level will be " + str(level+1)
+                + ".")
             return level + 1
         else:
-            self.logger.info("Participant got <75% questions correct last \
-                time, so we don't level up. Level will be " + str(level) + ".")
+            self.logger.info("Participant got less than " +
+                (percent_correct_to_level*100) + "% questions correct last "
+                + "time, so we don't level up. Level will be " + str(level)
+                + ".")
             return level
 
 

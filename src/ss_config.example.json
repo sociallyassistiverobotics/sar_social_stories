@@ -3,4 +3,5 @@
     "story_script_path": "path/to/story_scripts/from/script_path/",
     "session_script_path": "path/to/session_scripts/from/script_path/"
     "database": "../relative/path/to/your_database.db"
+    "percent_correct_to_level": 0.75
 }

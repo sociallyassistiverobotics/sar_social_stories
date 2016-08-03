@@ -58,6 +58,13 @@ The options you can set in the config file include:
   database `socialstories.db` in the `src/` directory. This field is optional.
   If not set, it is assumed that the database file is `src/socialstories.db`.
 
+- percent\_correct\_to\_level: The percentage of questions about a story that
+  a participant has to have gotten correct in the last session to level up in
+  this session, written as a decimal value. The demo game does not use this
+  field since there is only one demo story, and thus, no need to level up. This
+  field is optional. If not set, the default value is 0.75 (75% correct to
+  level up).
+
 #### Log config
 
 The game uses the Python logging module to direct log output to four places:

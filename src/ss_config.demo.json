@@ -3,4 +3,5 @@
     "story_script_path": "story_scripts/",
     "session_script_path": "session_scripts/"
     "database": "socialstories.db"
+    "percent_correct_to_level": 0.75
 }

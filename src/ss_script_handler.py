@@ -78,7 +78,7 @@ class ss_script_handler():
         # Set up personalization manager so we can get personalized
         # stories for this participant.
         self.personalization_manager = ss_personalization_manager(session,
-                participant, database)
+                participant, database, percent_correct_to_level)
 
         # Set up counter for how many stories have been told this session.
         self.stories_told = 0

@@ -164,6 +164,15 @@ class ss_game_node():
                         Expected option \"database\" to be in the config file.
                         Assuming database is named \"socialstories.db\"""")
                     database = "socialstories.db"
+                if ("percent_correct_to_level") in json_data:
+                    percent_correct_to_level = json_data[
+                            "percent_correct_to_level"]
+                else:
+                    self.logger.error("""Could not read the percent questions
+                        correct needed to level! Expected option
+                        \"percent_correct_to_level\" to be in the config file.
+                        Defaulting to 75%.""")
+                    percent_correct_to_level = 0.75
         except Exception as e:
             self.logger.exception("Could not read your json config file \""
                 + config_file + "\". Does the file exist? Is it valid json?"
@@ -174,7 +183,7 @@ class ss_game_node():
         try:
             self.script_handler = ss_script_handler(self.ros_ss, session,
                 participant, self.script_path, self.story_script_path,
-                self.session_script_path, database)
+                self.session_script_path, database, percent_correct_to_level)
         except IOError as e:
             self.logger.exception("Did not load the session script... exiting "
                 + "because we need the session script to run the game.")
