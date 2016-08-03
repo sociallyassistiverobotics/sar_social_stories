@@ -25,21 +25,37 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import argparse # to parse command line arguments
 import sqlite3 # store game info and personalization
 
 def ss_init_db():
     """ Initalize database with tables for tracking question responses
     in the social stories game.
     """
+    # Parse python arguments: The name of the database to create can be
+    # optionally provided.
+    parser = argparse.ArgumentParser(
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            description="""Initializes a database for storing story information
+            and participant progress for the SAR Social Stories game. Creates
+            the necessary tables.""")
+    parser.add_argument('-d', '--database', dest='db',
+           action='store', nargs='?', type=str, default='socialstories.db',
+           help= "The database filename for storing story and question info. "
+           + "Defaults to \"socialstories.db\"".)
+
+    # Parse the args we got, and print them out.
+    args = parser.parse_args()
+    print("Args received: " + str(args))
+
     # Get connection to database.
-    # TODO Make the name of the database an argument to this script!
-    conn = sqlite3.connect("socialstories.db")
+    conn = sqlite3.connect(args.db)
     cursor = conn.cursor()
 
     # Create tables.
     # The STORIES table holds the story names.
     cursor.execute(''' CREATE TABLE stories (
-            id       integer     PRIMARY KEY,
+            id          integer     PRIMARY KEY,
             story_name  text        NOT NULL   UNIQUE
             )''')
 

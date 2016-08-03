@@ -48,7 +48,8 @@ def ss_process_story_ods():
             ask about each story to the database.""")
     parser.add_argument('-d', '--database', dest='db',
            action='store', nargs='?', type=str, default='socialstories.db',
-           help= 'The database filename for storing story and question info.')
+           help= "The database filename for storing story and question info. "
+           + "Defaults to \"socialstories.db\"".)
     parser.add_argument('ods_files', action='store',
            nargs='+', type=str, help="""A list of .ods spreadsheets containing
            stories for the SAR Social Stories game.""")

@@ -187,8 +187,8 @@ following, which are described in more detail below:
 particular trigger. Triggers may be actions the user takes, such as selecting a
 correct or incorrect response for a question, input from sensors, or a
 particular repeating action in the script, such as an introductory comment
-before telling a story. `ADD` should list the trigger and the file containing the
-list of robot commands. For example, the following command will load the
+before telling a story. `ADD` should list the trigger and the file containing
+the list of robot commands. For example, the following command will load the
 commands listed in `incorrect.txt` as response options for incorrect actions
 taken by the user:
 
@@ -322,11 +322,16 @@ stories, and stories the player has already played in an SQLite database.
 
 You can initialize the database by running the script `ss_init_db.py`:
 
-`python ss_init_db.py`
+`python ss_init_db.py [-h] [-d [DB]]`
 
-This script currently takes no arguments and assumes the database will be named
-`socialstories.db`. In the future, the script will take an argument so you can
-provide whatever name you like.
+Optional arguments:
+
+- -h, --help
+    - Show the help message and exit.
+
+- -d [DB], --database [DB]
+    - The database filename for storing story and question info. Defaults to
+      `socialstories.db`.
 
 #### Filling the database
 
@@ -353,10 +358,11 @@ Positional arguments:
 
 Optional arguments:
 - -h, --help
-    - show this help message and exit
+    - Show the help message and exit.
 
 - -d [DB], --database [DB]
-    - The database filename for storing story and question info.
+    - The database filename for storing story and question info. Defaults to
+      `socialstories.db`.
 
 - -o [OUT\_DIR], --output\_dir [OUT\_DIR]
     - The output directory where generated story scripts will be saved.
