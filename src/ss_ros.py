@@ -232,8 +232,8 @@ class ss_ros():
         self.wait_for_response(response, timeout)
 
 
-    def send_game_state(self, state):
-        """ Publish a game state message """
+    def send_game_state(self, state, performance=None):
+        """ Publish a game state message. """
         self.logger.info("Sending game state: " + str(state))
         # Build message.
         msg = GameState()
@@ -253,6 +253,12 @@ class ss_ros():
             msg.state = GameState.TIMEOUT
         if "END" in state:
             msg.state = GameState.END
+            if performance is not None:
+                msg.performance = performance
+            else:
+                self.logger.warning("Expected to send performance "
+                    + "metric with GameState.END message, but did not "
+                    + "receive a performance metric!")
         # Send message.
         self.state_pub.publish(msg)
         self.logger.debug(msg)

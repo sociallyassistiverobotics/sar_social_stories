@@ -83,10 +83,13 @@ class ss_db_manager():
             raise
 
 
-    def get_most_recent_percent_correct_responses(self, participant,
-            current_session):
-        """ Get the percentage of the participant's question responses
-        from the previous session that were correct.
+    def get_percent_correct_responses(self, participant, session,
+            question_type=None):
+        """ Get the percentage of the participant's questions responses
+        from the specified session that were correct. Unless
+        question_type is specified, this function will look at ALL
+        question types. If specified, only that single type of question
+        will be counted (e.g., only emotion questions).
         """
         try:
             # Get the number of correct responses (i.e., the questions
@@ -104,12 +107,21 @@ class ss_db_manager():
                         WHERE participant = (?)
                            AND session = (?)
                         ORDER BY time DESC)
-                """, (participant, (current_session-1))).fetchone()
+                """
+                # Only filter by question type if one was provided.
+                + ("" if (question_type is None) else \
+                    " AND questions.question_type = (?)"),
+                # Provide the question_type if we need to filter by it.
+                ((participant, session) if (question_type is None) else \
+                    (participant, session, question_type))
+                ).fetchone()
+
             if total_correct is None:
                 self.logger.warn("Could not find any correct responses for "
-                    + participant + " for session " + (current_session-1)
+                    + participant + " for session " + session
                     + " in the database!")
                 total_correct = 0
+
             # Get the total number of responses made by the participant
             # in the last session.
             total_responses = self.cursor.execute("""
@@ -123,10 +135,18 @@ class ss_db_manager():
                         WHERE participant = (?)
                            AND session = (?)
                         ORDER BY time DESC)
-                """, (participant, (current_session-1))).fetchone()
-            if total_responses is None or total_responses[0] is 0:
+                    """
+                    # Only filter by question type if one was provided.
+                    + ("" if (question_type is None) else \
+                        " AND questions.question_type = (?)"),
+                 # Provide the question_type if we need to filter by it.
+                ((participant, session) if (question_type is None) else \
+                    (participant, session, question_type))
+                ).fetchone()
+
+            if total_responses is None or total_responses[0] == 0:
                 self.logger.warn("Could not find any responses for "
-                    + participant + " for session " + (current_session-1)
+                    + participant + " for session " + session
                     + " in the database!")
                 total_responses = 0
                 return 0
@@ -136,7 +156,7 @@ class ss_db_manager():
                 return float(correct_responses[0]) / total_responses[0]
         except Exception as e:
             self.logger.exception("Could not find any responses for "
-                + participant + " for session " + (current_session-1)
+                + participant + " for session " + session
                 + " in the database!")
             # Pass on exception for now.
             raise

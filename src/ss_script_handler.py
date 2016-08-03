@@ -134,7 +134,7 @@ class ss_script_handler():
         # We didn't read a line!
         # If we get a stop iteration exception, we're at the end of the
         # file and will stop iterating over lines.
-        except StopIteration:
+        except StopIteration as e:
             # If we were doing a story, now we're done, go back to
             # the previous script.
             if self.doing_story:
@@ -159,7 +159,11 @@ class ss_script_handler():
             # Otherwise we're at the end of the main script.
             else:
                 self.logger.info("No more script lines to get!")
-                # Pass on the stop iteration exception.
+                # Pass on the stop iteration exception, with additional
+                # information about the player's performance during the
+                # game.
+                e.performance = self.personalization_manager. \
+                    get_emotion_performance_this_session()
                 raise
 
         except ValueError:

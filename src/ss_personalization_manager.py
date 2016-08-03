@@ -96,8 +96,8 @@ class ss_personalization_manager():
         # If participant got 75%-80% questions correct last time, level
         # up. If no responses were found, do not level up.
         #TODO total performance or just last time's performance?
-        if(self.db_man.get_most_recent_percent_correct_responses(
-            self.participant, self.session) > percent_correct_to_level):
+        if(self.db_man.get_percent_correct_responses(
+            self.participant, (self.session - 1)) > percent_correct_to_level):
             self.logger.info("Participant got more than " +
                 (percent_correct_to_level*100) + "% questions correct last "
                 + "time, so we can level up! Level will be " + str(level+1)
@@ -109,6 +109,18 @@ class ss_personalization_manager():
                 + "time, so we don't level up. Level will be " + str(level)
                 + ".")
             return level
+
+
+    def get_emotion_performance_this_session(self):
+        """ Get the user's performance on the emotion questions in this
+        session (and ignore performance on any other questions).
+        """
+        # Only get the user's performance if this isn't a DEMO session.
+        if (session != -1):
+            return self.db_man.get_percent_correct_responses(self.participant,
+                self.session, "emotion")
+        else:
+            return None
 
 
     def get_next_story_script(self):

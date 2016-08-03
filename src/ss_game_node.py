@@ -265,10 +265,13 @@ class ss_game_node():
                                     + "start.")
                             log_timer = datetime.datetime.now()
 
-                except StopIteration:
+                except StopIteration as e:
                     self.logger.info("Finished script!")
                     # Send message to announce the game is over.
-                    self.ros_ss.send_game_state("END")
+                    if "performance" in dir(e):
+                        self.ros_ss.send_game_state("END", e.performance)
+                    else:
+                        self.ros_ss.send_game_state("END")
                     break
 
             # TODO wait after exiting this loop for the main
