@@ -1,2 +1,2 @@
-"Touch START when you're ready for the next story."
-"Okay. When you're ready for the next story, touch START."
+"<lookat_screen,b> Touch START when you're ready for the next story."
+"<lookat_screen,b> Okay. When you're ready for the next story, touch START."
