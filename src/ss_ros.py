@@ -80,8 +80,11 @@ class ss_ros():
                 self.on_game_command_msg)
 
 
-    def send_opal_command(self, command, properties=None):
-        """ Publish opal command message """
+    def send_opal_command(self, command, properties=None, response=None,
+            timeout=None):
+        """ Publish opal command message. Optionally, wait for a
+        response.
+        """
         self.logger.info("Sending opal command: " + command)
         # Build message.
         msg = OpalCommand()
@@ -186,16 +189,17 @@ class ss_ros():
         self.game_pub.publish(msg)
         self.logger.debug(msg)
 
-
-    def send_opal_command_and_wait(self, command, response, timeout,
-            properties=None):
-        """ Publish opal command message and wait for a response """
-        self.send_opal_command(command, properties)
-        self.wait_for_response(response, timeout)
+        # If we got a response to wait for and a timeout value, wait
+        # for a response.
+        if response and timeout:
+            self.wait_for_response(response, timeout)
 
 
-    def send_robot_command(self, command, properties=None):
-        """ Publish robot command message """
+    def send_robot_command(self, command, properties=None, response=None,
+            timeout=None):
+        """ Publish robot command message and optionally wait for a
+        response.
+        """
         self.logger.info("Sending robot command: " + str(command))
         # Build message.
         msg = RobotCommand()
@@ -223,13 +227,11 @@ class ss_ros():
         self.robot_pub.publish(msg)
         self.logger.debug(msg)
 
-
-    def send_robot_command_and_wait(self, command, response, timeout,
-            properties=None):
-        """ Publish robot command message and wait for a response """
+        # If we got a response to wait for and a timeout value, wait
+        # for a response.
         # Timeout should be a datetime.timedelta object.
-        self.send_robot_command(command, properties)
-        self.wait_for_response(response, timeout)
+        if response and timeout:
+            self.wait_for_response(response, timeout)
 
 
     def send_game_state(self, state, performance=None):
@@ -281,16 +283,16 @@ class ss_ros():
             # specify the level the game should start at. Pass this on
             # if it exists.
             self.game_node_queue.put("START" +
-                    ("\t" + str(data.level) if data.level is not None else "")
-        if data.command is GameCommand.PAUSE:
+                ("\t" + str(data.level) if data.level else ""))
+        elif data.command is GameCommand.PAUSE:
             self.game_node_queue.put("PAUSE")
-        if data.command is GameCommand.CONTINUE:
+        elif data.command is GameCommand.CONTINUE:
             self.game_node_queue.put("CONTINUE")
-        if data.command is GameCommand.END:
+        elif data.command is GameCommand.END:
             self.game_node_queue.put("END")
-        if data.command is GameCommand.WAIT_FOR_RESPONSE:
+        elif data.command is GameCommand.WAIT_FOR_RESPONSE:
             self.game_node_queue.put("WAIT_FOR_RESPONSE")
-        if data.command is GameCommand.SKIP_RESPONSE:
+        elif data.command is GameCommand.SKIP_RESPONSE:
             self.game_node_queue.put("SKIP_RESPONSE")
 
 
