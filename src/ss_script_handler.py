@@ -454,9 +454,9 @@ class ss_script_handler():
 
 
     def read_list_from_file(self, filename):
-        ''' Read a list of robot responses from a file, return a list
+        """ Read a list of robot responses from a file, return a list
         of the lines from the file
-        '''
+        """
         # Open script for reading.
         try:
             fh = open(filename, "r")
@@ -657,9 +657,9 @@ class ss_script_handler():
 
 
     def set_end_game(self):
-        ''' End the game gracefully -- stop any stories or repeating
+        """ End the game gracefully -- stop any stories or repeating
         scripts, go back to main session script and finish.
-        '''
+        """
         # For now, we just need to set a flag indicating we should end
         # the game. When we check whether we should load another story
         # or repeat a repeating script, this flag will be used to skip
@@ -676,17 +676,17 @@ class ss_script_handler():
 
 
     def pause_game_timer(self):
-        ''' Track how much time we spend paused so when we check
+        """ Track how much time we spend paused so when we check
         whether we have reached the max game time, we don't include
         time spent paused.
-        '''
+        """
         self.pause_start_time = datetime.datetime.now()
 
 
     def resume_game_timer(self):
-        ''' Add how much time we spent paused to our total time spent
+        """ Add how much time we spent paused to our total time spent
         paused.
-        '''
+        """
         # Since this function could theoretically be called before we
         # get a call to pause_game_timer, we have to check that there
         # is a pause start time, and then later, reset it so we can't
@@ -707,7 +707,7 @@ class ss_script_handler():
 
 
     def load_answers(self, answer_list):
-        ''' Load the answer graphics for this story '''
+        """ Load the answer graphics for this story """
         # We are given a list of words that indicate what the answer
         # options are. By convention, the first word is probably the
         # correct answer; the others are incorrect answers. However,
@@ -733,9 +733,9 @@ class ss_script_handler():
 
 
     def load_next_story(self):
-        ''' Get the next story, set up the game scene with scene and
+        """ Get the next story, set up the game scene with scene and
         answer slots, and load scene graphics.
-        '''
+        """
         # If we've told the max number of stories, or if we've reached
         # the max game time, don't load another story even though we
         # were told to load one -- instead, play error message from
