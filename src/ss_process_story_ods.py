@@ -49,14 +49,14 @@ def ss_process_story_ods():
     parser.add_argument('-d', '--database', dest='db',
            action='store', nargs='?', type=str, default='socialstories.db',
            help= "The database filename for storing story and question info. "
-           + "Defaults to \"socialstories.db\"".)
+           + "Defaults to \"socialstories.db\".")
     parser.add_argument('ods_files', action='store',
            nargs='+', type=str, help="""A list of .ods spreadsheets containing
            stories for the SAR Social Stories game.""")
     parser.add_argument('-o', '--output_dir', dest='out_dir', action='store',
-            nargs='?', type=str, default="", help='''The output directory where
+            nargs='?', type=str, default="", help="""The output directory where
             generated story scripts will be saved. Defaults to the current
-            directory.''')
+            directory.""")
 
     # Parse the args we got, and print them out.
     args = parser.parse_args()

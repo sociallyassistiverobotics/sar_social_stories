@@ -42,32 +42,29 @@ class ss_ros():
     """
     # Set up rostopics we publish: commands to the game (on a tablet or on a
     # PC/touchscreen), commands to the robot, and game state messages.
-    game_pub = rospy.Publisher('/sar/opal_command', OpalCommand,
+    _game_pub = rospy.Publisher('/sar/opal_command', OpalCommand,
             queue_size = 10)
-    robot_pub = rospy.Publisher('/sar/robot_command', RobotCommand,
+    _robot_pub = rospy.Publisher('/sar/robot_command', RobotCommand,
             queue_size = 10)
-    state_pub = rospy.Publisher('/sar/game_state', GameState, queue_size = 10)
+    _state_pub = rospy.Publisher('/sar/game_state', GameState, queue_size = 10)
 
 
-    def __init__(self, ros_node, queue):
+    def __init__(self, queue):
         """ Initialize ROS """
-        # We get a reference to the main ROS node so we can do callbacks
-        # to publish messages, and subscribe to stuff. # TODO being used?
-        self.ros_node = ros_node
         # We get a reference to the main game node's queue so we can
         # give it messages.
-        self.game_node_queue = queue
+        self._game_node_queue = queue
 
         # Set up logger
-        self.logger = logging.getLogger(__name__)
-        self.logger.info("Subscribing to topics: /sar/opal_action, " +
+        self._logger = logging.getLogger(__name__)
+        self._logger.info("Subscribing to topics: /sar/opal_action, " +
             "/sar/robot_state, /sar/game_command")
 
         # Initialize the flags we use to track responses from the robot
         # and from the user.
-        self.robot_doing_action = False
-        self.robot_speaking = False
-        self.response_received = None
+        self._robot_doing_action = False
+        self._robot_speaking = False
+        self._response_received = None
 
         # Subscribe to messages from opal game.
         rospy.Subscriber('/sar/opal_action', OpalAction,
@@ -80,9 +77,12 @@ class ss_ros():
                 self.on_game_command_msg)
 
 
-    def send_opal_command(self, command, properties=None):
-        """ Publish opal command message """
-        self.logger.info("Sending opal command: " + command)
+    def send_opal_command(self, command, properties=None, response=None,
+            timeout=None):
+        """ Publish opal command message. Optionally, wait for a
+        response.
+        """
+        self._logger.info("Sending opal command: " + command)
         # Build message.
         msg = OpalCommand()
         # Add header.
@@ -108,7 +108,7 @@ class ss_ros():
             if properties:
                 msg.properties = properties
             else:
-                self.logger.warning("Did not get properties for a "
+                self._logger.warning("Did not get properties for a "
                     + "SIDEKICK_SAY command! Not sending empty command.")
                 return
         elif "LOAD_OBJECT" in command:
@@ -117,7 +117,7 @@ class ss_ros():
             if properties:
                 msg.properties = properties
             else:
-                self.logger.warning("Did not get properties for a "
+                self._logger.warning("Did not get properties for a "
                     + "LOAD_OBJECT command! Not sending empty command.")
                 return
         elif "CLEAR" in command:
@@ -132,7 +132,7 @@ class ss_ros():
             if properties:
                 msg.properties = properties
             else:
-                self.logger.warning("Did not get properties for a "
+                self._logger.warning("Did not get properties for a "
                     + "MOVE_OBJECT command! Not sending empty command.")
                 return
         elif "HIGHLIGHT_OBJECT" in command:
@@ -141,7 +141,7 @@ class ss_ros():
             if properties:
                 msg.properties = properties
             else:
-                self.logger.warning("Did not get properties for a "
+                self._logger.warning("Did not get properties for a "
                     + "HIGHLIGHT_OBJECT command! Not sending empty command.")
                 return
         elif "REQUEST_KEYFRAME" in command:
@@ -163,7 +163,7 @@ class ss_ros():
             if properties:
                 msg.properties = properties
             else:
-                self.logger.warning("Did not get properties for a "
+                self._logger.warning("Did not get properties for a "
                     + "SET_CORRECT command! Not sending empty command.")
                 return
         elif "SHOW_CORRECT" in command:
@@ -176,27 +176,28 @@ class ss_ros():
             if properties:
                 msg.properties = properties
             else:
-                self.logger.warning("Did not get properties for a "
+                self._logger.warning("Did not get properties for a "
                     + "SETUP_STORY_SCENE command! Not sending empty command.")
                 return
         else:
-            self.logger.warning("Not sending invalid OpalCommand: ", command)
+            self._logger.warning("Not sending invalid OpalCommand: ", command)
             return
         # Send message.
-        self.game_pub.publish(msg)
-        self.logger.debug(msg)
+        self._game_pub.publish(msg)
+        self._logger.debug(msg)
+
+        # If we got a response to wait for and a timeout value, wait
+        # for a response.
+        if response and timeout:
+            self.wait_for_response(response, timeout)
 
 
-    def send_opal_command_and_wait(self, command, response, timeout,
-            properties=None):
-        """ Publish opal command message and wait for a response """
-        self.send_opal_command(command, properties)
-        self.wait_for_response(response, timeout)
-
-
-    def send_robot_command(self, command, properties=None):
-        """ Publish robot command message """
-        self.logger.info("Sending robot command: " + str(command))
+    def send_robot_command(self, command, properties=None, response=None,
+            timeout=None):
+        """ Publish robot command message and optionally wait for a
+        response.
+        """
+        self._logger.info("Sending robot command: " + str(command))
         # Build message.
         msg = RobotCommand()
         # Add header.
@@ -215,26 +216,24 @@ class ss_ros():
             if properties:
                 msg.properties = properties
             else:
-                self.logger.warning("Did not get properties for a DO command! "
+                self._logger.warning("Did not get properties for a DO command! "
                         + "Not sending empty command.")
                 return
         msg.interrupt = False
         # Send message.
-        self.robot_pub.publish(msg)
-        self.logger.debug(msg)
+        self._robot_pub.publish(msg)
+        self._logger.debug(msg)
 
-
-    def send_robot_command_and_wait(self, command, response, timeout,
-            properties=None):
-        """ Publish robot command message and wait for a response """
+        # If we got a response to wait for and a timeout value, wait
+        # for a response.
         # Timeout should be a datetime.timedelta object.
-        self.send_robot_command(command, properties)
-        self.wait_for_response(response, timeout)
+        if response and timeout:
+            self.wait_for_response(response, timeout)
 
 
     def send_game_state(self, state, performance=None):
         """ Publish a game state message. """
-        self.logger.info("Sending game state: " + str(state))
+        self._logger.info("Sending game state: " + str(state))
         # Build message.
         msg = GameState()
         # Add header.
@@ -256,22 +255,22 @@ class ss_ros():
             if performance is not None:
                 msg.performance = performance
             else:
-                self.logger.warning("Expected to send performance "
+                self._logger.warning("Expected to send performance "
                     + "metric with GameState.END message, but did not "
                     + "receive a performance metric!")
         # Send message.
-        self.state_pub.publish(msg)
-        self.logger.debug(msg)
+        self._state_pub.publish(msg)
+        self._logger.debug(msg)
 
 
     def on_game_command_msg(self, data):
         """ Called when we receive GameCommand messages """
-        self.logger.info("Received GameCommand message: GAME=" +
+        self._logger.info("Received GameCommand message: GAME=" +
                 str(data.game) + ", COMMAND=" + str(data.command))
         # If the game field doesn't list the constant referring to this
         # game, we can ignore the message.
         if GameCommand.STORYTELLING is not data.game:
-            self.logger.info("Not for us... ignoring.")
+            self._logger.info("Not for us... ignoring.")
             return
 
         # We need to act based on the game commands - queue up the
@@ -280,23 +279,23 @@ class ss_ros():
             # START commands may include the "level" field that can
             # specify the level the game should start at. Pass this on
             # if it exists.
-            self.game_node_queue.put("START" +
-                    ("\t" + str(data.level) if data.level is not None else "")
-        if data.command is GameCommand.PAUSE:
-            self.game_node_queue.put("PAUSE")
-        if data.command is GameCommand.CONTINUE:
-            self.game_node_queue.put("CONTINUE")
-        if data.command is GameCommand.END:
-            self.game_node_queue.put("END")
-        if data.command is GameCommand.WAIT_FOR_RESPONSE:
-            self.game_node_queue.put("WAIT_FOR_RESPONSE")
-        if data.command is GameCommand.SKIP_RESPONSE:
-            self.game_node_queue.put("SKIP_RESPONSE")
+            self._game_node_queue.put("START" +
+                ("\t" + str(data.level) if data.level else ""))
+        elif data.command is GameCommand.PAUSE:
+            self._game_node_queue.put("PAUSE")
+        elif data.command is GameCommand.CONTINUE:
+            self._game_node_queue.put("CONTINUE")
+        elif data.command is GameCommand.END:
+            self._game_node_queue.put("END")
+        elif data.command is GameCommand.WAIT_FOR_RESPONSE:
+            self._game_node_queue.put("WAIT_FOR_RESPONSE")
+        elif data.command is GameCommand.SKIP_RESPONSE:
+            self._game_node_queue.put("SKIP_RESPONSE")
 
 
     def on_opal_action_msg(self, data):
         """ Called when we receive OpalAction messages """
-        self.logger.info("Received OpalAction message: ACTION="
+        self._logger.info("Received OpalAction message: ACTION="
                 + data.action + ", MESSAGE=" + data.message)
 
         # Currently, we are only using OpalAction messages to get
@@ -313,11 +312,11 @@ class ss_ros():
             # Check if START was in the message.
             if "START" in data.message:
                 self.start_response_received = True
-                self.response_received = data.message
+                self._response_received = data.message
             # Check if CORRECT was in the message.
             if "CORRECT" in data.message:
-                self.correct_incorrect_response_received = True
-                self.response_received = data.message
+                self._correct_incorrect_response_received = True
+                self._response_received = data.message
             pass
         elif "release" in data.action:
             # No object
@@ -340,9 +339,9 @@ class ss_ros():
         """ Called when we receive RobotState messages """
         # When we get robot state messages, set a flag indicating
         # whether the robot is in motion or playing sound or not.
-        self.robot_speaking = data.is_playing_sound
-        self.robot_doing_action = data.doing_action
-        self.logger.info("Received RobotState message: doing_action="
+        self._robot_speaking = data.is_playing_sound
+        self._robot_doing_action = data.doing_action
+        self._logger.info("Received RobotState message: doing_action="
                 + str(data.doing_action) + ", playing_sound="
                 + str(data.is_playing_sound))
         # TODO Set flags for any other fields that we add to
@@ -359,47 +358,47 @@ class ss_ros():
         # START, CORRECT_INCORRECT, ROBOT_NOT_SPEAKING
         if "START" in response:
             self.start_response_received = False
-            self.waiting_for_start = True
-            self.waiting_for_correct_incorrect = False
-            self.waiting_for_robot_speaking = False
+            self._waiting_for_start = True
+            self._waiting_for_correct_incorrect = False
+            self._waiting_for_robot_speaking = False
         elif "CORRECT" in response:
-            self.correct_incorrect_response_received = False
-            self.waiting_for_start = False
-            self.waiting_for_correct_incorrect = True
-            self.waiting_for_robot_speaking = False
+            self._correct_incorrect_response_received = False
+            self._waiting_for_start = False
+            self._waiting_for_correct_incorrect = True
+            self._waiting_for_robot_speaking = False
         elif "ROBOT_NOT_SPEAKING" in response:
-            self.robot_speaking = True
-            self.waiting_for_start = False
-            self.waiting_for_correct_incorrect = False
-            self.waiting_for_robot_speaking = True
+            self._robot_speaking = True
+            self._waiting_for_start = False
+            self._waiting_for_correct_incorrect = False
+            self._waiting_for_robot_speaking = True
         else:
-            self.logger.warning("Told to wait for " + response + " but that " +
+            self._logger.warning("Told to wait for " + response + " but that " +
                 "isn't one of the allowed responses to wait for!")
             return
 
-        self.logger.info("waiting for " + response + "...")
+        self._logger.info("waiting for " + response + "...")
         start_time = datetime.datetime.now()
         while datetime.datetime.now() - start_time < timeout:
             time.sleep(0.1)
             # Check periodically whether we've received the response we
             # were waiting for, and if so, we're done waiting.
-            if (self.waiting_for_start and self.start_response_received) \
-                    or (self.waiting_for_correct_incorrect and \
-                        self.correct_incorrect_response_received) \
-                    or (self.waiting_for_robot_speaking \
-                    and not self.robot_speaking \
-                    and not self.robot_doing_action):
-                self.logger.info("Got " + response + " response!")
+            if (self._waiting_for_start and self.start_response_received) \
+                    or (self._waiting_for_correct_incorrect and \
+                        self._correct_incorrect_response_received) \
+                    or (self._waiting_for_robot_speaking \
+                    and not self._robot_speaking \
+                    and not self._robot_doing_action):
+                self._logger.info("Got " + response + " response!")
                 # Reset waiting flags
-                self.waiting_for_start = False
-                self.waiting_for_correct_incorrect = False
-                self.waiting_for_robot_speaking = False
-                return self.response_received
+                self._waiting_for_start = False
+                self._waiting_for_correct_incorrect = False
+                self._waiting_for_robot_speaking = False
+                return self._response_received
         # If we don't get the response we were waiting for, we're done
         # waiting and timed out.
-        self.waiting_for_start = False
-        self.waiting_for_correct_incorrect = False
-        self.waiting_for_robot_speaking = False
-        self.logger.info("Timed out! Moving on...")
+        self._waiting_for_start = False
+        self._waiting_for_correct_incorrect = False
+        self._waiting_for_robot_speaking = False
+        self._logger.info("Timed out! Moving on...")
         return "TIMEOUT"
 
