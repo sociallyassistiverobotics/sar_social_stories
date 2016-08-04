@@ -234,30 +234,65 @@ class ss_game_node():
 
                         # If we get a PAUSE command, pause iteration over
                         # the script.
-                        if "PAUSE" in msg and not paused:
+                        elif "PAUSE" in msg and not paused:
                             self.logger.info("Game paused!")
                             log_timer = datetime.datetime.now()
                             paused = True
                             self.script_handler.pause_game_timer()
-                            # announce the game is pausing
+                            # Announce the game is pausing.
                             self.ros_ss.send_game_state("PAUSE")
 
                         # If we are paused and get a CONTINUE command,
                         # we can resume iterating over the script. If
                         # we're not paused, ignore.
-                        if "CONTINUE" in msg and paused:
+                        elif "CONTINUE" in msg and paused:
                             self.logger.info("Resuming game!")
                             paused = False
                             self.script_handler.resume_game_timer()
-                            # announce the game is resuming
+                            # Announce the game is resuming.
                             self.ros_ss.send_game_state("IN_PROGRESS")
 
                         # When we receive an END command, we need to
                         # exit gracefully. Stop all repeating scripts
                         # and story scripts, go directly to the end.
-                        if "END" in msg and started:
+                        elif "END" in msg and started:
                             self.logger.info("Ending game!")
                             self.script_handler.set_end_game()
+
+                        # When we receive a WAIT_FOR_RESPONSE command,
+                        # we can unpause the game, but go directly to
+                        # waiting for a user response rather than
+                        # reading the next script line.
+                        elif "WAIT_FOR_RESPONSE" in msg and started:
+                            self.logger.info("Waiting for user response!")
+                            if (self.script_handler. \
+                                wait_for_last_response_again()):
+                                # If we get a response, we can unpause
+                                # (but we may not have been paused).
+                                paused = False
+                                self.script_handler.resume_game_timer()
+                                # Announce the game is resuming.
+                                self.ros_ss.send_game_state("IN_PROGRESS")
+                            else:
+                                # We timed out again, don't resume.
+                                self.logger.info("Did not get response!")
+
+                        # When we receive a SKIP_RESPONSE command, we
+                        # unpause the game, and instead of waiting for
+                        # user response, we skip waiting, and continue
+                        # with the next script line.
+                        elif "SKIP_RESPONSE" in msg and started:
+                            self.logger.info("Skipping waiting for user " +
+                                "response!")
+                            # Treat the skipped response as a NO or as
+                            # INCORRECT, then let the game resume play
+                            # normally.
+                            self.script_handler.skip_wait_for_response()
+                            # Unpause and continue the game.
+                            paused = False
+                            self.script_handler.resume_game_timer()
+                            # Announce the game is resuming.
+                            self.ros_ss.send_game_state("IN_PROGRESS")
 
                     # If the game has been started and is not paused,
                     # parse and handle the next script line.
@@ -271,7 +306,7 @@ class ss_game_node():
                                 datetime.timedelta(seconds=int(5))):
                             if paused:
                                 self.logger.info("Game paused... waiting for "
-                                + "command to continue.")
+                                + "command to continue or skip response.")
                             elif not started:
                                 self.logger.info("Waiting for command to "
                                     + "start.")

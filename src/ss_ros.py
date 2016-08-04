@@ -250,7 +250,7 @@ class ss_ros():
         if "PAUSED" in state:
             msg.state = GameState.PAUSED
         if "TIMEOUT" in state:
-            msg.state = GameState.TIMEOUT
+            msg.state = GameState.USER_TIMEOUT
         if "END" in state:
             msg.state = GameState.END
             if performance is not None:
@@ -288,6 +288,10 @@ class ss_ros():
             self.game_node_queue.put("CONTINUE")
         if data.command is GameCommand.END:
             self.game_node_queue.put("END")
+        if data.command is GameCommand.WAIT_FOR_RESPONSE:
+            self.game_node_queue.put("WAIT_FOR_RESPONSE")
+        if data.command is GameCommand.SKIP_RESPONSE:
+            self.game_node_queue.put("SKIP_RESPONSE")
 
 
     def on_opal_action_msg(self, data):
@@ -351,7 +355,7 @@ class ss_ros():
         """
         # Check what response to wait for, set that response received
         # flag to false.
-        # Valid responses are:
+        # Valid responses to wait for are:
         # START, CORRECT_INCORRECT, ROBOT_NOT_SPEAKING
         if "START" in response:
             self.start_response_received = False
@@ -369,9 +373,8 @@ class ss_ros():
             self.waiting_for_correct_incorrect = False
             self.waiting_for_robot_speaking = True
         else:
-            self.logger.warning("Told to wait for "
-                    + response + " but that isn't one of the allowed "
-                    + "responses to wait for!")
+            self.logger.warning("Told to wait for " + response + " but that " +
+                "isn't one of the allowed responses to wait for!")
             return
 
         self.logger.info("waiting for " + response + "...")

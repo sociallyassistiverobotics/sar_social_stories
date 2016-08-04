@@ -29,6 +29,7 @@ import time # For sleep
 import json # For packing ros message properties
 import random # For picking robot responses and shuffling answer options
 import logging # Log messages
+import Queue # for queuing messages for the main game loop
 from SS_Errors import NoStoryFound # Custom exception when no stories found
 from ss_script_parser import ss_script_parser # Parses scripts
 from ss_personalization_manager import ss_personalization_manager
@@ -51,7 +52,7 @@ class ss_script_handler():
     WAIT_TIME = 30
 
     def __init__(self, ros_node, session, participant, script_path,
-            story_script_path, session_script_path, database):
+            story_script_path, session_script_path, database, queue):
         """ Save references to ROS connection and logger, get scripts and
         set up to read script lines
         """
@@ -74,6 +75,10 @@ class ss_script_handler():
             self.session_script_path = ""
         else:
             self.session_script_path = session_script_path
+
+        # We get a reference to the main game node's queue so we can
+        # give it messages.
+        self.game_node_queue = queue
 
         # Set up personalization manager so we can get personalized
         # stories for this participant.
@@ -109,6 +114,10 @@ class ss_script_handler():
 
         # Initialize total time paused.
         self.total_time_paused = datetime.timedelta(seconds=0)
+
+        # Initialize pause start time in case someone calls the resume
+        # game timer function before the pause game function.
+        self.pause_start_time = None
 
 
     def iterate_once(self):
@@ -457,12 +466,16 @@ class ss_script_handler():
 
 
     def wait_for_response(self, response_to_get, timeout):
-        ''' Wait for a user response or wait until the specified time
+        """ Wait for a user response or wait until the specified time
         has elapsed. If the response is incorrect, allow multiple
         attempts up to the maximum number of incorrect responses.
-        '''
+        """
         for i in range(0, self.max_incorrect_responses):
             self.logger.info("Waiting for user response...")
+             # Save the response we were trying to get in case we need
+             # to try again.
+            self.last_response_to_get = response_to_get
+            self.last_response_timeout = timeout
             # Wait for the specified type of response, or until the
             # specified time has elapsed.
             response = self.ros_node.wait_for_response(response_to_get,
@@ -473,21 +486,34 @@ class ss_script_handler():
 
             # If we didn't receive a response, then it was probably
             # because we didn't send a valid response to wait for.
+            # This is different from a TIMEOUT since we didn't time
+            # out -- we just didn't get a response of any kind.
             if not response:
                 self.logger.info("Done waiting -- did not get valid response!")
-                return
+                return False
 
-            # If we received no user response before timing out, treat
-            # as either NO or INCORRECT.
-            # TODO Send GameCommand.TIMEOUT message when we time out
-            # waiting for a user response. May need to revise how we
-            # deal with timeouts based on how this TIMEOUT message is
-            # used.
+            # If we received no user response before timing out, send a
+            # TIMEOUT message and pause the game.
+            elif "TIMEOUT" in response:
+                # Announce we timed out.
+                self.ros_node.send_game_state("TIMEOUT")
+                # Pause game and wait to be told whether we should try
+                # waiting again for a response or whether we should
+                # skip it and move on. Queue up the pause command so the
+                # main game loop can take action.
+                self.game_node_queue.put("PAUSE")
+                # Announce the game is pausing.
+                self.ros_node.send_game_state("PAUSE")
+                # Indicate that we did not get a response.
+                # We don't break and let the user try again because the
+                # external game monitor deals with TIMEOUT events, and
+                # will tell us whether to try waiting again or to just
+                # skip waiting for this response.
+                return False
 
             # If response was INCORRECT, randomly select a robot
             # response to an incorrect user action.
-            if ("INCORRECT" in response) or ("TIMEOUT" in response
-                    and "CORRECT" in response_to_get):
+            elif "INCORRECT" in response:
                 try:
                     self.ros_node.send_robot_command_and_wait("DO",
                             "ROBOT_NOT_SPEAKING",
@@ -497,11 +523,12 @@ class ss_script_handler():
                 except AttributeError:
                     self.logger.exception("Could not play an incorrect "
                             + "response because none were loaded!")
+                # Don't break so we allow the user a chance to respond
+                # again.
 
             # If response was NO, randomly select a robot response to
             # the user selecting no.
-            elif "NO" in response or ("TIMEOUT" in response
-                    and "START" in response_to_get):
+            elif "NO" in response:
                 try:
                     self.ros_node.send_robot_command_and_wait("DO",
                             "ROBOT_NOT_SPEAKING",
@@ -511,6 +538,8 @@ class ss_script_handler():
                 except AttributeError:
                     self.logger.exception("Could not play a response to "
                             + "user's NO because none were loaded!")
+                # Don't break so we allow the user a chance to respond
+                # again.
 
             # If response was CORRECT, randomly select a robot response
             # to a correct user action, highlight the correct answer,
@@ -535,6 +564,8 @@ class ss_script_handler():
                     self.logger.exception("Could not play a correct "
                             + "response or could not play robot's answer"
                             + "feedback because none were loaded!")
+                # Break from the for loop so we don't give the user
+                # a chance to respond again.
                 break
 
             # If response was START, randomly select a robot response to
@@ -549,10 +580,12 @@ class ss_script_handler():
                     except AttributeError:
                         self.logger.exception("Could not play response to"
                             + "user's START because none were loaded!")
+                    # Break from the for loop so we don't give the user
+                    # a chance to respond again.
                     break
 
         # We exhausted our allowed number of user responses, so have
-        # the robot do something.
+        # the robot do something instead of waiting more.
         else:
             # If user was never correct, play robot's correct answer
             # feedback and show which answer was correct in the game.
@@ -577,6 +610,41 @@ class ss_script_handler():
             elif "START" in response_to_get:
                 self.repeating = False
                 self.story = False
+
+        # We got a user response and responded to it!
+        return True
+
+
+    def skip_wait_for_response(self):
+        """ Skip waiting for a response; treat the skipped response as
+        a NO or INCORRECT response.
+        """
+        # If the response to wait for was CORRECT or INCORRECT,
+        # randomly select a robot response to an incorrect user
+        # action.
+        if "CORRECT" in self.last_response_to_get:
+            try:
+                self.ros_node.send_robot_command_and_wait("DO",
+                        "ROBOT_NOT_SPEAKING",
+                        datetime.timedelta(seconds=int(self.WAIT_TIME)),
+                        self.incorrect_responses[random.randint(0, \
+                            len(self.incorrect_responses)-1)])
+            except AttributeError:
+                self.logger.exception("Could not play an incorrect "
+                        + "response because none were loaded!")
+
+        # If response to wait for was YES or NO, randomly select a
+        # robot response for a NO user action.
+        elif "NO" in self.last_response_to_get:
+            try:
+                self.ros_node.send_robot_command_and_wait("DO",
+                        "ROBOT_NOT_SPEAKING",
+                        datetime.timedelta(seconds=int(self.WAIT_TIME)),
+                        self.no_responses[random.randint(0,
+                            len(self.no_responses)-1)])
+            except AttributeError:
+                self.logger.exception("Could not play a response to "
+                        + "user's NO because none were loaded!")
 
 
     def set_end_game(self):
@@ -610,8 +678,23 @@ class ss_script_handler():
         ''' Add how much time we spent paused to our total time spent
         paused.
         '''
-        self.total_time_paused += datetime.datetime.now() \
-           - self.pause_start_time
+        # Since this function could theoretically be called before we
+        # get a call to pause_game_timer, we have to check that there
+        # is a pause start time, and then later, reset it so we can't
+        # add the same pause length multiple times to our total pause
+        # time.
+        if self.pause_start_time is not None:
+            self.total_time_paused += datetime.datetime.now() \
+               - self.pause_start_time
+        # Reset pause start time.
+        self.pause_start_time = None
+
+    def wait_for_last_response_again(self):
+        """ Wait for the same response that we just waited for again,
+        with the same parameters for the response and the timeout.
+        """
+        return self.wait_for_response(self.last_response_to_get,
+            last_response_timeout)
 
 
     def load_answers(self, answer_list):
