@@ -53,7 +53,7 @@ class ss_game_node():
     # export to the environment variable $ROS_IP to set the public
     # address of this node, so the user doesn't have to remember
     # to do this before starting the node.
-    ros_node = rospy.init_node('social_story_game', anonymous=True)
+    _ros_node = rospy.init_node('social_story_game', anonymous=True)
             # We could set the ROS log level here if we want:
             #log_level=rospy.DEBUG)
             # The rest of our logging is set up in the log config file.
@@ -61,22 +61,22 @@ class ss_game_node():
     def __init__(self):
         """ Initialize anything that needs initialization """
         # Set up queue that we use to get messages from ROS callbacks.
-        self.queue = Queue.Queue()
+        self._queue = Queue.Queue()
         # Set up logger.
-        self.logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger(__name__)
         # Configure logging.
         try:
             config_file = "ss_log_config.json"
             with open(config_file) as json_file:
                 json_data = json.load(json_file)
                 logging.config.dictConfig(json_data)
-                self.logger.debug("==============================\n" +
+                self._logger.debug("==============================\n" +
                     "STARTING\nLogger configuration:\n %s", json_data)
         except Exception as e:
             # Could not read config file -- use basic configuration.
             logging.basicConfig(filename="ss.log",
                     level=logging.DEBUG)
-            self.logger.exception("ERROR! Could not read your json log "
+            self._logger.exception("ERROR! Could not read your json log "
                 + "config file \"" + config_file + "\". Does the file "
                 + "exist? Is it valid json?\n\nUsing default log setup to "
                 + "log to \"ss.log\". Will not be logging to rosout!")
@@ -103,7 +103,7 @@ class ss_game_node():
 
         # Parse the args we got, and print them out.
         args = parser.parse_args()
-        self.logger.debug("Args received: %s", args)
+        self._logger.debug("Args received: %s", args)
 
         # Give the session number and participant ID to the game launcher
         # where they will be used to load appropriate game scripts.
@@ -111,20 +111,20 @@ class ss_game_node():
         # If the session number doesn't make sense, or we've specified that
         # this is a demo, run demo.
         if args.session < 0 or args.participant == 'DEMO':
-            self.launch_game(-1, 'DEMO')
+            self._launch_game(-1, 'DEMO')
         # Otherwise, launch the game for the provided session and ID
         else:
-            self.launch_game(args.session, args.participant)
+            self._launch_game(args.session, args.participant)
 
 
-    def launch_game(self, session, participant):
+    def _launch_game(self, session, participant):
         """ Load game based on the current session and participant """
         # Log session and participant ID.
-        self.logger.info("==============================\nSOCIAL STORIES " +
+        self._logger.info("==============================\nSOCIAL STORIES " +
             "GAME\nSession: %s, Participant ID: %s", session, participant)
 
         # Set up ROS node publishers and subscribers.
-        self.ros_ss = ss_ros(self.ros_node, self.queue)
+        self._ros_ss = ss_ros(self._queue)
 
         # Read config file to get relative file path to game scripts.
         try:
@@ -132,35 +132,35 @@ class ss_game_node():
                     else "ss_config.json"
             with open(config_file) as json_file:
                 json_data = json.load(json_file)
-                self.logger.debug("Reading game config file...: %s", json_data)
+                self._logger.debug("Reading game config file...: %s", json_data)
                 if ("script_path" in json_data):
-                    self.script_path = json_data["script_path"]
+                    script_path = json_data["script_path"]
                 else:
-                    self.logger.error("Could not read relative path to game "
+                    self._logger.error("Could not read relative path to game "
                         + "scripts! Expected option \"script_path\" to be in "
                         + "the config file. Exiting because we need the "
                         + "scripts to run the game.")
                     return
                 if ("story_script_path" in json_data):
-                    self.story_script_path = json_data["story_script_path"]
+                    story_script_path = json_data["story_script_path"]
                 else:
-                    self.logger.error("Could not read path to story scripts! "
+                    self._logger.error("Could not read path to story scripts! "
                         + "Expected option \"story_script_path\" to be in "
                         + "config file. Assuming story scripts are in the main"
                         + " game script directory and not a sub-directory.")
-                    self.story_script_path = None
+                    story_script_path = None
                 if ("session_script_path" in json_data):
-                    self.session_script_path = json_data["session_script_path"]
+                    session_script_path = json_data["session_script_path"]
                 else:
-                    self.logger.error("Could not read path to session scripts! "
+                    self._logger.error("Could not read path to session scripts! "
                         + "Expected option \"session_script_path\" to be in "
                         + "config file. Assuming session scripts are in the main"
                         + "game script directory and not a sub-directory.")
-                    self.session_script_path = None
+                    session_script_path = None
                 if ("database") in json_data:
                     database = json_data["database"]
                 else:
-                    self.logger.error("""Could not read name of database!
+                    self._logger.error("""Could not read name of database!
                         Expected option \"database\" to be in the config file.
                         Assuming database is named \"socialstories.db\"""")
                     database = "socialstories.db"
@@ -168,29 +168,29 @@ class ss_game_node():
                     percent_correct_to_level = json_data[
                             "percent_correct_to_level"]
                 else:
-                    self.logger.error("""Could not read the percent questions
+                    self._logger.error("""Could not read the percent questions
                         correct needed to level! Expected option
                         \"percent_correct_to_level\" to be in the config file.
                         Defaulting to 75%.""")
                     percent_correct_to_level = 0.75
         except Exception as e:
-            self.logger.exception("Could not read your json config file \""
+            self._logger.exception("Could not read your json config file \""
                 + config_file + "\". Does the file exist? Is it valid json?"
                 + " Exiting because we need the config file to run the game.")
             return
 
         # Load script.
         try:
-            self.script_handler = ss_script_handler(self.ros_ss, session,
-                participant, self.script_path, self.story_script_path,
-                self.session_script_path, database, percent_correct_to_level)
+            script_handler = ss_script_handler(self._ros_ss, session,
+                participant, script_path, story_script_path,
+                session_script_path, database, percent_correct_to_level)
         except IOError as e:
-            self.logger.exception("Did not load the session script... exiting "
+            self._logger.exception("Did not load the session script... exiting "
                 + "because we need the session script to run the game.")
             return
         else:
             # Flag to indicate whether we should exit.
-            self.stop = False
+            self._stop = False
 
             # Flags for game control.
             started = False
@@ -198,14 +198,14 @@ class ss_game_node():
             log_timer = datetime.datetime.now()
 
             # Set up signal handler to catch SIGINT (e.g., ctrl-c).
-            signal.signal(signal.SIGINT, self.signal_handler)
+            signal.signal(signal.SIGINT, self._signal_handler)
 
-            while (not self.stop):
+            while (not self._stop):
                 try:
                     try:
                         # Get data from queue if any is there, but don't
                         # wait if there isn't.
-                        msg = self.queue.get(False)
+                        msg = self._queue.get(False)
                     except Queue.Empty:
                         # no data yet!
                         pass
@@ -214,90 +214,90 @@ class ss_game_node():
                         # Wait for START command before starting to
                         # iterate over the script.
                         if "START" in msg and not started:
-                            self.logger.info("Starting game!")
+                            self._logger.info("Starting game!")
                             # Pass on the start level, if it was given.
                             msg_parts = msg.split("\t")
                             if len(msg_parts) > 1:
                                 try:
-                                    self.script_handler.set_start_level(
+                                    script_handler.set_start_level(
                                         int(msg_parts[1]))
-                                    self.logger.info("Got start level: "
+                                    self._logger.info("Got start level: "
                                         + msg_parts[1])
                                 except ValueError:
-                                    self.logger.warning("Was given a start " +
+                                    self._logger.warning("Was given a start " +
                                         "level that wasn't an int! "
                                         + msg_parts[1])
                             started = True
                             # Announce the game is starting.
-                            self.ros_ss.send_game_state("START")
-                            self.ros_ss.send_game_state("IN_PROGRESS")
+                            self._ros_ss.send_game_state("START")
+                            self._ros_ss.send_game_state("IN_PROGRESS")
 
                         # If we get a PAUSE command, pause iteration over
                         # the script.
                         elif "PAUSE" in msg and not paused:
-                            self.logger.info("Game paused!")
+                            self._logger.info("Game paused!")
                             log_timer = datetime.datetime.now()
                             paused = True
-                            self.script_handler.pause_game_timer()
+                            script_handler.pause_game_timer()
                             # Announce the game is pausing.
-                            self.ros_ss.send_game_state("PAUSE")
+                            self._ros_ss.send_game_state("PAUSE")
 
                         # If we are paused and get a CONTINUE command,
                         # we can resume iterating over the script. If
                         # we're not paused, ignore.
                         elif "CONTINUE" in msg and paused:
-                            self.logger.info("Resuming game!")
+                            self._logger.info("Resuming game!")
                             paused = False
-                            self.script_handler.resume_game_timer()
+                            script_handler.resume_game_timer()
                             # Announce the game is resuming.
-                            self.ros_ss.send_game_state("IN_PROGRESS")
+                            self._ros_ss.send_game_state("IN_PROGRESS")
 
                         # When we receive an END command, we need to
                         # exit gracefully. Stop all repeating scripts
                         # and story scripts, go directly to the end.
                         elif "END" in msg and started:
-                            self.logger.info("Ending game!")
-                            self.script_handler.set_end_game()
+                            self._logger.info("Ending game!")
+                            script_handler.set_end_game()
 
                         # When we receive a WAIT_FOR_RESPONSE command,
                         # we can unpause the game, but go directly to
                         # waiting for a user response rather than
                         # reading the next script line.
                         elif "WAIT_FOR_RESPONSE" in msg and started:
-                            self.logger.info("Waiting for user response!")
-                            if (self.script_handler. \
+                            self._logger.info("Waiting for user response!")
+                            if (script_handler. \
                                 wait_for_last_response_again()):
                                 # If we get a response, we can unpause
                                 # (but we may not have been paused).
                                 paused = False
-                                self.script_handler.resume_game_timer()
+                                script_handler.resume_game_timer()
                                 # Announce the game is resuming.
-                                self.ros_ss.send_game_state("IN_PROGRESS")
+                                self._ros_ss.send_game_state("IN_PROGRESS")
                             else:
                                 # We timed out again, don't resume.
-                                self.logger.info("Did not get response!")
+                                self._logger.info("Did not get response!")
 
                         # When we receive a SKIP_RESPONSE command, we
                         # unpause the game, and instead of waiting for
                         # user response, we skip waiting, and continue
                         # with the next script line.
                         elif "SKIP_RESPONSE" in msg and started:
-                            self.logger.info("Skipping waiting for user " +
+                            self._logger.info("Skipping waiting for user " +
                                 "response!")
                             # Treat the skipped response as a NO or as
                             # INCORRECT, then let the game resume play
                             # normally.
-                            self.script_handler.skip_wait_for_response()
+                            script_handler.skip_wait_for_response()
                             # Unpause and continue the game.
                             paused = False
-                            self.script_handler.resume_game_timer()
+                            script_handler.resume_game_timer()
                             # Announce the game is resuming.
-                            self.ros_ss.send_game_state("IN_PROGRESS")
+                            self._ros_ss.send_game_state("IN_PROGRESS")
 
                     # If the game has been started and is not paused,
                     # parse and handle the next script line.
                     if started and not paused:
-                        self.script_handler.iterate_once()
+                        script_handler.iterate_once()
 
                     elif not started or paused:
                         # Print a log message periodically stating that
@@ -305,31 +305,31 @@ class ss_game_node():
                         if (datetime.datetime.now() - log_timer > \
                                 datetime.timedelta(seconds=int(5))):
                             if paused:
-                                self.logger.info("Game paused... waiting for "
+                                self._logger.info("Game paused... waiting for "
                                 + "command to continue or skip response.")
                             elif not started:
-                                self.logger.info("Waiting for command to "
+                                self._logger.info("Waiting for command to "
                                     + "start.")
                             log_timer = datetime.datetime.now()
 
                 except StopIteration as e:
-                    self.logger.info("Finished script!")
+                    self._logger.info("Finished script!")
                     # Send message to announce the game is over.
                     if "performance" in dir(e):
-                        self.ros_ss.send_game_state("END", e.performance)
+                        self._ros_ss.send_game_state("END", e.performance)
                     else:
-                        self.ros_ss.send_game_state("END")
+                        self._ros_ss.send_game_state("END")
                     break
 
             # TODO wait after exiting this loop for the main
             # SessionManager to close the process??
 
 
-    def signal_handler(self, sig, frame):
+    def _signal_handler(self, sig, frame):
         """ Handle signals caught """
         if sig == signal.SIGINT:
-            self.logger.info("Got keyboard interrupt! Exiting.")
-            self.stop = True
+            self._logger.info("Got keyboard interrupt! Exiting.")
+            self._stop = True
             exit("Interrupted by user.")
 
 
@@ -341,6 +341,6 @@ if __name__ == '__main__':
 
     # If roscore isn't running or shuts down unexpectedly...
     except rospy.ROSInterruptException:
-        self.logger.exception('ROS node shutdown')
+        self._logger.exception('ROS node shutdown')
         pass
 
