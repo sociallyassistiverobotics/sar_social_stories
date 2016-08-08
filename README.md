@@ -115,6 +115,17 @@ number, and/or enter `DEMO` as the participant string.
 The demo game uses the config file `ss_config.demo.json`, game scripts located
 in the `game_scripts/` directory, and the database file `src/socialstories.db`.
 
+To run a full demo, you will need the following ROS nodes:
+- roscore
+- rosbridge webserver (for Opal device websocket connection)
+- an Opal device (running
+  [SAR-Opal-base](https://github.com/personal-robots/SAR-opal-base))
+- a game command node (e.g., [sar\_game\_command\_sender](https://github.com/personal-robots/sar_game_command_sender))
+- a robot node (e.g.,
+  [sar\_robot\_simulator](https://github.com/personal-robots/sar_robot_simulator))
+- the robot translation node ([sar\_robot\_translation](https://github.com/personal-robots/sar_robot_translation))
+- this game
+
 ### Graphics
 
 The game, including the demo version, requires a set of graphics to be added to

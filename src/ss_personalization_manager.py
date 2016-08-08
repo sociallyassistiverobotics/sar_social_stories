@@ -30,14 +30,12 @@ class ss_personalization_manager():
     """ Determine personalization for a participant, given their past
     performance and the current session """
 
-    def __init__(self, participant, session, database,
+    def __init__(self, session, participant, database,
             percent_correct_to_level):
         """ Initialize stuff """
         # Set up logger.
         self._logger = logging.getLogger(__name__)
-
-        self._logger.info("TODO initialize personalization manager - "
-            + "using DEMO setup")
+        self._logger.info("Initializing personalization manager...")
 
         # Save participant and session so we can use them to get their
         # past performance from the database, which we will use to

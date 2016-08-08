@@ -52,7 +52,8 @@ class ss_script_handler():
     WAIT_TIME = 30
 
     def __init__(self, ros_node, session, participant, script_path,
-            story_script_path, session_script_path, database, queue):
+            story_script_path, session_script_path, database, queue,
+            percent_correct_to_level):
         """ Save references to ROS connection and logger, get scripts and
         set up to read script lines
         """
@@ -282,7 +283,7 @@ class ss_script_handler():
                 self._logger.debug("ROBOT")
                 # Play a randomly selected story intro from the list.
                 if "STORY_INTRO" in elements[1]:
-                    self._ros_node.send_robot_command_and_wait("DO",
+                    self._ros_node.send_robot_command("DO",
                         response="ROBOT_NOT_SPEAKING",
                         timeout=datetime.timedelta(seconds=int(
                             self.WAIT_TIME)),
@@ -291,7 +292,7 @@ class ss_script_handler():
 
                 # Play a randomly selected story closing from the list.
                 elif "STORY_CLOSING" in elements[1]:
-                    self._ros_node.send_robot_command_and_wait("DO",
+                    self._ros_node.send_robot_command("DO",
                         response="ROBOT_NOT_SPEAKING",
                         timeout=datetime.timedelta(seconds=int(
                             self.WAIT_TIME)),
@@ -300,7 +301,7 @@ class ss_script_handler():
 
                 # Send a command to the robot, with properties.
                 elif len(elements) > 2:
-                    self._ros_node.send_robot_command_and_wait(elements[1],
+                    self._ros_node.send_robot_command(elements[1],
                         response="ROBOT_NOT_SPEAKING",
                         timeout=datetime.timedelta(seconds=int(
                             self.WAIT_TIME)),
@@ -544,7 +545,7 @@ class ss_script_handler():
             # response to an incorrect user action.
             elif "INCORRECT" in response:
                 try:
-                    self._ros_node.send_robot_command_and_wait("DO",
+                    self._ros_node.send_robot_command("DO",
                         response="ROBOT_NOT_SPEAKING",
                         timeout=datetime.timedelta(seconds=int(
                             self.WAIT_TIME)),
@@ -560,7 +561,7 @@ class ss_script_handler():
             # the user selecting no.
             elif "NO" in response:
                 try:
-                    self._ros_node.send_robot_command_and_wait("DO",
+                    self._ros_node.send_robot_command("DO",
                         response="ROBOT_NOT_SPEAKING",
                         timeout=datetime.timedelta(seconds=int(
                             self.WAIT_TIME)),
@@ -577,14 +578,14 @@ class ss_script_handler():
             # and break out of response loop.
             elif "CORRECT" in response:
                 try:
-                    self._ros_node.send_robot_command_and_wait("DO",
+                    self._ros_node.send_robot_command("DO",
                         response="ROBOT_NOT_SPEAKING",
                         timeout=datetime.timedelta(seconds=int(
                             self.WAIT_TIME)),
                         properties=self._correct_responses[random.randint(0,
                             len(self._correct_responses)-1)])
                     self._ros_node.send_opal_command("SHOW_CORRECT")
-                    self._ros_node.send_robot_command_and_wait("DO",
+                    self._ros_node.send_robot_command("DO",
                         response="ROBOT_NOT_SPEAKING",
                         timeout=datetime.timedelta(seconds=int(
                             self.WAIT_TIME)),
@@ -605,7 +606,7 @@ class ss_script_handler():
             # the user selecting START, and break out of response loop.
             elif "START" in response:
                     try:
-                        self._ros_node.send_robot_command_and_wait("DO",
+                        self._ros_node.send_robot_command("DO",
                             response="ROBOT_NOT_SPEAKING",
                             timeout=datetime.timedelta(seconds=int(
                                 self.WAIT_TIME)),
@@ -626,7 +627,7 @@ class ss_script_handler():
             if "CORRECT" in response_to_get:
                 try:
                     self._ros_node.send_opal_command("SHOW_CORRECT")
-                    self._ros_node.send_robot_command_and_wait("DO",
+                    self._ros_node.send_robot_command("DO",
                         response="ROBOT_NOT_SPEAKING",
                         timeout=datetime.timedelta(seconds=int(
                             self.WAIT_TIME)),
@@ -659,7 +660,7 @@ class ss_script_handler():
         # action.
         if "CORRECT" in self._last_response_to_get:
             try:
-                self._ros_node.send_robot_command_and_wait("DO",
+                self._ros_node.send_robot_command("DO",
                     response="ROBOT_NOT_SPEAKING",
                     timeout=datetime.timedelta(seconds=int(self.WAIT_TIME)),
                     properties=self._incorrect_responses[random.randint(0, \
@@ -672,7 +673,7 @@ class ss_script_handler():
         # robot response for a NO user action.
         elif "NO" in self._last_response_to_get:
             try:
-                self._ros_node.send_robot_command_and_wait("DO",
+                self._ros_node.send_robot_command("DO",
                     response="ROBOT_NOT_SPEAKING",
                     timeout=datetime.timedelta(seconds=int(self.WAIT_TIME)),
                     properties=self._no_responses[random.randint(0,
@@ -774,7 +775,7 @@ class ss_script_handler():
                     " out of time! Skipping and ending now.")
             self._doing_story = False
             try:
-                self._ros_node.send_robot_command_and_wait("DO",
+                self._ros_node.send_robot_command("DO",
                     response="ROBOT_NOT_SPEAKING",
                     timeout=datetime.timedelta(seconds=int(self.WAIT_TIME)),
                     properties=self._max_stories_reached

@@ -183,7 +183,8 @@ class ss_game_node():
         try:
             script_handler = ss_script_handler(self._ros_ss, session,
                 participant, script_path, story_script_path,
-                session_script_path, database, percent_correct_to_level)
+                session_script_path, database, self._queue,
+                percent_correct_to_level)
         except IOError as e:
             self._logger.exception("Did not load the session script... exiting "
                 + "because we need the session script to run the game.")

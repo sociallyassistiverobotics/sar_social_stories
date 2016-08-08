@@ -36,7 +36,7 @@ class ss_db_manager():
         # Get connection to database.
         try:
             self._conn = sqlite3.connect(database)
-            self._cursor = conn.cursor()
+            self._cursor = self._conn.cursor()
         except:
             self._logger.exception("Could not connect to database: " +
                 database)
@@ -69,16 +69,16 @@ class ss_db_manager():
                     (participant, (current_session-1))).fetchone()
             if result is None:
                 self._logger.warn("Could not find level of previous session"
-                    + " for " + participant + " for session " + current_session
-                    + " in the database!")
+                    + " for " + participant + " for session "
+                    + str(current_session) + " in the database!")
                 return None
             else:
                 # Database gives us a tuple, so return the first element.
                 return result[0]
         except Exception as e:
             self._logger.exception("Could not find level of previous session"
-                    + " for " + participant + " for session " + current_session
-                    + " in the database!")
+                    + " for " + participant + " for session "
+                    + str(current_session) + " in the database!")
             # Pass on exception for now.
             raise
 
@@ -240,8 +240,8 @@ class ss_db_manager():
 
             if result is None or result == []:
                 self._logger.warn("Could not find any unplayed stories for "
-                    + participant + " for session " + current_session +
-                    " with emotions " + emotions + " in the database!" +
+                    + participant + " for session " + str(current_session)
+                    + " with emotions " + emotions + " in the database!" +
                     " Will try to find any unplayed story...")
 
                 # Query again, but look for any unplayed stories, not
@@ -262,9 +262,9 @@ class ss_db_manager():
                     """ , (participant, session)).fetchall()
 
                 if result is None or result == []:
-                    self._logger.warn("Could not find any unplayed stories for "
-                    + participant + " for session " + current_session +
-                    " in the database!")
+                    self._logger.warn("Could not find unplayed stories for "
+                    + participant + " for session " + str(current_session)
+                    + " in the database!")
                     return None
 
             # We either found an unplayed story with the right emotions
@@ -275,8 +275,8 @@ class ss_db_manager():
 
         except Exception as e:
             self._logger.exception("Could not find any unplayed stories for "
-                    + participant + " for session " + current_session +
-                    " with emotions " + emotions + " in the database!")
+                    + participant + " for session " + str(current_session)
+                    + " with emotions " + emotions + " in the database!")
             # Pass on exception for now.
             raise
 
@@ -324,7 +324,7 @@ class ss_db_manager():
 
             if result is None:
                 self._logger.warn("Could not find any stories to review for "
-                    + participant + " for session " + current_session +
+                    + participant + " for session " + str(current_session)
                     + " with emotions " + emotions + " in the database!"
                     + " Looking for a story without those emotions...")
 
@@ -348,8 +348,8 @@ class ss_db_manager():
 
                 if result is None or result == []:
                     self._logger.warn("Could not find any review stories for "
-                    + participant + " for session " + current_session +
-                    " in the database!")
+                    + participant + " for session " + str(current_session)
+                    + " in the database!")
                     return None
 
             # We found a review story with the right emotions, or
@@ -361,7 +361,7 @@ class ss_db_manager():
 
         except Exception as e:
             self._logger.exception("Could not find any stories to review for "
-                    + participant + " for session " + current_session +
+                    + participant + " for session " + str(current_session)
                     + " with emotions " + emotions + " in the database!")
             # Pass on exception for now.
             raise
