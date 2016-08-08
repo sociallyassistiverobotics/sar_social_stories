@@ -36,7 +36,7 @@ class ss_db_manager():
         # Get connection to database.
         try:
             self._conn = sqlite3.connect(database)
-            self._cursor = conn.cursor()
+            self._cursor = self._conn.cursor()
         except:
             self._logger.exception("Could not connect to database: " +
                 database)
