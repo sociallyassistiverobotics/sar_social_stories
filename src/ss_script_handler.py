@@ -52,7 +52,8 @@ class ss_script_handler():
     WAIT_TIME = 30
 
     def __init__(self, ros_node, session, participant, script_path,
-            story_script_path, session_script_path, database, queue):
+            story_script_path, session_script_path, database, queue,
+            percent_correct_to_level):
         """ Save references to ROS connection and logger, get scripts and
         set up to read script lines
         """
