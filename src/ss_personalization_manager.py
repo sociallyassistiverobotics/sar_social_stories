@@ -195,7 +195,7 @@ class ss_personalization_manager():
             # Demo has 4 scenes.
             num_answers = 4
 
-            self._logger.debug("DEMO story:\nScenes: " + str(scenes)
+            self._logger.debug("DEMO story:\nScenes: " + str(graphic_names)
                     + "\nIn order: " + str(in_order)
                     + "\nNum answers: " + str(num_answers))
 
