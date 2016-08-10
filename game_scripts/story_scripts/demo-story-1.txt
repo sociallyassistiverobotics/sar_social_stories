@@ -1,7 +1,4 @@
-ROBOT	DO	"Lisa was putting on her shoes in the morning. Bella the dog took Lisa's favorite shoe."
-ROBOT	DO	"Lisa tried to get her shoe back from Bella. Bella wouldn't give it back."
-ROBOT	DO	"Lisa tried again but Bella still wouldn't give it back. Lisa's mom came into the room."
-ROBOT	DO	"She took the shoe from Bella. Then Lisa's mom gave the shoe back to her."
+ROBOT	DO	"Lisa was putting on her shoes in the morning. Bella the dog took Lisa's favorite shoe. Lisa tried to get her shoe back from Bella. Bella wouldn't give it back. Lisa tried again but Bella still wouldn't give it back. Lisa's mom came into the room. She took the shoe from Bella. Then Lisa's mom gave the shoe back to her."
 ROBOT	DO	"The end."
 PAUSE	2
 OPAL	LOAD_ANSWERS	answers/lisa_happy.png, answers/lisa_sad.png, answers/lisa_excited.png, answers/lisa_surprised.png
