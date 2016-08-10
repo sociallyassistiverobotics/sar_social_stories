@@ -49,7 +49,7 @@ class ss_personalization_manager():
         self._percent_correct_to_level = percent_correct_to_level
         # Get database manager, but don't require the database for a
         # DEMO session!
-        if (session != -1):
+        if (self._session != -1):
             self._db_man = ss_db_manager(database)
 
         # Get the level for this session.
@@ -70,7 +70,7 @@ class ss_personalization_manager():
         # that should be present in the stories this session. These
         # will be the emotions gotten incorrect in the past session.
         # Skip this if this is a demo session.
-        if (session != -1):
+        if (self._session != -1):
             self._emotion_list = self._db_man.get_most_recent_incorrect_emotions(
                 self._participant, self._session)
 
@@ -114,7 +114,7 @@ class ss_personalization_manager():
         session (and ignore performance on any other questions).
         """
         # Only get the user's performance if this isn't a DEMO session.
-        if (session != -1):
+        if (self._session != -1):
             return self._db_man.get_percent_correct_responses(self._participant,
                 self._session, "emotion")
         else:
@@ -195,7 +195,7 @@ class ss_personalization_manager():
             # Demo has 4 scenes.
             num_answers = 4
 
-            self._logger.debug("DEMO story:\nScenes: " + str(scenes)
+            self._logger.debug("DEMO story:\nScenes: " + str(graphic_names)
                     + "\nIn order: " + str(in_order)
                     + "\nNum answers: " + str(num_answers))
 
@@ -224,7 +224,7 @@ class ss_personalization_manager():
         playing this story.
         """
         # Skip if this is a demo session; otherwise record.
-        if (session != -1):
+        if (self._session != -1):
             self._db_man.record_story_played(self._participant, self._session,
                 self._level, self._current_story)
 
@@ -234,7 +234,7 @@ class ss_personalization_manager():
         questions.
         """
         # Skip if this is a demo session; otherwise record.
-        if (session != -1):
+        if (self._session != -1):
             self._db_man.record_response(self._participant, self._session,
                 self._level, self._current_story, question_num, question_type,
                 response)

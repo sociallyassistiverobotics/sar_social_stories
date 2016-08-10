@@ -416,6 +416,8 @@ This program was developed and tested with:
   "/sar_opal_msgs") 4.0.0
 - [sar\_robot\_command\_msgs](https://github.com/personal-robots/sar_robot_command_msgs
   "/sar_robot_command_msgs") 2.0.0
+- [sar\_game\_command\_msgs](https://github.com/sociallyassistiverobotics/sar_game_command_msgs
+  "/sar_game_command_msgs") 1.0.0
 - Ubuntu 14.04 LTS (64-bit)
 
 ## Bugs and issues
@@ -425,6 +427,18 @@ page](https://github.com/personal-robots/sar_social_stories/issues).
 
 ## TODO
 
-- Select scripts to play based on session and personalization.
 - Consider listing the mapping of session script files to sessions in a config
   file.
+- Add joint attention and turn taking tags to indicate opportunities for a user
+  to demonstrate these skills. Waiting on specifications for this from the SAR
+  team.
+- If the game is waiting for a response from the user, it will not respond to
+  GameCommands immediately. GameCommands (such as PAUSE) only take effect
+  between script lines, so the game would need to finish dealing with one line
+  (such as a line instructing the game to wait for a user response) before it
+  will deal with the GameCommand. It would be useful to be able to PAUSE
+  immediately regardless of what is happening in the game.
+- The game will only wait for one response at a time, so if the robot is
+  speaking and we are waiting for a "robot not speaking" response before
+  continuing, any user response made while the robot is speaking will be
+  ignored, even if it is the type of response that we will be waiting for next.
