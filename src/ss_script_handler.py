@@ -553,7 +553,7 @@ class ss_script_handler():
                             len(self._incorrect_responses)-1)])
                 except AttributeError:
                     self._logger.exception("Could not play an incorrect "
-                            + "response because none were loaded!")
+                            + "response. Maybe none were loaded?")
                 # Don't break so we allow the user a chance to respond
                 # again.
 
@@ -569,7 +569,7 @@ class ss_script_handler():
                             len(self._no_responses)-1)])
                 except AttributeError:
                     self._logger.exception("Could not play a response to "
-                            + "user's NO because none were loaded!")
+                            + "user's NO. Maybe none were loaded?")
                 # Don't break so we allow the user a chance to respond
                 # again.
 
@@ -591,13 +591,13 @@ class ss_script_handler():
                             self.WAIT_TIME)),
                         properties=self._answer_feedback[random.randint(0,
                             len(self._answer_feedback)-1)])
-                # Pause after speaking before hiding correct again
-                    time.sleep(self._answer_feedback_PAUSE_TIME)
+                    # Pause after speaking before hiding correct again
+                    time.sleep(self.ANSWER_FEEDBACK_PAUSE_TIME)
                     self._ros_node.send_opal_command("HIDE_CORRECT")
                 except AttributeError:
                     self._logger.exception("Could not play a correct "
                             + "response or could not play robot's answer"
-                            + "feedback because none were loaded!")
+                            + " feedback. Maybe none were loaded?")
                 # Break from the for loop so we don't give the user
                 # a chance to respond again.
                 break
@@ -614,7 +614,7 @@ class ss_script_handler():
                                 len(self._start_responses)-1)])
                     except AttributeError:
                         self._logger.exception("Could not play response to"
-                            + "user's START because none were loaded!")
+                            + "user's START. Maybe none were loaded?")
                     # Break from the for loop so we don't give the user
                     # a chance to respond again.
                     break
@@ -634,11 +634,11 @@ class ss_script_handler():
                         properties=self._answer_feedback[random.randint(0,
                             len(self._answer_feedback)-1)])
                     # Pause after speaking before hiding correct again.
-                    time.sleep(self._answer_feedback_PAUSE_TIME)
+                    time.sleep(self.ANSWER_FEEDBACK_PAUSE_TIME)
                     self._ros_node.send_opal_command("HIDE_CORRECT")
                 except AttributeError:
                     self._logger.exception("Could not play robot's answer"
-                            + " feedback because none were loaded!")
+                            + " feedback! Maybe none were loaded?")
 
             # If user never selects START (which is used to ask the user
             # if they are ready to play), stop all stories and repeating
@@ -667,7 +667,7 @@ class ss_script_handler():
                         len(self._incorrect_responses)-1)])
             except AttributeError:
                 self._logger.exception("Could not play an incorrect "
-                        + "response because none were loaded!")
+                        + "response. Maybe none were loaded?")
 
         # If response to wait for was YES or NO, randomly select a
         # robot response for a NO user action.
@@ -680,7 +680,7 @@ class ss_script_handler():
                         len(self._no_responses)-1)])
             except AttributeError:
                 self._logger.exception("Could not play a response to "
-                        + "user's NO because none were loaded!")
+                        + "user's NO. Maybe none were loaded?")
 
 
     def set_end_game(self):
@@ -782,7 +782,7 @@ class ss_script_handler():
                     [random.randint(0, len(self._no_responses)-1)])
             except AttributeError:
                 self._logger.exception("Could not play a max stories reached "
-                        + "response because none were loaded!")
+                        + "response. Maybe none were loaded?")
             # We were either told to play another story because a
             # repeating script loads a story and the max number of
             # repetitions is greater than the max number of stories,
