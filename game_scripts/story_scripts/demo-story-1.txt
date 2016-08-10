@@ -3,18 +3,21 @@ ROBOT	DO	"The end."
 PAUSE	2
 OPAL	LOAD_ANSWERS	answers/lisa_happy.png, answers/lisa_sad.png, answers/lisa_excited.png, answers/lisa_surprised.png
 OPAL	SET_CORRECT	{"correct":["lisa_sad"], "incorrect":["lisa_happy","lisa_excited","lisa_surprised"]}
-ROBOT	DO	"How did Lisa feel when she saw Bella take her favorite shoe?"
+ROBOT	DO	How did Lisa feel when she saw Bella take her favorite shoe?
 WAIT	CORRECT_INCORRECT	10
+ROBOT	DO	Lisa felt sad.
 OPAL	CLEAR	ANSWERS
 PAUSE	1
 OPAL	LOAD_ANSWERS	answers/lisa_excited.png, answers/lisa_happy.png, answers/lisa_bored.png, answers/lisa_frustrated.png
 OPAL	SET_CORRECT	{"correct":["lisa_frustrated"], "incorrect":["lisa_excited","lisa_happy","lisa_bored"]}
-ROBOT	DO	"How did Lisa feel when she couldn't get her shoe back?"
+ROBOT	DO	How did Lisa feel when she couldn't get her shoe back?
 WAIT	CORRECT_INCORRECT	10
+ROBOT	DO	Lisa felt frustrated.
 OPAL	CLEAR	ANSWERS
 PAUSE	1
 OPAL	LOAD_ANSWERS	answers/lisa_angry.png, answers/lisa_afraid.png, answers/lisa_frustrated.png, answers/lisa_happy.png
 OPAL	SET_CORRECT	{"correct":["lisa_happy"], "incorrect":["lisa_angry","lisa_afraid","lisa_frustrated"]}
-ROBOT	DO	"How did Lisa feel when she got her shoe back from her mom?"
+ROBOT	DO	How did Lisa feel when she got her shoe back from her mom?
 WAIT	CORRECT_INCORRECT	10
+ROBOT	DO	Lisa felt happy.
 OPAL	CLEAR	ANSWERS

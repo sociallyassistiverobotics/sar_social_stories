@@ -312,13 +312,13 @@ def insert_to_responses_table(cursor, story, level, question_num,
 def fill_levels_table(cursor):
     """ Initialize levels table. """
     # level = The level number.
-    # num_answers = The number of answer options for questions asked
+    # num_scenes = The number of answer options for questions asked
     # about the story this level.
     # in_order = Whether the scenes for stories at that level are shown
     # in order (1=True) or out of order (0=False).
     try:
         cursor.execute("""
-            INSERT INTO levels (level, num_answers, in_order)
+            INSERT INTO levels (level, num_scenes, in_order)
             VALUES
             ("1", "1", "1"),
             ("2", "2", "1"),
@@ -409,11 +409,11 @@ def add_question_to_script(question, outfile):
 
     # Set correct line.
     outfile.write("OPAL\tSET_CORRECT\t{\"correct\":[\"" + character + "_"
-            + question[1][0] + "\"], \"incorrect\":[")
+            + question[1][0].lower() + "\"], \"incorrect\":[")
     # Make a string so we can deal with commas.
     s = ""
     for i in range (1, len(question[1])):
-        s += "\"" + character + "_" + question[1][i] + "\","
+        s += "\"" + character + "_" + question[1][i].lower() + "\","
     # Remove last comma before adding ending punctuation and
     # writing the rest of the line to the file.
     outfile.write(s[:-1] + "]}" + "\n")
@@ -421,11 +421,17 @@ def add_question_to_script(question, outfile):
     # Robot will say the question text next.
     outfile.write("ROBOT\tDO\t" + question[0] + "\n")
 
-    # Add wait, clear, and pause lines.
-    outfile.write("WAIT\tCORRECT_INCORRECT\t10\n"
-        + "OPAL\tCLEAR\tANSWERS\n"
-        + "PAUSE\t1\n")
+    # Add wait line.
+    outfile.write("WAIT\tCORRECT_INCORRECT\t10\n")
 
+    # Robot will say the answer, but only for ToM and emotion questions.
+    if "scene" not in question[1][0]:
+        outfile.write("ROBOT\tDO\t" + (character[0].upper() + character[1:])
+                + " felt " + question[1][0].lower() + ".\n")
+
+    # Add clear and pause lines.
+    outfile.write("OPAL\tCLEAR\tANSWERS\n"
+        + "PAUSE\t1\n")
 
 
 if __name__ == '__main__':
