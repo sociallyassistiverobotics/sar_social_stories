@@ -46,7 +46,7 @@ class ss_script_handler():
     # Constants for script playback:
     # Time to pause after showing answer feedback and playing robot
     # feedback speech before moving on to the next question.
-    ANSWER_FEEDBACK_PAUSE_TIME = 3
+    ANSWER_FEEDBACK_PAUSE_TIME = 2
     # Time to wait for robot to finish speaking or acting before
     # moving on to the next script line (in seconds).
     WAIT_TIME = 30
