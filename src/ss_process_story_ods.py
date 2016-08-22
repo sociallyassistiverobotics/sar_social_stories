@@ -351,21 +351,41 @@ def generate_script_for_story(output_dir, story_name, level, story, questions,
         # We can't split on sentences because splitting by period may
         # make some quoted speech in the stories be split onto multiple
         # lines, since periods may be inside of the quotations...
-        if "*" in story:
-            # There's a question to ask partway through the story, so
-            # we need to tell half the story, ask the question, then
-            # tell the second half.
-            story = story.split("*")
-            # Add first half of story.
-            f.write("ROBOT\tDO\t" + story[0].strip() + "\n")
+        # We do need to split by scenes, using "//" as a delimiter, so
+        # that we can send a "highlight scene" message to highlight the
+        # scene corresponding to the current story text being read.
+        if "//" in story:
+            # There's a scene delimiter, so there is text for more than
+            # one scene here.
+            story = story.split("//")
 
-            # Add midway question
-            add_question_to_script(midway_questions[0], f)
+            # Add each story segment with a scene highlight command.
+            counter = 0
+            for s in story:
+                # Highlight current scene.
+                f.write("OPAL\tHIGHLIGHT\tscene" + str(counter) + "\n")
+                # Add story text.
+                if "*" in s:
+                    # There's a question to ask partway through the
+                    # story, so we need to tell half the story, ask the
+                    # question, then tell the second half.
+                    s = s.split("*")
+                    # Add first half of story.
+                    f.write("ROBOT\tDO\t" + s[0].strip() + "\n")
+                    # Add midway question
+                    add_question_to_script(midway_questions[0], f)
+                    # Add second half of story.
+                    f.write("ROBOT\tDO\t" + s[1].strip() + "\n")
+                else:
+                    # There's no question to ask partway through this
+                    # story segment.
+                    f.write("ROBOT\tDO\t" + s.strip() + "\n")
+                counter += 1
 
-            # Add second half of story.
-            f.write("ROBOT\tDO\t" + story[1].strip() + "\n")
-
+        # Or, there's only text for one scene in this story.
         else:
+            # Highlight current scene.
+            f.write("OPAL\tHIGHLIGHT\tscene0\n")
             f.write("ROBOT\tDO\t" + story.strip() + "\n")
 
         # Add "The end" and a pause.
@@ -427,7 +447,8 @@ def add_question_to_script(question, outfile):
     # Robot will say the answer, but only for ToM and emotion questions.
     if "scene" not in question[1][0]:
         outfile.write("ROBOT\tDO\t" + (character[0].upper() + character[1:])
-                + " felt " + question[1][0].lower() + ".\n")
+                + " felt " + question[1][0].lower() + " <"
+                + question[1][0].lower() + ">.\n")
 
     # Add clear and pause lines.
     outfile.write("OPAL\tCLEAR\tANSWERS\n"
