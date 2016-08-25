@@ -92,14 +92,16 @@ class ss_script_handler():
         self._story_parser = None
         self._repeat_parser = None
 
-        # Get session script from script parser and story scripts from
-        # the personalization manager, and give to the script parser.
+        # Get session script from script parser and give to the script
+        # parser. Story scripts we will get later from the
+        # personalization manager.
         try:
             self._script_parser.load_script(self._script_path
                     + self._session_script_path
                     + self._script_parser.get_session_script(session))
         except IOError:
-            self._logger.exception("Script parser could not open session script!")
+            self._logger.exception("Script parser could not open session "
+                + "script!")
             # Pass exception up so whoever wanted a script handler knows
             # they didn't get a script.
             raise
