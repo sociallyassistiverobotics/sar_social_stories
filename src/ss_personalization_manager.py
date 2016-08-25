@@ -92,10 +92,17 @@ class ss_personalization_manager():
         if (level is None):
             return 1
         # If participant got 75%-80% questions correct last time, level
-        # up. If no responses were found, do not level up.
+        # up. If no responses were found or not enough were answered
+        # correctly, do not level up.
         #TODO total performance or just last time's performance?
-        if(self._db_man.get_percent_correct_responses(
-            self._participant, (self._session - 1)) > percent_correct_to_level):
+        past_performance = self._db_man.get_percent_correct_responses(
+            self._participant, (self._session - 1))
+        if past_performance is None:
+            self._logger.info("Participant did not answer any questions last "
+                + "time, so we will not level up. Level will be " + str(level)
+                + ".")
+            return level
+        elif (past_performance > percent_correct_to_level):
             self._logger.info("Participant got more than " +
                 (percent_correct_to_level*100) + "% questions correct last "
                 + "time, so we can level up! Level will be " + str(level+1)
@@ -109,14 +116,20 @@ class ss_personalization_manager():
             return level
 
 
-    def get_emotion_performance_this_session(self):
-        """ Get the user's performance on the emotion questions in this
-        session (and ignore performance on any other questions).
+    def get_performance_this_session(self):
+        """ Get the user's performance on all questions asked this
+        session, by question type, and format as a json object.
         """
         # Only get the user's performance if this isn't a DEMO session.
         if (self._session != -1):
-            return self._db_man.get_percent_correct_responses(self._participant,
-                self._session, "emotion")
+            # Get the user's performance on the emotion questions, on
+            # the theory of mind questions, and on the order questions.
+            return self._db_man.get_percent_correct_responses(
+                self._participant, self._session, "emotion"), \
+                self._db_man.get_percent_correct_responses(self._participant,
+                self._session, "ToM"), \
+                self._db_man.get_percent_correct_responses( \
+                self._participant, self._session, "order")
         else:
             return None
 

@@ -197,9 +197,20 @@ class ss_script_handler():
                 self._logger.info("No more script lines to get!")
                 # Pass on the stop iteration exception, with additional
                 # information about the player's performance during the
-                # game.
-                e.performance = self._personalization_man. \
-                    get_emotion_performance_this_session()
+                # game, formatted as a json object.
+                emotion, tom, order = self._personalization_man. \
+                    get_performance_this_session()
+                performance = {}
+                if emotion is not None:
+                    performance["child-emotion-question-accuracy"] = \
+                        performance_emotion
+                if tom is not None:
+                    performance["child-tom-question-accuracy"] = \
+                        performance_emotion
+                if order is not None:
+                    performance["child-order-question-accuracy"] = \
+                        performance_emotion
+                e.performance = json.dumps(performance)
                 raise
 
         except ValueError:

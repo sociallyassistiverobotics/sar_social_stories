@@ -149,7 +149,7 @@ class ss_db_manager():
                     + participant + " for session " + session
                     + " in the database!")
                 total_responses = 0
-                return 0
+                return None
             else:
                 # Return percent responses correct (database gave us
                 # these values in tuples).
