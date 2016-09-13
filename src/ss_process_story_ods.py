@@ -142,8 +142,8 @@ def ss_process_story_ods():
                             continue
 
                         # Add question to questions table at this level.
-                        insert_to_questions_table(cursor, sheet.name, level+1,
-                            question_num, question_type,
+                        insert_to_questions_table(cursor, sheet.name.lower(),
+                            level+1, question_num, question_type,
                             # Target response is the first in the list
                             # of response options
                             sheet_dict[responses][level].split(',')[0]
@@ -151,8 +151,8 @@ def ss_process_story_ods():
 
                         # Add responses to emotions_in_question table
                         # at this level.
-                        insert_to_responses_table(cursor, sheet.name, level+1,
-                            question_num, question_type,
+                        insert_to_responses_table(cursor, sheet.name.lower(),
+                            level+1, question_num, question_type,
                             sheet_dict[responses][level].split(','))
 
                         # Make dict of level: question text, responses.
@@ -197,16 +197,16 @@ def ss_process_story_ods():
                                 or (sheet[level,key] == ["-"]):
                                 print("Skipping empty cell")
                                 continue
-                            insert_to_graphics_table(cursor, sheet.name,
-                                level + 1, scene_num + 1,
+                            insert_to_graphics_table(cursor,
+                                sheet.name.lower(), level + 1, scene_num + 1,
                                 sheet[level,key].lower())
 
             # For each level, generate story.
             # Rows are 0-indexed but levels are 1-indexed.
             for level in range(0,10):
                 # Use story to generate game script for robot
-                generate_script_for_story(args.out_dir, sheet.name, level+1,
-                        sheet[level, "Story"], question_list[level],
+                generate_script_for_story(args.out_dir, sheet.name.lower(),
+                        level+1, sheet[level, "Story"], question_list[level],
                         midway_question_list[level])
 
             # Commit after each story.
@@ -312,13 +312,13 @@ def insert_to_responses_table(cursor, story, level, question_num,
 def fill_levels_table(cursor):
     """ Initialize levels table. """
     # level = The level number.
-    # num_scenes = The number of answer options for questions asked
+    # num_answers = The number of answer options for questions asked
     # about the story this level.
     # in_order = Whether the scenes for stories at that level are shown
     # in order (1=True) or out of order (0=False).
     try:
         cursor.execute("""
-            INSERT INTO levels (level, num_scenes, in_order)
+            INSERT INTO levels (level, num_answers, in_order)
             VALUES
             ("1", "1", "1"),
             ("2", "2", "1"),
@@ -413,30 +413,70 @@ def find_character(words):
 
 def add_question_to_script(question, outfile):
     """ Add a question to a game script. """
-    # Find character this question is about.
+    # Find the character this question is about.
+    # The question provided has two parts:
+    #   [0] = the question text
+    #   [1] = the comma-separated list of responses
     character = find_character(question[0].split())
 
-    # Load answers line.
-    outfile.write("OPAL\tLOAD_ANSWERS\t")
     # Make a string so we can deal with commas.
     s = ""
-    for response in question[1]:
-        s += "answers/" + character + "_" + response.lower() \
-            + ".png, "
-    # Remove last comma before adding ending punctuation and
-    # writing the rest of the line to the file.
-    outfile.write(s[:-2] + "\n")
 
-    # Set correct line.
-    outfile.write("OPAL\tSET_CORRECT\t{\"correct\":[\"" + character + "_"
-            + question[1][0].lower() + "\"], \"incorrect\":[")
-    # Make a string so we can deal with commas.
-    s = ""
-    for i in range (1, len(question[1])):
-        s += "\"" + character + "_" + question[1][i].lower() + "\","
-    # Remove last comma before adding ending punctuation and
-    # writing the rest of the line to the file.
-    outfile.write(s[:-1] + "]}" + "\n")
+    # We only want to load character faces as answers if the question is
+    # an emotion or ToM question about a character.
+    if "scene" not in question[1][0]:
+        for response in question[1]:
+            # Load answers line.
+            outfile.write("OPAL\tLOAD_ANSWERS\t")
+            s += "answers/" + character + "_" + response.lower().strip() \
+                + ".png, "
+
+        # Remove last comma before adding ending punctuation and
+        # writing the rest of the line to the file.
+        outfile.write(s[:-2] + "\n")
+
+        # Set correct line.
+        outfile.write("OPAL\tSET_CORRECT\t{\"correct\":[\"" + character + "_"
+                + question[1][0].lower().strip() + "\"], \"incorrect\":[")
+        # Make a string so we can deal with commas.
+        s = ""
+        for i in range (1, len(question[1])):
+            s += "\"" + character + "_" + question[1][i].lower().strip() + "\","
+        # Remove last comma before adding ending punctuation and
+        # writing the rest of the line to the file.
+        outfile.write(s[:-1] + "]}" + "\n")
+
+    # For order questions, we don't need to load answers -- we will use
+    # the scenes as the answer slots. So we will just need to set the
+    # scenes as correct or incorrect.
+    else:
+        # Set correct line. Scene slots in the game are 0-indexed, but
+        # in the story scripts, they are 1-indexed, so we need to
+        # convert them.
+        responses_0indexed = []
+        for response in question[1]:
+            try:
+                num = re.findall(r'\d+', response)[0]
+                responses_0indexed.append("scene" + str(int(num)-1))
+            except:
+                # If there is no number, we have a problem. Order
+                # questions should always have numbered scene responses.
+                print("No scene number found in question responses!")
+                raise
+
+        # Now that we have 0-indexed responses, build a line to set
+        # the correct and incorrect responses.
+        outfile.write("OPAL\tSET_CORRECT\t{\"correct\":[\""
+            + responses_0indexed[0]
+            + "\"], \"incorrect\":[")
+        # Make a string so we can deal with commas.
+        s = ""
+        for i in range (1, len(responses_0indexed)):
+            s += "\"" + responses_0indexed[i] + "\","
+
+        # Remove last comma before adding ending punctuation and
+        # writing the rest of the line to the file.
+        outfile.write(s[:-1] + "]}" + "\n")
 
     # Robot will say the question text next.
     outfile.write("ROBOT\tDO\t" + question[0] + "\n")
