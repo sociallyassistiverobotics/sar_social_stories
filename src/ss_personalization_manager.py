@@ -189,7 +189,7 @@ class ss_personalization_manager():
         self._current_story = story
 
         # Return name of story script: story name + level + file extension.
-        return story + str(self._level) + ".txt"
+        return (story + "-" + str(self._level) + ".txt").lower()
 
 
     def get_next_story_details(self):

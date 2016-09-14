@@ -118,7 +118,7 @@ class ss_db_manager():
 
             if total_correct is None:
                 self._logger.warn("Could not find any correct responses for "
-                    + participant + " for session " + session
+                    + participant + " for session " + str(session)
                     + " in the database!")
                 total_correct = 0
 
@@ -146,7 +146,7 @@ class ss_db_manager():
 
             if total_responses is None or total_responses[0] == 0:
                 self._logger.warn("Could not find any responses for "
-                    + participant + " for session " + session
+                    + participant + " for session " + str(session)
                     + " in the database!")
                 total_responses = 0
                 return None
@@ -156,7 +156,7 @@ class ss_db_manager():
                 return float(correct_responses[0]) / total_responses[0]
         except Exception as e:
             self._logger.exception("Could not find any responses for "
-                + participant + " for session " + session
+                + participant + " for session " + str(session)
                 + " in the database!")
             # Pass on exception for now.
             raise
@@ -185,7 +185,7 @@ class ss_db_manager():
                 """, (participant, current_session)).fetchall()
             if result is None or result == []:
                 self._logger.warn("Could not find any incorrect responses for "
-                    + participant + " for session " + (current_session-1)
+                    + participant + " for session " + str(current_session-1)
                     + " in the database!")
                 return []
             else:
@@ -194,7 +194,7 @@ class ss_db_manager():
                 return [emotion[0] for emotion in result]
         except Exception as e:
             self._logger.exception("Could not find any incorrect responses for "
-                + participant + " for session " + (current_session-1)
+                + participant + " for session " + str(current_session-1)
                 + " in the database!")
             # Pass on exception for now.
             raise
@@ -216,7 +216,7 @@ class ss_db_manager():
             # correct number of ?'s into the query for the number of
             # emotions and supply a list with a matching number of
             # parameters.
-            params = emotions
+            params = list(emotions)
             params.append(participant)
             params.append(current_session)
 
@@ -241,7 +241,7 @@ class ss_db_manager():
             if result is None or result == []:
                 self._logger.warn("Could not find any unplayed stories for "
                     + participant + " for session " + str(current_session)
-                    + " with emotions " + emotions + " in the database!" +
+                    + " with emotions " + str(emotions) + " in the database!" +
                     " Will try to find any unplayed story...")
 
                 # Query again, but look for any unplayed stories, not
@@ -259,7 +259,7 @@ class ss_db_manager():
                             AND stories_played.session = (?))
                     ORDER BY stories.id
                     LIMIT 1
-                    """ , (participant, session)).fetchall()
+                    """ , (participant, current_session)).fetchall()
 
                 if result is None or result == []:
                     self._logger.warn("Could not find unplayed stories for "
@@ -271,12 +271,13 @@ class ss_db_manager():
             # or didn't, and found an unplayed story without them.
             # Return the name of a new story to play. The DB gives
             # us the name of the story in a tuple.
-            return result[0]
+            self._logger.info("Found a story to play: " + str(result[0][0]))
+            return result[0][0]
 
         except Exception as e:
             self._logger.exception("Could not find any unplayed stories for "
                     + participant + " for session " + str(current_session)
-                    + " with emotions " + emotions + " in the database!")
+                    + " with emotions " + str(emotions) + " in the database!")
             # Pass on exception for now.
             raise
 
@@ -297,7 +298,7 @@ class ss_db_manager():
             # correct number of ?'s into the query for the number of
             # emotions and supply a list with a matching number of
             # parameters.
-            params = emotions
+            params = list(emotions)
             params.append(participant)
             params.append(current_session)
 
@@ -325,7 +326,7 @@ class ss_db_manager():
             if result is None:
                 self._logger.warn("Could not find any stories to review for "
                     + participant + " for session " + str(current_session)
-                    + " with emotions " + emotions + " in the database!"
+                    + " with emotions " + str(emotions) + " in the database!"
                     + " Looking for a story without those emotions...")
 
                 # If no stories have the desired emotions to review,
@@ -362,7 +363,7 @@ class ss_db_manager():
         except Exception as e:
             self._logger.exception("Could not find any stories to review for "
                     + participant + " for session " + str(current_session)
-                    + " with emotions " + emotions + " in the database!")
+                    + " with emotions " + str(emotions) + " in the database!")
             # Pass on exception for now.
             raise
 
@@ -423,7 +424,7 @@ class ss_db_manager():
             raise
 
 
-    def record_story_played(participant, session, level, story):
+    def record_story_played(self, participant, session, level, story):
         """ Insert the participant ID, session number, story level,
         current date and time, and a reference to the current story
         into the stories_played table.
@@ -447,13 +448,13 @@ class ss_db_manager():
         except Exception as e:
             self._logger.exception("Could not insert record into stories_played"
                 + " table in database! Tried to insert: participant=" +
-                participant + ", session=" + session + ", level=" + level +
+                participant + ", session=" + str(session) + ", level=" + level +
                 ", story=" + story)
             # Pass on exception for now.
             raise
 
 
-    def record_response(participant, session, level, story, question_num,
+    def record_response(self, participant, session, level, story, question_num,
             question_type, response):
         """ Insert a user response into the responses table: we need
         the question ID, stories_played ID, and the actual response.
@@ -496,8 +497,9 @@ class ss_db_manager():
         except Exception as e:
             self._logger.exception("Could not insert record into questions"
                 + " table in database! Tried to insert: participant=" +
-                participant + ", session=" + session + ", level=" + level +
-                ", story=" + story + ", question_num=" + question_num +
-                ", question_type=" + question_type + ", response=" + response)
+                participant + ", session=" + str(session) + ", level=" +
+                str(level) + ", story=" + story + ", question_num=" +
+                str(question_num) + ", question_type=" + question_type +
+                ", response=" + response)
             # Pass on exception for now.
             raise

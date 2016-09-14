@@ -50,7 +50,7 @@ class ss_script_parser():
         elif session < 3:
             self._logger.info("We assume session scripts are named with the "
                 + "pattern \"session-[session_number].txt\", where the "
-                + "session number is an integer starting at 1 for session 1."
+                + "session number is an integer starting at 1 for session 1. "
                 + "But if this is a later session, we will use a generic "
                 + "session script instead, which we expect to be called "
                 + "\"session-general.txt\". So for this session, we will load"
@@ -59,7 +59,7 @@ class ss_script_parser():
         else:
             self._logger.info("We assume session scripts are named with the "
                 + "pattern \"session-[session_number].txt\", where the "
-                + "session number is an integer starting at 1 for session 1."
+                + "session number is an integer starting at 1 for session 1. "
                 + "But this is a later session, so we will use a generic "
                 + "session script instead, which we expect to be called "
                 + "\"session-general.txt\".")
