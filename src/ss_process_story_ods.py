@@ -224,7 +224,7 @@ def insert_to_stories_table(cursor, story_names):
             cursor.execute("""
                 INSERT INTO stories (story_name)
                 VALUES (?)
-                """, (name,))
+                """, (name.lower(),))
         except sqlite3.IntegrityError as e:
             print("Error adding story " + name + " to DB! It may already "
                 "exist. Exception: " + str(e))
@@ -425,12 +425,11 @@ def add_question_to_script(question, outfile):
     # We only want to load character faces as answers if the question is
     # an emotion or ToM question about a character.
     if "scene" not in question[1][0]:
+        # Load answers line.
+        outfile.write("OPAL\tLOAD_ANSWERS\t")
         for response in question[1]:
-            # Load answers line.
-            outfile.write("OPAL\tLOAD_ANSWERS\t")
             s += "answers/" + character + "_" + response.lower().strip() \
                 + ".png, "
-
         # Remove last comma before adding ending punctuation and
         # writing the rest of the line to the file.
         outfile.write(s[:-2] + "\n")
