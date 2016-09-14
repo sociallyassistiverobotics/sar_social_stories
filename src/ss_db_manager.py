@@ -225,7 +225,7 @@ class ss_db_manager():
                 FROM stories
                 JOIN questions
                     ON questions.story_id = stories.id
-                JOIN stories_played
+                LEFT JOIN stories_played
                     ON stories_played.story_id = stories.id
                 WHERE questions.target_response IN (%s)
                 AND stories.id
@@ -249,7 +249,7 @@ class ss_db_manager():
                 result = self._cursor.execute("""
                     SELECT DISTINCT stories.story_name
                     FROM stories
-                    JOIN stories_played
+                    LEFT JOIN stories_played
                         ON stories_played.story_id = stories.id
                     WHERE stories.id
                         NOT IN (
@@ -310,7 +310,7 @@ class ss_db_manager():
                 FROM stories
                 JOIN questions
                     ON questions.story_id = stories.id
-                JOIN stories_played
+                LEFT JOIN stories_played
                     ON stories_played.story_id = stories.id
                 WHERE questions.target_response IN (%s)
                 AND stories.id
@@ -337,7 +337,7 @@ class ss_db_manager():
                 result = self._cursor.execute("""
                     SELECT stories.story_name
                     FROM stories_played
-                    JOIN stories
+                    LEFT JOIN stories
                         ON stories_played.story_id = stories.id
                     WHERE stories_played.participant = (?)
                     AND stories_played.session <> (?)
@@ -345,7 +345,7 @@ class ss_db_manager():
                     ORDER BY count(stories_played.story_id) ASC,
                         stories_played.time ASC
                     LIMIT 1
-                    """, (participant, session)).fetchone()
+                    """, (participant, current_session)).fetchone()
 
                 if result is None or result == []:
                     self._logger.warn("Could not find any review stories for "
