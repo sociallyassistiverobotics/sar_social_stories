@@ -53,22 +53,17 @@ class test_db_manager(unittest.TestCase):
 
     def test_get_percent_correct_responses(self):
         # If there is no participant data, we should always get None.
-        self.assertEqual(self.dbm.get_percent_correct_responses("p234", 2),
-            None)
-        self.assertEqual(self.dbm.get_percent_correct_responses("93", 1),
-            None)
-        self.assertEqual(self.dbm.get_percent_correct_responses("93", 0.1),
-            None)
-        self.assertEqual(self.dbm.get_percent_correct_responses("1", 0),
-            None)
-        self.assertEqual(self.dbm.get_percent_correct_responses("", 0),
-            None)
-        self.assertEqual(self.dbm.get_percent_correct_responses("p234", 2,
-            "order"), None)
-        self.assertEqual(self.dbm.get_percent_correct_responses("p234", 2,
-            "emotion"), None)
-        self.assertEqual(self.dbm.get_percent_correct_responses("p234", 2,
-            "ToM"), None)
+        self.assertIsNone(self.dbm.get_percent_correct_responses("p234", 2))
+        self.assertIsNone(self.dbm.get_percent_correct_responses("93", 1))
+        self.assertIsNone(self.dbm.get_percent_correct_responses("93", 0.1))
+        self.assertIsNone(self.dbm.get_percent_correct_responses("1", 0))
+        self.assertIsNone(self.dbm.get_percent_correct_responses("", 0))
+        self.assertIsNone(self.dbm.get_percent_correct_responses("p234", 2,
+            "order"))
+        self.assertIsNone(self.dbm.get_percent_correct_responses("p234", 2,
+            "emotion"))
+        self.assertIsNone(self.dbm.get_percent_correct_responses("p234", 2,
+            "ToM"))
 
 
     def test_get_most_recent_incorrect_emotions(self):
