@@ -38,6 +38,14 @@ class ss_script_parser():
 
     def get_session_script(self, session):
         """ Get scripts for the specified session """
+        if not isinstance(session, int):
+            raise TypeError("session should be an integer")
+
+        if session < -1:
+            raise ValueError("Session number out of range. Should be -1 to "
+                 "play the demo or a positive integer to play a particular "
+                 "session.")
+
         if session <= 0:
             # We will use the demo session script if this is a demo
             # session or if the session number doesn't make sense.
