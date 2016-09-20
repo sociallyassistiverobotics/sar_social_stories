@@ -41,11 +41,15 @@ def ss_process_story_ods():
     # which will each be parsed for stories.
     parser = argparse.ArgumentParser(
             formatter_class=argparse.RawDescriptionHelpFormatter,
-            description="""Read .ods spreadsheets containing story info for the
-            SAR Social Stories game stories. Generate game scripts that will be
-            used to load graphics and tell the robot how to read aloud the
-            story. Add meta-information about the stories and the questions to
-            ask about each story to the database.""")
+            description="Read .ods spreadsheets containing story info for the"
+            " SAR Social Stories game stories. Generate game scripts that will"
+            " be used to load graphics and tell the robot how to read aloud"
+            " the story. Add meta-information about the stories and the"
+            " questions to ask about each story to the database.\nThis script"
+            " will clear any existing data from the tables, so you should run"
+            " it with all the spreadsheets at once -- if you run it again"
+            " later, some or all of the previously imported data may be"
+            " deleted.")
     parser.add_argument('-d', '--database', dest='db',
            action='store', nargs='?', type=str, default='socialstories.db',
            help= "The database filename for storing story and question info. "
@@ -197,8 +201,9 @@ def ss_process_story_ods():
                                 or (sheet[level,key] == ["-"]):
                                 print("Skipping empty cell")
                                 continue
+                            # Graphics scene numbers are 1-indexed.
                             insert_to_graphics_table(cursor,
-                                sheet.name.lower(), level + 1, scene_num + 1,
+                                sheet.name.lower(), level + 1, scene_num,
                                 sheet[level,key].lower())
 
             # For each level, generate story.
@@ -320,16 +325,16 @@ def fill_levels_table(cursor):
         cursor.execute("""
             INSERT INTO levels (level, num_answers, in_order)
             VALUES
-            ("1", "1", "1"),
-            ("2", "2", "1"),
+            ("1", "3", "1"),
+            ("2", "3", "1"),
             ("3", "3", "1"),
-            ("4", "4", "1"),
-            ("5", "4", "0"),
+            ("4", "3", "1"),
+            ("5", "3", "0"),
             ("6", "4", "0"),
             ("7", "4", "0"),
             ("8", "4", "0"),
             ("9", "4", "0"),
-            ("10", "4", "0"),
+            ("10", "5", "0"),
             ("11", "4", "0"),
             ("12", "4", "0")
             """)

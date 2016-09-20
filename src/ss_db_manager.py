@@ -76,9 +76,9 @@ class ss_db_manager():
                 # Database gives us a tuple, so return the first element.
                 return result[0]
         except Exception as e:
-            self._logger.exception("Could not find level of previous session"
-                    + " for " + participant + " for session "
-                    + str(current_session) + " in the database!")
+            self._logger.exception("Failed when trying to find the level of "
+                "previous session" + " for " + participant + " for session "
+                + str(current_session) + " in the database!")
             # Pass on exception for now.
             raise
 
@@ -155,7 +155,7 @@ class ss_db_manager():
                 # these values in tuples).
                 return float(correct_responses[0]) / total_responses[0]
         except Exception as e:
-            self._logger.exception("Could not find any responses for "
+            self._logger.exception("Failed when trying to find responses for "
                 + participant + " for session " + str(session)
                 + " in the database!")
             # Pass on exception for now.
@@ -193,19 +193,21 @@ class ss_db_manager():
                 # a list before returning.
                 return [emotion[0] for emotion in result]
         except Exception as e:
-            self._logger.exception("Could not find any incorrect responses for "
-                + participant + " for session " + str(current_session-1)
-                + " in the database!")
+            self._logger.exception("Failed when trying to find incorrect "
+                "responses for " + participant + " for session " +
+                str(current_session-1) + " in the database!")
             # Pass on exception for now.
             raise
 
 
-    def get_next_new_story(self, participant, current_session, emotions):
-        """ Get the next unplayed story from the story table with at
-        least one of the listed emotions present in the story. If no
-        unplayed story has the desired emotions or if there are no
-        desired emotions, return the name of the next unplayed story.
-        If there are no more unplayed stories, return None.
+    def get_next_new_story(self, participant, current_session, emotions,
+            level):
+        """ Get the next unplayed story for the desired level from the
+        story table with at least one of the listed emotions present in
+        the story. If no unplayed story has the desired emotions or if
+        there are no desired emotions, return the name of the next
+        unplayed story.  If there are no more unplayed stories, return
+        None.
         """
         try:
             # Parameters are the list of emotions, participant, session.
@@ -219,6 +221,7 @@ class ss_db_manager():
             params = list(emotions)
             params.append(participant)
             params.append(current_session)
+            params.append(level)
 
             result = self._cursor.execute("""
                 SELECT DISTINCT stories.story_name
@@ -234,6 +237,7 @@ class ss_db_manager():
                         FROM stories_played
                         WHERE stories_played.participant = (?)
                         AND stories_played.session = (?))
+                AND questions.level = (?)
                 ORDER BY stories.id
                 LIMIT 1
                 """ % ",".join("?"*len(emotions)), params).fetchall()
@@ -275,14 +279,16 @@ class ss_db_manager():
             return result[0][0]
 
         except Exception as e:
-            self._logger.exception("Could not find any unplayed stories for "
-                    + participant + " for session " + str(current_session)
-                    + " with emotions " + str(emotions) + " in the database!")
+            self._logger.exception("Failed when trying to find unplayed "
+                "stories for " + participant + " for session " +
+                str(current_session) + " with emotions " + str(emotions) +
+                " in the database!")
             # Pass on exception for now.
             raise
 
 
-    def get_next_review_story(self, participant, current_session, emotions):
+    def get_next_review_story(self, participant, current_session, emotions,
+            level):
         """ Get a review story with at least one of the listed emotions
         present in the story that wasn't played in the current session.
         If no played stories have the desired emotions, return the
@@ -301,6 +307,7 @@ class ss_db_manager():
             params = list(emotions)
             params.append(participant)
             params.append(current_session)
+            params.append(level)
 
             # This gives us a randomly picked story from a list of
             # stories played not this session with at least one of the
@@ -319,6 +326,7 @@ class ss_db_manager():
                         FROM stories_played
                         WHERE stories_played.participant = (?)
                         AND stories_played.session <> (?))
+                AND questions.level = (?)
                 ORDER BY RANDOM()
                 LIMIT 1
                 """ % ",".join("?"*len(emotions)), params).fetchone()
@@ -361,9 +369,10 @@ class ss_db_manager():
             return result[0]
 
         except Exception as e:
-            self._logger.exception("Could not find any stories to review for "
-                    + participant + " for session " + str(current_session)
-                    + " with emotions " + str(emotions) + " in the database!")
+            self._logger.exception("Failed when trying to find stories to "
+                "review for " + participant + " for session " +
+                str(current_session) + " with emotions " + str(emotions) +
+                " in the database!")
             # Pass on exception for now.
             raise
 
@@ -378,9 +387,9 @@ class ss_db_manager():
                 SELECT num_answers, in_order
                 FROM levels
                 WHERE level=(?)
-                """, (level,))
+                """, (level,)).fetchone()
             if result is None:
-                self._logger.warn("Could not find info for level " + level
+                self._logger.warn("Could not find info for level " + str(level)
                         + " in the database!")
                 return None
             else:
@@ -389,8 +398,8 @@ class ss_db_manager():
                 # to a boolean.
                 return result[0], (True if result[1] == 1 else False)
         except Exception as e:
-            self._logger.exception("Could not find info for level " + level
-                    + " in the database!")
+            self._logger.exception("Failed when trying to find info for level "
+                    + str(level) + " in the database!")
             # Pass on exception for now.
             raise
 
@@ -409,17 +418,18 @@ class ss_db_manager():
                     FROM stories
                     WHERE story_name=(?))
                 """, (level, story)).fetchall()
-            if result is None:
+            if result is None or result == []:
                 self._logger.warn("Could not find graphics for story " + story
-                    + " at level " + level + " in the database!")
+                    + " at level " + str(level) + " in the database!")
                 return None
             else:
                 # Database gives us a list of tuples of graphic names,
                 # so make this into a list of graphic names.
                 return [name[0] for name in result]
         except Exception as e:
-            self._logger.exception("Could not find graphics for story " + story
-                    + " at level " + level + " in the database!")
+            self._logger.exception("Failed when trying to find graphics for "
+                "story " + story + " at level " + str(level) +
+                " in the database!")
             # Pass on exception for now.
             raise
 
@@ -448,8 +458,8 @@ class ss_db_manager():
         except Exception as e:
             self._logger.exception("Could not insert record into stories_played"
                 + " table in database! Tried to insert: participant=" +
-                participant + ", session=" + str(session) + ", level=" + level +
-                ", story=" + story)
+                participant + ", session=" + str(session) + ", level=" +
+                str(level) + ", story=" + story)
             # Pass on exception for now.
             raise
 
