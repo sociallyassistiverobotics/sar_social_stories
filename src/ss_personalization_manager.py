@@ -91,6 +91,7 @@ class ss_personalization_manager():
         # If there is no previous data, start at level 1.
         if (level is None):
             return 1
+
         # If participant got 75%-80% questions correct last time, level
         # up. If no responses were found or not enough were answered
         # correctly, do not level up.
@@ -102,17 +103,17 @@ class ss_personalization_manager():
                 + "time, so we will not level up. Level will be " + str(level)
                 + ".")
             return level
-        elif (past_performance > percent_correct_to_level):
+        elif (past_performance >= self._percent_correct_to_level):
             self._logger.info("Participant got more than " +
-                (percent_correct_to_level*100) + "% questions correct last "
-                + "time, so we can level up! Level will be " + str(level+1)
-                + ".")
-            return level + 1
+                str(self._percent_correct_to_level*100) +
+                "% questions correct last time, so we can level up! Level will"
+                " be " + str(level+1) + ".")
+            return level + 1 if level < 10 else level
         else:
             self._logger.info("Participant got less than " +
-                (percent_correct_to_level*100) + "% questions correct last "
-                + "time, so we don't level up. Level will be " + str(level)
-                + ".")
+                str(self._percent_correct_to_level*100) +
+                "% questions correct last time, so we don't level up. Level"
+                " will be " + str(level) + ".")
             return level
 
 
