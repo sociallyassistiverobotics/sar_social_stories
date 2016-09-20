@@ -93,6 +93,16 @@ class test_db_manager(unittest.TestCase):
         # emotions are only present at higher levels, so for these, at
         # lower levels, we expect to get whichever story is first in
         # stories table.
+        #
+        # Note that these tests assume that all 42 SAR stories have
+        # been imported into the database, and that the ods sheets were
+        # imported in alphabetical order. A more general version of the
+        # tests here could merely assert that we get back a string, or
+        # could provide a list of all the story names, and assert that
+        # the string we get back is one of the story names. However,
+        # that would not test whether the story included the correct
+        # emotions for the story's level, since not all stories have
+        # the same emotions present at every level.
         self.assertEqual(self.dbm.get_next_new_story("p391", 1, ["angry"], 1),
             "story-fo1")
         self.assertEqual(self.dbm.get_next_new_story("", 2, ["angry"], 10),
@@ -251,7 +261,8 @@ class test_db_manager(unittest.TestCase):
         self.assertIsNone(self.dbm.get_graphics("story-sp2", 0))
 
         # If a story exists at the level, we get a list of graphics
-        # file names.
+        # file names. Note that these tests assume that all 42 SAR
+        # stories have been imported into the database.
         self.assertIsInstance(self.dbm.get_graphics("story-fo1", 1), list)
         self.assertIsInstance(self.dbm.get_graphics("story-sr2", 10), list)
         self.assertIsInstance(self.dbm.get_graphics("story-fo2", 3), list)
