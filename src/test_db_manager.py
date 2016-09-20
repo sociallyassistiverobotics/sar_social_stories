@@ -35,7 +35,6 @@ class test_db_manager(unittest.TestCase):
         self.dbm = ss_db_manager("ss_test_no_participant_data.db")
         #self.dbm2 = ss_db_manager("ss_test_with_participant_data.db")
         #TODO add second database with participant data
-        #TODO add mocks to test exceptions for all the functions
 
 
     def test_get_most_recent_level(self):
@@ -50,6 +49,7 @@ class test_db_manager(unittest.TestCase):
         self.assertEqual(self.dbm.get_most_recent_level("0928u4ijos", 2), None)
         self.assertEqual(self.dbm.get_most_recent_level("", 2), None)
         self.assertEqual(self.dbm.get_most_recent_level("0xa7", 2), None)
+
 
     def test_get_percent_correct_responses(self):
         # If there is no participant data, we should always get None.
@@ -70,6 +70,7 @@ class test_db_manager(unittest.TestCase):
         self.assertEqual(self.dbm.get_percent_correct_responses("p234", 2,
             "ToM"), None)
 
+
     def test_get_most_recent_incorrect_emotions(self):
         # If there is no participant data, we should get an empty list.
         self.assertEqual(
@@ -86,6 +87,7 @@ class test_db_manager(unittest.TestCase):
             self.dbm.get_most_recent_incorrect_emotions("0xa7", 4), [])
         self.assertEqual(
             self.dbm.get_most_recent_incorrect_emotions("", 4), [])
+
 
     def test_get_next_new_story(self):
         # If there is no participant data, we should get the name of an
@@ -276,6 +278,7 @@ class test_db_manager(unittest.TestCase):
                 ["story-fo1-B-a.png", "story-fo1-B-b.png",
                 "story-fo1-B-c.png", "story-fo1-B-d.png"])
 
+
     def test_record_story_played(self):
         # Add a record to the stories_played table.
         # args: participant, session, level, story
@@ -283,6 +286,7 @@ class test_db_manager(unittest.TestCase):
         # Check that it was inserted correctly.
         # Reset database: remove all the data we added.
         pass
+
 
     def test_record_response(self):
         # Add a record to the responses table.
@@ -292,3 +296,33 @@ class test_db_manager(unittest.TestCase):
         # Check that it was inserted correctly.
         # Reset database: remove all the data we added.
         pass
+
+
+    def test_exceptions(self):
+        # For each function, test that we handle exceptions properly.
+        m = Mock()
+        self.dbm._cursor = m
+        m.execute.side_effect = Exception
+
+        with self.assertRaises(Exception):
+            self.dbm.get_most_recent_level("p023", 1)
+
+        with self.assertRaises(Exception):
+            self.dbm.get_percent_correct_responses("p023", 1)
+        with self.assertRaises(Exception):
+            self.dbm.get_percent_correct_responses("p023", 1, "emotion")
+
+        with self.assertRaises(Exception):
+            self.dbm.get_most_recent_incorrect_emotions("p023", 1)
+
+        with self.assertRaises(Exception):
+            self.dbm.get_next_new_story("p391", 1, ["happy", "frustrated"], 1)
+
+        with self.assertRaises(Exception):
+            self.dbm.get_next_review_story("40", 5, ["bored"], 8)
+
+        with self.assertRaises(Exception):
+            self.dbm.get_level_info(2)
+
+        with self.assertRaises(Exception):
+            self.dbm.get_graphics("story-ki2", 4)
