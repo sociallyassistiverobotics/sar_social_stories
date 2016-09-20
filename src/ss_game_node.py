@@ -47,16 +47,8 @@ class ss_game_node():
     platforms).
     """
 
-    # Set up ROS node globally.
-    # TODO If running on network where DNS does not resolve local
-    # hostnames, get the public IP address of this machine and
-    # export to the environment variable $ROS_IP to set the public
-    # address of this node, so the user doesn't have to remember
-    # to do this before starting the node.
-    _ros_node = rospy.init_node('social_story_game', anonymous=True)
-            # We could set the ROS log level here if we want:
-            #log_level=rospy.DEBUG)
-            # The rest of our logging is set up in the log config file.
+    # We will have a ROS node, which we initialize when we launch the game.
+    _ros_node = None
 
     def __init__(self):
         """ Initialize anything that needs initialization """
@@ -70,7 +62,7 @@ class ss_game_node():
             with open(config_file) as json_file:
                 json_data = json.load(json_file)
                 logging.config.dictConfig(json_data)
-                self._logger.debug("==============================\n" +
+                self._logger.debug("\n==============================\n" +
                     "STARTING\nLogger configuration:\n %s", json_data)
         except Exception as e:
             # Could not read config file -- use basic configuration.
@@ -82,7 +74,7 @@ class ss_game_node():
                 + "log to \"ss.log\". Will not be logging to rosout!")
 
 
-    def parse_arguments_and_launch(self):
+    def parse_arguments(self):
         # Parse python arguments.
         # The game node requires the session number and participant ID be
         # provided so the appropriate game scripts can be loaded.
@@ -105,23 +97,41 @@ class ss_game_node():
         args = parser.parse_args()
         self._logger.debug("Args received: %s", args)
 
-        # Give the session number and participant ID to the game launcher
-        # where they will be used to load appropriate game scripts.
+        # Return the session number and participant ID so they can be
+        # used by the game launcher, where they will be used to load
+        # appropriate game scripts.
         #
-        # If the session number doesn't make sense, or we've specified that
-        # this is a demo, run demo.
-        if args.session < 0 or args.participant == 'DEMO':
-            self._launch_game(-1, 'DEMO')
-        # Otherwise, launch the game for the provided session and ID
+        # If the session number doesn't make sense, throw an error.
+        if args.session < -1:
+            raise ValueError("Session number out of range. Should be -1 to "
+                 "play the demo or a positive integer to play a particular "
+                 "session.")
+
+        # If the args indicate that this is a demo, return demo args.
+        if args.session <= 0 or args.participant.lower() == "demo":
+            return (-1, "DEMO")
+
+        # Otherwise, return the provided session and ID.
         else:
-            self._launch_game(args.session, args.participant)
+            return (args.session, args.participant)
 
 
-    def _launch_game(self, session, participant):
+    def launch_game(self, session, participant):
         """ Load game based on the current session and participant """
         # Log session and participant ID.
-        self._logger.info("==============================\nSOCIAL STORIES " +
+        self._logger.info("\n==============================\nSOCIAL STORIES " +
             "GAME\nSession: %s, Participant ID: %s", session, participant)
+
+        # Initialize the ROS node.
+        # TODO If running on network where DNS does not resolve local
+        # hostnames, get the public IP address of this machine and
+        # export to the environment variable $ROS_IP to set the public
+        # address of this node, so the user doesn't have to remember
+        # to do this before starting the node.
+        self._ros_node = rospy.init_node('social_story_game', anonymous=True)
+                # We could set the ROS log level here if we want:
+                #log_level=rospy.DEBUG)
+                # The rest of our logging is set up in the log config file.
 
         # Set up ROS node publishers and subscribers.
         self._ros_ss = ss_ros(self._queue)
@@ -338,7 +348,8 @@ if __name__ == '__main__':
     # Try launching the game!
     try:
         game_node = ss_game_node()
-        game_node.parse_arguments_and_launch()
+        (session, participant) = game_node.parse_arguments()
+        game_node.launch_game(session, participant)
 
     # If roscore isn't running or shuts down unexpectedly...
     except rospy.ROSInterruptException:
