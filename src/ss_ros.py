@@ -249,6 +249,8 @@ class ss_ros():
             msg.state = GameState.PAUSED
         if "TIMEOUT" in state:
             msg.state = GameState.USER_TIMEOUT
+        if "READY" in state:
+            msg.state = GameState.READY
         if "END" in state:
             msg.state = GameState.END
             if performance is not None:

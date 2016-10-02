@@ -211,6 +211,9 @@ class ss_game_node():
             # Set up signal handler to catch SIGINT (e.g., ctrl-c).
             signal.signal(signal.SIGINT, self._signal_handler)
 
+            # Ready to start the game. Send a "READY" message.
+            self._ros_ss.send_game_state("READY")
+
             while (not self._stop):
                 try:
                     try:
