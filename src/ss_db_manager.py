@@ -95,6 +95,9 @@ class ss_db_manager():
             # Get the number of correct responses (i.e., the questions
             # from the participant's last session where their response
             # was equal to the target response).
+            # The responses table can be empty if no responses from the
+            # participant have been recorded yet. The questions table
+            # should never be empty (filled when stories are imported).
             total_correct = self._cursor.execute("""
                 SELECT COUNT(responses.response)
                 FROM responses
@@ -116,6 +119,8 @@ class ss_db_manager():
                     (participant, session, question_type))
                 ).fetchone()
 
+            # The participant may not have responded to any questions
+            # correctly.
             if total_correct is None:
                 self._logger.warn("Could not find any correct responses for "
                     + participant + " for session " + str(session)
@@ -144,6 +149,7 @@ class ss_db_manager():
                     (participant, session, question_type))
                 ).fetchone()
 
+            # The participant may not have responded to any questions.
             if total_responses is None or total_responses[0] == 0:
                 self._logger.warn("Could not find any responses for "
                     + participant + " for session " + str(session)
@@ -169,6 +175,8 @@ class ss_db_manager():
         """
         # May not be able to use ORDER BY in the subquery - if this is
         # a problem, fix later.
+        # The responses table may be empty if no responses have been
+        # recorded yet.
         try:
             result = self._cursor.execute("""
                 SELECT DISTINCT responses.response, questions.target_response
@@ -183,6 +191,8 @@ class ss_db_manager():
                           AND session = (?)
                        ORDER BY time DESC)
                 """, (participant, current_session)).fetchall()
+            # The user may not have responded incorrectly to any
+            # questions, in which case we get no results from the query.
             if result is None or result == []:
                 self._logger.warn("Could not find any incorrect responses for "
                     + participant + " for session " + str(current_session-1)
@@ -223,6 +233,8 @@ class ss_db_manager():
             params.append(current_session)
             params.append(level)
 
+            # The stories and questions tables should not be empty.
+            # The stories_played table may be empty.
             result = self._cursor.execute("""
                 SELECT DISTINCT stories.story_name
                 FROM stories
@@ -312,6 +324,8 @@ class ss_db_manager():
             # This gives us a randomly picked story from a list of
             # stories played not this session with at least one of the
             # desired emotions.
+            # The stories and questions tables should not be empty.
+            # The stories_played table may be empty.
             result = self._cursor.execute("""
                 SELECT DISTINCT stories.story_name
                 FROM stories
