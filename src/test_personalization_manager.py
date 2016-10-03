@@ -28,6 +28,7 @@ import mock
 import random
 from mock import Mock
 from ss_personalization_manager import ss_personalization_manager
+from SS_Errors import NoStoryFound
 
 class test_personalization_manager(unittest.TestCase):
     # TODO test for different participants, sessions, including DEMO!
@@ -95,72 +96,97 @@ class test_personalization_manager(unittest.TestCase):
         dbm.get_most_recent_level.return_value = None
         self.assertEqual(self.pm.get_level_for_session(), 1)
 
-        # Last level = 1
-        dbm.get_most_recent_level.return_value = 1
-        # No questions answered, play at level 1.
-        dbm.get_percent_correct_responses.return_value = None
-        self.assertEqual(self.pm.get_level_for_session(), 1)
-        # All questions correct, play at level 2.
-        dbm.get_percent_correct_responses.return_value = 1
-        self.assertEqual(self.pm.get_level_for_session(), 2)
-        # 75% questions correct, play at level 2.
-        dbm.get_percent_correct_responses.return_value = 0.75
-        self.assertEqual(self.pm.get_level_for_session(), 2)
-        # 74% questions correct, play at level 1.
-        dbm.get_percent_correct_responses.return_value = 0.74
-        self.assertEqual(self.pm.get_level_for_session(), 1)
-        # -3% questions correct, play at # level 1.
-        dbm.get_percent_correct_responses.return_value = -0.03
-        self.assertEqual(self.pm.get_level_for_session(), 1)
+        # Last level played was...
+        last_level = [1,4,10]
+        # Percent questions correct were... None = no questions
+        # answered, 1 = all questions correct, 0.75 = 75% correct, etc.
+        percent_questions_correct = [None, 1, 0.75, 0.74, -0.03]
+        # Then we expect to play at level...
+        expected_level = [
+            (1, 2, 2, 1, 1),
+            (4, 5, 5, 4, 4),
+            (10, 10, 10, 10, 10)
+            ]
 
-        # Last level = 4
-        dbm.get_most_recent_level.return_value = 4
-        # No questions answered ever, play at level 1.
-        dbm.get_percent_correct_responses.return_value = None
-        self.assertEqual(self.pm.get_level_for_session(), 4)
-        # All questions correct, play at level 5.
-        dbm.get_percent_correct_responses.return_value = 1
-        self.assertEqual(self.pm.get_level_for_session(), 5)
-        # 75% questions correct, play at level 5.
-        dbm.get_percent_correct_responses.return_value = 0.75
-        self.assertEqual(self.pm.get_level_for_session(), 5)
-        # 74% questions correct, play at level 4.
-        dbm.get_percent_correct_responses.return_value = 0.74
-        self.assertEqual(self.pm.get_level_for_session(), 4)
-        # -3% questions correct, play at # level 4.
-        dbm.get_percent_correct_responses.return_value = -0.03
-        self.assertEqual(self.pm.get_level_for_session(), 4)
+        # Test at each level.
+        for i in range(0, len(last_level)):
+            dbm.get_most_recent_level.return_value = last_level[i]
 
-        # Last level = 10
-        dbm.get_most_recent_level.return_value = 10
-        # No questions answered ever, play at level 10.
-        dbm.get_percent_correct_responses.return_value = None
-        self.assertEqual(self.pm.get_level_for_session(), 10)
-        # All questions correct, play at level 10.
-        dbm.get_percent_correct_responses.return_value = 1
-        self.assertEqual(self.pm.get_level_for_session(), 10)
-        # 75% questions correct, play at level 10.
-        dbm.get_percent_correct_responses.return_value = 0.75
-        self.assertEqual(self.pm.get_level_for_session(), 10)
-        # 74% questions correct, play at level 10.
-        dbm.get_percent_correct_responses.return_value = 0.74
-        self.assertEqual(self.pm.get_level_for_session(), 10)
-        # -3% questions correct, play at # level 10.
-        dbm.get_percent_correct_responses.return_value = -0.03
-        self.assertEqual(self.pm.get_level_for_session(), 10)
-
+            # Test for each percentage of questions correct.
+            for j in range(0, len(percent_questions_correct)):
+                dbm.get_percent_correct_responses.return_value = \
+                    percent_questions_correct[j]
+                self.assertEqual(self.pm.get_level_for_session(),
+                    expected_level[i][j])
 
 
     def test_get_performance_this_session(self):
-        pass
+        # Test demo session.
+        self.setup_demo()
+        self.assertEqual(self.pm.get_performance_this_session(), None)
 
+        # Test a participant with no data on their first session.
+        dbm = self.setup_no_participant_data("P001", 1)
 
-    def test_get_performance_this_session(self):
-        pass
+        # Mock past play and performance data so we can test different
+        # values. Returns (emotion, ToM, order) performance.
+        performance_data = [
+                # No questions answered.
+                (None, None, None),
+                # All correct.
+                (1, 1, 1),
+                # All incorrect.
+                (0, 0, 0),
+                # Some correct.
+                (0.5, 0.75, 0.5),
+                # Didn't answer some, answered others.
+                (None, 0, 0),
+                (0, None, 0),
+                (0, 0, None),
+                (1, None, None),
+                (None, None, 1),
+                (None, 1, None),
+                (0.4, -1, 5),
+                ]
+
+        for pd in performance_data:
+            dbm.get_percent_correct_responses.side_effect = [ pd[0], pd[1],
+                pd[2] ]
+            self.assertEqual(self.pm.get_performance_this_session(), pd)
 
 
     def test_get_next_story_script(self):
         pass
+
+
+    def test_pick_next_story(self):
+        # Test demo session.
+        self.setup_demo()
+        self.assertEqual(self.pm.pick_next_story(), "demo-story-1.txt")
+
+        # Test a participant with no data on their first session.
+        dbm = self.setup_no_participant_data("P001", 1)
+
+        # Tell new story starts out True, toggles after each call to
+        # pick_new_story.
+        self.assertTrue(self.pm._tell_new_story)
+
+        # Mock relevant story data.
+        dbm.get_next_new_story.side_effect = [ None, None ]
+        dbm.get_next_review_story.side_effect = [ None ]
+        with self.assertRaises(NoStoryFound):
+            self.pm.pick_next_story()
+
+        # Mock relevant story data.
+        dbm.get_next_new_story.side_effect = [ None, None ]
+        dbm.get_next_review_story.side_effect = [ "story-cf1" ]
+        self.assertEquals(self.pm.pick_next_story(), "story-cf1-1.txt")
+
+        # Tell new story starts out True, toggles after each call to
+        # pick_new_story.
+        self.assertFalse(self.pm._tell_new_story)
+
+        #TODO ADD MORE
 
 
     def test_get_next_story_details(self):
