@@ -240,7 +240,7 @@ class ss_db_manager():
                 AND questions.level = (?)
                 ORDER BY stories.id
                 LIMIT 1
-                """ % ",".join("?"*len(emotions)), params).fetchall()
+                """ % ",".join("?"*len(emotions)), params).fetchone()
 
             if result is None or result == []:
                 self._logger.warn("Could not find any unplayed stories for "
@@ -263,7 +263,7 @@ class ss_db_manager():
                             AND stories_played.session = (?))
                     ORDER BY stories.id
                     LIMIT 1
-                    """ , (participant, current_session)).fetchall()
+                    """ , (participant, current_session)).fetchone()
 
                 if result is None or result == []:
                     self._logger.warn("Could not find unplayed stories for "
@@ -275,8 +275,8 @@ class ss_db_manager():
             # or didn't, and found an unplayed story without them.
             # Return the name of a new story to play. The DB gives
             # us the name of the story in a tuple.
-            self._logger.info("Found a story to play: " + str(result[0][0]))
-            return result[0][0]
+            self._logger.info("Found a story to play: " + str(result[0]))
+            return result[0]
 
         except Exception as e:
             self._logger.exception("Failed when trying to find unplayed "
