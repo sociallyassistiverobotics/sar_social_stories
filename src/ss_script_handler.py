@@ -257,7 +257,7 @@ class ss_script_handler():
 
             # Do different stuff depending on what the first element is.
             #########################################################
-            # only STORY lines have only one part to the command.
+            # Some STORY lines have only one part to the command.
             elif len(elements) == 1:
                 # For STORY lines, play back the next story for this
                 # participant.
@@ -266,7 +266,7 @@ class ss_script_handler():
                     # If line indicates we need to start a story, do so.
                     self._doing_story = True
                     # Create a script parser for the filename provided,
-                    # assume it is in the session_scripts directory.
+                    # assuming it is in the story scripts directory.
                     self._story_parser = ss_script_parser()
                     try:
                         self._story_parser.load_script(self._script_path
@@ -290,6 +290,14 @@ class ss_script_handler():
                         self._doing_story = False
 
             # Line has 2+ elements, so check the other commands.
+            #########################################################
+            # For STORY SETUP lines, pick the next story to play so
+            # we can load its graphics and play back the story.
+            if "STORY" in elements[0] and "SETUP" in elements[1]:
+                self._logger.debug("STORY SETUP")
+                # Pick the next story to play.
+                self._personalization_man.pick_next_story()
+
             #########################################################
             # For ROBOT lines, send command to the robot.
             elif "ROBOT" in elements[0]:

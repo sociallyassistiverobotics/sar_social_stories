@@ -119,7 +119,7 @@ class ss_personalization_manager():
 
     def get_performance_this_session(self):
         """ Get the user's performance on all questions asked this
-        session, by question type, and format as a json object.
+        session, by question type.
         """
         # Only get the user's performance if this isn't a DEMO session.
         if (self._session != -1):
@@ -136,6 +136,23 @@ class ss_personalization_manager():
 
 
     def get_next_story_script(self):
+        """ Return the name of the next story script to load. """
+        # If this is a demo session, use the demo script.
+        if (self._session == -1):
+            return "demo-story-1.txt"
+
+        # If no story has been picked yet, print error and pick a story.
+        elif (self._current_story is None):
+           self._logger.error("We were asked for the story script, but we "
+                "haven't picked a story yet! Picking a story...")
+           self.pick_next_story()
+
+        # Return name of story script: story name + level + file
+        # extension.
+        return (self._current_story + "-" + str(self._level) + ".txt").lower()
+
+
+    def pick_next_story(self):
         """ Determine which story should be heard next. We have 40
         stories. Alternate telling new stories and telling review
         stories. Earlier sessions will use more new stories since there
@@ -147,6 +164,8 @@ class ss_personalization_manager():
         # If this is a demo session, use the demo script.
         if (self._session == -1):
             self._logger.debug("Using DEMO script.")
+            # Save that we are using the demo story.
+            self._current_story = "demo-story-1"
             return "demo-story-1.txt"
 
         # If we should tell a new story, get the next new story that
@@ -189,7 +208,7 @@ class ss_personalization_manager():
         # Save current story so we can provide story details later.
         self._current_story = story
 
-        # Return name of story script: story name + level + file extension.
+        # Return name of script: story name + level + file extension.
         return (story + "-" + str(self._level) + ".txt").lower()
 
 
@@ -213,12 +232,11 @@ class ss_personalization_manager():
                     + "\nIn order: " + str(in_order)
                     + "\nNum answers: " + str(num_answers))
 
-        # If the current story isn't set, throw exception.
+        # If the current story isn't set, print error, and pick a story.
         elif (self._current_story is None):
            self._logger.error("We were asked for story details, but we \
-                haven't picked the next story yet!")
-           raise NoStoryFound("No current story is set.", self._participant,
-               self._session)
+                haven't picked a story yet! Picking a story...")
+           self.pick_next_story()
 
         # Otherwise, we have the current story.
         else:

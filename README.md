@@ -326,6 +326,15 @@ will look like this:
 
 `STORY`
 
+That said: Depending on your script, you may want to specify that a new story
+should be selected before attempting to load the story or play back the story.
+A `STORY` line may optionally take a string argument "SETUP", which indicates
+that the next story should be selected. You will then need to use the usual
+script lines for loading and playing back the story.
+
+`STORY  SETUP`
+
+
 ### Story scripts
 
 The story scripts follow the same format as the main session scripts. See the
