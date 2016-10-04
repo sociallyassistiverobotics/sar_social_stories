@@ -143,12 +143,11 @@ class ss_personalization_manager():
 
         # If no story has been picked yet, print error and pick a story.
         elif (self._current_story is None):
-           self._logger.error("We were asked for the story script, but we "
-                "haven't picked a story yet! Picking a story...")
-           self.pick_next_story()
+            self._logger.error("We were asked for the story script, but we "
+                 "haven't picked a story yet! Picking a story...")
+            self._current_story = self.pick_next_story()
 
-        # Return name of story script: story name + level + file
-        # extension.
+        # Return name of story script: story name + level + file extension.
         return (self._current_story + "-" + str(self._level) + ".txt").lower()
 
 
@@ -166,13 +165,16 @@ class ss_personalization_manager():
             self._logger.debug("Using DEMO script.")
             # Save that we are using the demo story.
             self._current_story = "demo-story-1"
-            return "demo-story-1.txt"
+            return "demo-story-1"
+
+        # We start without having picked the next story.
+        story = None
 
         # If we should tell a new story, get the next new story that
         # has one of the emotions to practice in it. If there aren't
         # any stories with one of those emotions, just get the next new
         # story.
-        elif self._tell_new_story:
+        if self._tell_new_story:
             story = self._db_man.get_next_new_story(self._participant,
                 self._emotion_list, self._level)
 
@@ -208,8 +210,8 @@ class ss_personalization_manager():
         # Save current story so we can provide story details later.
         self._current_story = story
 
-        # Return name of script: story name + level + file extension.
-        return (story + "-" + str(self._level) + ".txt").lower()
+        # Return name of the story.
+        return story
 
 
     def get_next_story_details(self):
@@ -232,14 +234,14 @@ class ss_personalization_manager():
                     + "\nIn order: " + str(in_order)
                     + "\nNum answers: " + str(num_answers))
 
-        # If the current story isn't set, print error, and pick a story.
-        elif (self._current_story is None):
-           self._logger.error("We were asked for story details, but we \
-                haven't picked a story yet! Picking a story...")
-           self.pick_next_story()
-
-        # Otherwise, we have the current story.
+        # Otherwise, we will get the details for the current story.
         else:
+            # If the current story isn't set, print error, and pick a story.
+            if (self._current_story is None):
+               self._logger.error("We were asked for story details, but we \
+                    haven't picked a story yet! Picking a story...")
+               self._current_story = self.pick_next_story()
+
             # Get story information from the database: scene graphics
             # names, whether the scenes are shown in order, how many
             # answer options there are per question at this level.

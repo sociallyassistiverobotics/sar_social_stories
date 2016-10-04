@@ -26,7 +26,7 @@
 import unittest
 import mock
 import random
-from mock import Mock
+from mock import Mock, patch
 from ss_personalization_manager import ss_personalization_manager
 from SS_Errors import NoStoryFound
 
@@ -155,14 +155,24 @@ class test_personalization_manager(unittest.TestCase):
             self.assertEqual(self.pm.get_performance_this_session(), pd)
 
 
-    def test_get_next_story_script(self):
-        pass
+    @patch("ss_personalization_manager.ss_personalization_manager."
+        + "pick_next_story")
+    def test_get_next_story_script(self, mock):
+        # The get_next_story_script function is also tested in the next test,
+        # when testing the pick_next_story function.
+        # Test a participant with no data on their first session.
+        dbm = self.setup_no_participant_data("P001", 1)
+        mock.return_value = "story-cr1"
+        self.assertEqual(self.pm.get_next_story_script(), "story-cr1-1.txt")
+        self.assertTrue(mock.called)
 
 
     def test_pick_next_story(self):
         # Test demo session.
         self.setup_demo()
-        self.assertEqual(self.pm.pick_next_story(), "demo-story-1.txt")
+        self.assertEqual(self.pm.pick_next_story(), "demo-story-1")
+        self.assertEqual(self.pm._current_story, "demo-story-1")
+        self.assertEqual(self.pm.get_next_story_script(), "demo-story-1.txt")
 
         # Test a participant with no data on their first session.
         dbm = self.setup_no_participant_data("P001", 1)
@@ -172,21 +182,67 @@ class test_personalization_manager(unittest.TestCase):
         self.assertTrue(self.pm._tell_new_story)
 
         # Mock relevant story data.
+        # Need new story, no new or review story found.
         dbm.get_next_new_story.side_effect = [ None, None ]
         dbm.get_next_review_story.side_effect = [ None ]
         with self.assertRaises(NoStoryFound):
             self.pm.pick_next_story()
 
-        # Mock relevant story data.
+        # Need new story, no new story found.
         dbm.get_next_new_story.side_effect = [ None, None ]
-        dbm.get_next_review_story.side_effect = [ "story-cf1" ]
-        self.assertEquals(self.pm.pick_next_story(), "story-cf1-1.txt")
+        dbm.get_next_review_story.side_effect = [ "story-cr1" ]
+        self.assertEqual(self.pm.pick_next_story(), "story-cr1")
+        self.assertEqual(self.pm._current_story, "story-cr1")
+        self.assertEqual(self.pm.get_next_story_script(), "story-cr1-1.txt")
 
-        # Tell new story starts out True, toggles after each call to
-        # pick_new_story.
+        # Tell new story flag should toggle.
         self.assertFalse(self.pm._tell_new_story)
 
-        #TODO ADD MORE
+        # Need review story, review story found on 1st try.
+        dbm.get_next_review_story.side_effect = [ "story-cf1" ]
+        self.assertEqual(self.pm.pick_next_story(), "story-cf1")
+        self.assertEqual(self.pm._current_story, "story-cf1")
+        self.assertEqual(self.pm.get_next_story_script(), "story-cf1-1.txt")
+
+        # Tell new story flag should toggle.
+        self.assertTrue(self.pm._tell_new_story)
+
+        # Need new story, new story found on 1st try.
+        dbm.get_next_new_story.side_effect = [ "story-cr1", None ]
+        dbm.get_next_review_story.side_effect = [ None ]
+        self.assertEqual(self.pm.pick_next_story(), "story-cr1")
+        self.assertEqual(self.pm._current_story, "story-cr1")
+        self.assertEqual(self.pm.get_next_story_script(), "story-cr1-1.txt")
+
+        # Tell new story flag should toggle.
+        self.assertFalse(self.pm._tell_new_story)
+
+        # Need review story, no review or new story found.
+        dbm.get_next_new_story.side_effect = [ None ]
+        dbm.get_next_review_story.side_effect = [ None ]
+        with self.assertRaises(NoStoryFound):
+            self.pm.pick_next_story()
+
+        # Need review story, no review story found, get new story.
+        dbm.get_next_new_story.side_effect = [ "story-cf1" ]
+        dbm.get_next_review_story.side_effect = [ None ]
+        self.assertEqual(self.pm.pick_next_story(), "story-cf1")
+        self.assertEqual(self.pm._current_story, "story-cf1")
+        self.assertEqual(self.pm.get_next_story_script(), "story-cf1-1.txt")
+
+        # Tell new story flag should toggle.
+        self.assertTrue(self.pm._tell_new_story)
+
+        # Need new story, new story found on 2nd try.
+        dbm.get_next_new_story.side_effect = [ None, "story-cr1" ]
+        dbm.get_next_review_story.side_effect = [ None ]
+        self.assertEqual(self.pm.pick_next_story(), "story-cr1")
+        self.assertEqual(self.pm._current_story, "story-cr1")
+        self.assertEqual(self.pm.get_next_story_script(), "story-cr1-1.txt")
+
+        # Tell new story flag should toggle.
+        self.assertFalse(self.pm._tell_new_story)
+
 
 
     def test_get_next_story_details(self):
