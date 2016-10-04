@@ -62,8 +62,8 @@ class ss_db_manager():
             result = self._cursor.execute("""
                 SELECT level_id
                 FROM stories_played
-                    WHERE participant=(?)
-                    AND session=(?)
+                    WHERE participant = (?)
+                    AND session = (?)
                     ORDER BY time DESC
                     LIMIT 1""",
                     (participant, (current_session-1))).fetchone()
@@ -103,13 +103,11 @@ class ss_db_manager():
                 FROM responses
                 JOIN questions
                     ON questions.id = responses.questions_id
-                    WHERE questions.target_response = responses.response
-                    AND responses.stories_played_id in (
-                        SELECT id
-                        FROM stories_played
-                        WHERE participant = (?)
-                           AND session = (?)
-                        ORDER BY time DESC)
+                JOIN stories_played
+                    ON responses.stories_played_id = stories_played.id
+                WHERE questions.target_response = responses.response
+                    AND stories_played.participant = (?)
+                    AND stories_played.session = (?)
                 """
                 # Only filter by question type if one was provided.
                 + ("" if (question_type is None) else \
@@ -118,6 +116,7 @@ class ss_db_manager():
                 ((participant, session) if (question_type is None) else \
                     (participant, session, question_type))
                 ).fetchone()
+                #TODO helper function, "correct" as parameter like question type
 
             # The participant may not have responded to any questions
             # correctly.
@@ -182,14 +181,12 @@ class ss_db_manager():
                 SELECT DISTINCT responses.response, questions.target_response
                 FROM responses
                 JOIN questions
-                   ON questions.id = responses.questions_id
-                   WHERE questions.target_response <> responses.response
-                   AND responses.stories_played_id in (
-                       SELECT id
-                       FROM stories_played
-                       WHERE participant = (?)
-                          AND session = (?)
-                       ORDER BY time DESC)
+                    ON questions.id = responses.questions_id
+                JOIN stories_played
+                    ON responses.stories_played_id = stories_played.id
+                WHERE questions.target_response <> responses.response
+                    AND stories_played.participant = (?)
+                    AND stories_played.session = (?)
                 """, (participant, current_session)).fetchall()
             # The user may not have responded incorrectly to any
             # questions, in which case we get no results from the query.
@@ -230,52 +227,45 @@ class ss_db_manager():
             params = list(emotions)
             params.append(participant)
             params.append(level)
+            params.append(participant)
 
             # The stories and questions tables should not be empty.
             # The stories_played table may be empty.
-            result = self._cursor.execute("""
-                SELECT DISTINCT stories.story_name
+            # The first half of the query looks for a story with the
+            # specified emotions; the second half looks for any unplayed
+            # story, not caring about emotions.
+            query1 = """
+                SELECT stories.story_name, stories.id, 0 AS found_emotion
                 FROM stories
                 JOIN questions
                     ON questions.story_id = stories.id
                 LEFT JOIN stories_played
                     ON stories_played.story_id = stories.id
                 WHERE questions.target_response IN (%s)
-                AND stories.id
-                    NOT IN (
-                        SELECT stories_played.story_id
-                        FROM stories_played
-                        WHERE stories_played.participant = (?))
+                AND (stories_played.participant <> (?)
+                    OR stories_played.participant IS NULL)
                 AND questions.level = (?)
-                ORDER BY stories.id
-                LIMIT 1
-                """ % ",".join("?"*len(emotions)), params).fetchone()
+                """ % ",".join("?"*len(emotions))
+
+            query2 = """
+                SELECT stories.story_name, stories.id, 1 AS found_emotion
+                FROM stories
+                LEFT JOIN stories_played
+                    ON stories_played.story_id = stories.id
+                AND (stories_played.participant <> (?)
+                    OR stories_played.participant IS NULL)
+                """
+
+            query = query1 + " UNION " + query2 + """
+                ORDER BY found_emotion, stories.id
+                LIMIT 1 """
+
+            result = self._cursor.execute(query, params).fetchone()
 
             if result is None or result == []:
                 self._logger.warn("Could not find any unplayed stories for "
-                    + participant + " with emotions " + str(emotions) +
-                    " in the database! Will try to find any unplayed story...")
-
-                # Query again, but look for any unplayed stories, not
-                # just unplayed stories with particular emotions.
-                result = self._cursor.execute("""
-                    SELECT DISTINCT stories.story_name
-                    FROM stories
-                    LEFT JOIN stories_played
-                        ON stories_played.story_id = stories.id
-                    WHERE stories.id
-                        NOT IN (
-                            SELECT stories_played.story_id
-                            FROM stories_played
-                            WHERE stories_played.participant = (?))
-                    ORDER BY stories.id
-                    LIMIT 1
-                    """ , (participant,)).fetchone()
-
-                if result is None or result == []:
-                    self._logger.warn("Could not find unplayed stories for "
-                    + participant + " in the database!")
-                    return None
+                + participant + " in the database!")
+                return None
 
             # We either found an unplayed story with the right emotions
             # or didn't, and found an unplayed story without them.
