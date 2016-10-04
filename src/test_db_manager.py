@@ -100,60 +100,60 @@ class test_db_manager(unittest.TestCase):
         # that would not test whether the story included the correct
         # emotions for the story's level, since not all stories have
         # the same emotions present at every level.
-        self.assertEqual(self.dbm.get_next_new_story("p391", 1, ["angry"], 1),
+        self.assertEqual(self.dbm.get_next_new_story("p391", ["angry"], 1),
             "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("", 2, ["angry"], 10),
+        self.assertEqual(self.dbm.get_next_new_story("", ["angry"], 10),
             "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("", 2, ["angry"], 22),
+        self.assertEqual(self.dbm.get_next_new_story("", ["angry"], 22),
             "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("p391", 1, ["sad"], 2),
+        self.assertEqual(self.dbm.get_next_new_story("p391", ["sad"], 2),
             "story-cr1")
-        self.assertEqual(self.dbm.get_next_new_story("33", 10, ["sad"], 10),
+        self.assertEqual(self.dbm.get_next_new_story("33", ["sad"], 10),
             "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("p391", 1, ["happy"], 3),
+        self.assertEqual(self.dbm.get_next_new_story("p391", ["happy"], 3),
             "story-am1")
-        self.assertEqual(self.dbm.get_next_new_story("33", 2, ["happy"], 8),
+        self.assertEqual(self.dbm.get_next_new_story("33", ["happy"], 8),
             "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("3811", 13, ["nervous"],
+        self.assertEqual(self.dbm.get_next_new_story("3811", ["nervous"],
             8), "story-am2")
-        self.assertEqual(self.dbm.get_next_new_story("0x7a", -0.1, ["nervous"],
+        self.assertEqual(self.dbm.get_next_new_story("0x7a", ["nervous"],
             3), "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("", 55, ["excited"], 9),
+        self.assertEqual(self.dbm.get_next_new_story("", ["excited"], 9),
             "story-fo2")
-        self.assertEqual(self.dbm.get_next_new_story("P001", -22, ["excited"],
+        self.assertEqual(self.dbm.get_next_new_story("P001", ["excited"],
             4), "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("002", 0, ["guilty"], 10),
+        self.assertEqual(self.dbm.get_next_new_story("002", ["guilty"], 10),
             "story-am1")
-        self.assertEqual(self.dbm.get_next_new_story("0.03a", 9, ["guilty"], 1),
+        self.assertEqual(self.dbm.get_next_new_story("0.03a", ["guilty"], 1),
             "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("0", 8, ["surprised"], 7),
+        self.assertEqual(self.dbm.get_next_new_story("0", ["surprised"], 7),
             "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("P01", 2, ["surprised"],
+        self.assertEqual(self.dbm.get_next_new_story("P01", ["surprised"],
             6), "story-sr1")
-        self.assertEqual(self.dbm.get_next_new_story("0", 5, ["afraid"], 5),
+        self.assertEqual(self.dbm.get_next_new_story("0", ["afraid"], 5),
             "story-fo2")
-        self.assertEqual(self.dbm.get_next_new_story("P01", 2, ["afraid"], 10),
+        self.assertEqual(self.dbm.get_next_new_story("P01", ["afraid"], 10),
             "story-fo2")
-        self.assertEqual(self.dbm.get_next_new_story("0", 9, ["frustrated"],
+        self.assertEqual(self.dbm.get_next_new_story("0", ["frustrated"],
             8), "story-cr1")
-        self.assertEqual(self.dbm.get_next_new_story("P01", 2, ["frustrated"],
+        self.assertEqual(self.dbm.get_next_new_story("P01", ["frustrated"],
             3), "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("0", 5, ["calm"], 10),
+        self.assertEqual(self.dbm.get_next_new_story("0", ["calm"], 10),
             "story-st1")
-        self.assertEqual(self.dbm.get_next_new_story("P01", 2, ["calm"], 1),
+        self.assertEqual(self.dbm.get_next_new_story("P01", ["calm"], 1),
             "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("0", 5, ["bored"], 8),
+        self.assertEqual(self.dbm.get_next_new_story("0", ["bored"], 8),
             "story-sr2")
-        self.assertEqual(self.dbm.get_next_new_story("P01", 2, ["bored"], 3),
+        self.assertEqual(self.dbm.get_next_new_story("P01", ["bored"], 3),
             "story-fo1")
 
-        self.assertEqual(self.dbm.get_next_new_story("0", 9, ["frustrated",
+        self.assertEqual(self.dbm.get_next_new_story("0", ["frustrated",
             "bored", "happy"], 8), "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("0", 9, ["frustrated",
+        self.assertEqual(self.dbm.get_next_new_story("0", ["frustrated",
             "surprised", "sad"], 8), "story-fo1")
-        self.assertEqual(self.dbm.get_next_new_story("p391", 1, ["happy",
+        self.assertEqual(self.dbm.get_next_new_story("p391", ["happy",
             "frustrated", "afraid", "sad"], 1), "story-fo2")
-        self.assertEqual(self.dbm.get_next_new_story("p391", 2, [""], 1),
+        self.assertEqual(self.dbm.get_next_new_story("p391", [""], 1),
             "story-fo1")
 
 
@@ -311,7 +311,7 @@ class test_db_manager(unittest.TestCase):
             self.dbm.get_most_recent_incorrect_emotions("p023", 1)
 
         with self.assertRaises(Exception):
-            self.dbm.get_next_new_story("p391", 1, ["happy", "frustrated"], 1)
+            self.dbm.get_next_new_story("p391", ["happy", "frustrated"], 1)
 
         with self.assertRaises(Exception):
             self.dbm.get_next_review_story("40", 5, ["bored"], 8)

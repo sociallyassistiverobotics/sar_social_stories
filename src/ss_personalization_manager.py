@@ -174,7 +174,7 @@ class ss_personalization_manager():
         # story.
         elif self._tell_new_story:
             story = self._db_man.get_next_new_story(self._participant,
-                self._session, self._emotion_list, self._level)
+                self._emotion_list, self._level)
 
         # If there are no more new stories to tell, or if we need to
         # tell a review story next, get a review story that has one of
@@ -189,7 +189,7 @@ class ss_personalization_manager():
         # story but haven't told very many stories yet).
         if (story is None):
             story = self._db_man.get_next_new_story(self._participant,
-                self._session, self._emotion_list, self._level)
+                self._emotion_list, self._level)
 
         # If we still don't have a story, then for some reason there
         # are no new stories and no review stories we can tell. This is

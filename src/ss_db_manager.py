@@ -210,8 +210,7 @@ class ss_db_manager():
             raise
 
 
-    def get_next_new_story(self, participant, current_session, emotions,
-            level):
+    def get_next_new_story(self, participant, emotions, level):
         """ Get the next unplayed story for the desired level from the
         story table with at least one of the listed emotions present in
         the story. If no unplayed story has the desired emotions or if
@@ -230,7 +229,6 @@ class ss_db_manager():
             # parameters.
             params = list(emotions)
             params.append(participant)
-            params.append(current_session)
             params.append(level)
 
             # The stories and questions tables should not be empty.
@@ -247,8 +245,7 @@ class ss_db_manager():
                     NOT IN (
                         SELECT stories_played.story_id
                         FROM stories_played
-                        WHERE stories_played.participant = (?)
-                        AND stories_played.session = (?))
+                        WHERE stories_played.participant = (?))
                 AND questions.level = (?)
                 ORDER BY stories.id
                 LIMIT 1
@@ -256,9 +253,8 @@ class ss_db_manager():
 
             if result is None or result == []:
                 self._logger.warn("Could not find any unplayed stories for "
-                    + participant + " for session " + str(current_session)
-                    + " with emotions " + str(emotions) + " in the database!" +
-                    " Will try to find any unplayed story...")
+                    + participant + " with emotions " + str(emotions) +
+                    " in the database! Will try to find any unplayed story...")
 
                 # Query again, but look for any unplayed stories, not
                 # just unplayed stories with particular emotions.
@@ -271,16 +267,14 @@ class ss_db_manager():
                         NOT IN (
                             SELECT stories_played.story_id
                             FROM stories_played
-                            WHERE stories_played.participant = (?)
-                            AND stories_played.session = (?))
+                            WHERE stories_played.participant = (?))
                     ORDER BY stories.id
                     LIMIT 1
-                    """ , (participant, current_session)).fetchone()
+                    """ , (participant,)).fetchone()
 
                 if result is None or result == []:
                     self._logger.warn("Could not find unplayed stories for "
-                    + participant + " for session " + str(current_session)
-                    + " in the database!")
+                    + participant + " in the database!")
                     return None
 
             # We either found an unplayed story with the right emotions
@@ -292,9 +286,8 @@ class ss_db_manager():
 
         except Exception as e:
             self._logger.exception("Failed when trying to find unplayed "
-                "stories for " + participant + " for session " +
-                str(current_session) + " with emotions " + str(emotions) +
-                " in the database!")
+                "stories for " + participant + " with emotions " +
+                str(emotions) + " in the database!")
             # Pass on exception for now.
             raise
 
