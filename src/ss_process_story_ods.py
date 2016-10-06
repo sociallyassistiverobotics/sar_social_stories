@@ -238,7 +238,7 @@ def insert_to_stories_table(cursor, story_names):
 def insert_to_graphics_table(cursor, story_name, level, scene, graphic_tag):
     """ Add a list of graphics names to the graphics table."""
     # story_id = The id from the stories table for this story.
-    # level_id = The level number from the levels table for this level.
+    # level = The level number from the levels table for this level.
     # scene = Scene number (1,2,3,4) to load this graphic into.
     # graphic_tag = Tag of graphic to load (lowercase letter).
     print("ADD GRAPHIC: " + story_name + "-" + str(level) + " scene" +
@@ -251,7 +251,7 @@ def insert_to_graphics_table(cursor, story_name, level, scene, graphic_tag):
     graphic_name = story_name.replace("Story-","") + "-" + \
         ("P" if level < 6 else "B") + "-" + graphic_tag + ".png"
     cursor.execute("""
-        INSERT INTO graphics (story_id, level_id, scene_num, graphic)
+        INSERT INTO graphics (story_id, level, scene_num, graphic)
         VALUES (
             (SELECT id FROM stories WHERE story_name=(?)),
             (SELECT level FROM levels WHERE level=(?)),

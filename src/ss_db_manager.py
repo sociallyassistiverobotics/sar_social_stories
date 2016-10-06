@@ -60,7 +60,7 @@ class ss_db_manager():
 
         try:
             result = self._cursor.execute("""
-                SELECT level_id
+                SELECT level
                 FROM stories_played
                     WHERE participant = (?)
                     AND session = (?)
@@ -234,6 +234,9 @@ class ss_db_manager():
             # The first half of the query looks for a story with the
             # specified emotions; the second half looks for any unplayed
             # story, not caring about emotions.
+            # 0 for the first query and 1 for the second query lets us
+            # order the results by anything found from the first query (the
+            # first half of the union) before anything from the second half.
             query1 = """
                 SELECT stories.story_name, stories.id, 0 AS found_emotion
                 FROM stories
@@ -314,15 +317,11 @@ class ss_db_manager():
                 FROM stories
                 JOIN questions
                     ON questions.story_id = stories.id
-                LEFT JOIN stories_played
+                JOIN stories_played
                     ON stories_played.story_id = stories.id
                 WHERE questions.target_response IN (%s)
-                AND stories.id
-                    IN (
-                        SELECT stories_played.story_id
-                        FROM stories_played
-                        WHERE stories_played.participant = (?)
-                        AND stories_played.session <> (?))
+                AND stories_played.participant = (?)
+                AND stories_played.session <> (?)
                 AND questions.level = (?)
                 ORDER BY RANDOM()
                 LIMIT 1
@@ -342,13 +341,13 @@ class ss_db_manager():
                 result = self._cursor.execute("""
                     SELECT stories.story_name
                     FROM stories_played
-                    LEFT JOIN stories
+                    JOIN stories
                         ON stories_played.story_id = stories.id
                     WHERE stories_played.participant = (?)
                     AND stories_played.session <> (?)
                     GROUP BY stories_played.story_id
                     ORDER BY count(stories_played.story_id) ASC,
-                        stories_played.time ASC
+                        max(stories_played.time) ASC
                     LIMIT 1
                     """, (participant, current_session)).fetchone()
 
@@ -383,7 +382,7 @@ class ss_db_manager():
             result = self._cursor.execute("""
                 SELECT num_answers, in_order
                 FROM levels
-                WHERE level=(?)
+                WHERE level = (?)
                 """, (level,)).fetchone()
             if result is None:
                 self._logger.warn("Could not find info for level " + str(level)
@@ -409,11 +408,11 @@ class ss_db_manager():
             result = self._cursor.execute("""
                 SELECT graphic
                 FROM graphics
-                WHERE level_id=(?)
-                AND story_id=(
+                WHERE level = (?)
+                AND story_id = (
                     SELECT id
                     FROM stories
-                    WHERE story_name=(?))
+                    WHERE story_name = (?))
                 """, (level, story)).fetchall()
             if result is None or result == []:
                 self._logger.warn("Could not find graphics for story " + story
@@ -439,16 +438,14 @@ class ss_db_manager():
         try:
             self._cursor.execute("""
                 INSERT INTO stories_played (participant, session,
-                    level_id, story_id)
+                    level, story_id)
                 VALUES (
                 (?),
                 (?),
                 (SELECT id
                     FROM stories
-                    WHERE story_name=(?)),
-                (SELECT level
-                    FROM levels
-                    WHERE level=(?)))
+                    WHERE story_name = (?)),
+                (?))
                 """, (participant, session, story, level))
             # Commit after recording the story.
             self._conn.commit()
@@ -472,30 +469,24 @@ class ss_db_manager():
                     response
                 VALUES (
                 (SELECT id from stories_played
-                    WHERE participant=(?)
-                    AND session=(?)
-                    AND level_id=(
-                        SELECT level
-                        FROM levels
-                        WHERE level=(?))
-                    AND story_id=(
+                    WHERE participant = (?)
+                    AND session = (?)
+                    AND level = (?)
+                    AND story_id = (
                         SELECT id
                             FROM stories
-                            WHERE story_name=(?))
+                            WHERE story_name = (?))
                     ORDER BY time DESC
                     LIMIT 1),
                 (SELECT id
                     FROM questions
-                    WHERE question_num=(?)
-                    AND question_type=(?)
-                    AND level=(
-                        SELECT level
-                        FROM levels
-                        WHERE level=(?))
-                    AND story_id=(
+                    WHERE question_num = (?)
+                    AND question_type = (?)
+                    AND level = (?)
+                    AND story_id = (
                         SELECT id
                         FROM stories
-                        WHERE story_name=(?))),
+                        WHERE story_name = (?))),
                 (?))
                 """, (participant, session, level, story, question_num,
                     question_type, level, story, response))
