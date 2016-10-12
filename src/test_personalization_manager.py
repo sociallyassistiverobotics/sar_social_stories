@@ -244,9 +244,33 @@ class test_personalization_manager(unittest.TestCase):
         self.assertFalse(self.pm._tell_new_story)
 
 
+    @patch("ss_personalization_manager.ss_personalization_manager."
+        + "pick_next_story")
+    def test_get_next_story_details(self, mock):
+        # Test demo session.
+        self.setup_demo()
+        self.assertEqual(self.pm.get_next_story_details(),
+            (["scenes/CR1-a-b.png", "scenes/CR1-b-b.png", "scenes/CR1-c-b.png",
+            "scenes/CR1-d-b.png"], True, 4))
 
-    def test_get_next_story_details(self):
-        pass
+        # Test a participant with no data on their first session.
+        dbm = self.setup_no_participant_data("P001", 1)
+
+        # Mock relevant story data and personalization.
+        # The current story starts out set to None, so get_next_story_details
+        # will call pick_next_story.
+        mock.return_value = "story-cr1"
+        dbm.get_graphics.return_value = ["scenes/CR1-a-p.png"]
+        dbm.get_level_info.return_value = (1, True)
+        self.assertEqual(self.pm.get_next_story_details(),
+            (["scenes/CR1-a-p.png"], True, 1))
+        self.assertTrue(mock.called)
+
+        # If we start with a current story set, the mock will not be called.
+        mock.reset_mock()
+        self.assertEqual(self.pm.get_next_story_details(),
+            (["scenes/CR1-a-p.png"], True, 1))
+        self.assertFalse(mock.called)
 
 
     def test_record_story_loaded(self):
