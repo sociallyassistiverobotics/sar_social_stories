@@ -266,12 +266,12 @@ class test_db_manager(unittest.TestCase):
         self.assertIsInstance(self.dbm.get_graphics("story-ki2", 4), list)
 
         self.assertListEqual(self.dbm.get_graphics("story-fo1", 1),
-                ["story-fo1-P-a.png"])
+                ["FO1-a-p.png"])
         self.assertListEqual(self.dbm.get_graphics("story-fo1", 2),
-                ["story-fo1-P-a.png", "story-fo1-P-b.png"])
+                ["FO1-a-p.png", "FO1-b-p.png"])
         self.assertListEqual(self.dbm.get_graphics("story-fo1", 8),
-                ["story-fo1-B-a.png", "story-fo1-B-b.png",
-                "story-fo1-B-c.png", "story-fo1-B-d.png"])
+                ["FO1-a-b.png", "FO1-b-b.png",
+                "FO1-c-b.png", "FO1-d-b.png"])
 
 
     def test_record_story_played(self):

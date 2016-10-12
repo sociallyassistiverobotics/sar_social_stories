@@ -50,7 +50,7 @@ class test_personalization_manager(unittest.TestCase):
         m.get_next_new_story.return_value = "story-fo1"
         m.get_next_review_story.return_value = None
         m.get_level_info.return_value = (3, 1)
-        m.get_graphics.return_value = ["story-fo1-P-a.png"]
+        m.get_graphics.return_value = ["FO1-a-p.png"]
 
 
     def setup_no_participant_data(self, participant, session):
@@ -71,7 +71,7 @@ class test_personalization_manager(unittest.TestCase):
         m.get_next_new_story.return_value = "story-fo1"
         m.get_next_review_story.return_value = None
         m.get_level_info.return_value = (3, 1)
-        m.get_graphics.return_value = ["story-fo1-P-a.png"]
+        m.get_graphics.return_value = ["FO1-a-p.png"]
         return m
 
 

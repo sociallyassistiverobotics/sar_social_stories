@@ -203,7 +203,7 @@ def ss_process_story_ods():
                                 continue
                             # Graphics scene numbers are 1-indexed.
                             insert_to_graphics_table(cursor,
-                                sheet.name.lower(), level + 1, scene_num,
+                                sheet.name.upper(), level + 1, scene_num,
                                 sheet[level,key].lower())
 
             # For each level, generate story.
@@ -237,19 +237,20 @@ def insert_to_stories_table(cursor, story_names):
 
 def insert_to_graphics_table(cursor, story_name, level, scene, graphic_tag):
     """ Add a list of graphics names to the graphics table."""
-    # story_id = The id from the stories table for this story.
+    # story_name = The name of the story.
     # level = The level number from the levels table for this level.
     # scene = Scene number (1,2,3,4) to load this graphic into.
     # graphic_tag = Tag of graphic to load (lowercase letter).
     print("ADD GRAPHIC: " + story_name + "-" + str(level) + " scene" +
             str(scene) + " " + graphic_tag)
     # Graphics file names:
-    #     [env][story_num]-[background_type]-[tag].png
-    #     e.g., LR1-B-a.png or CF1-P-f.png
-    # Levels 1-5: tag P for plain background.
-    # Levels 6-10: tag B for complex background.
-    graphic_name = story_name.replace("Story-","") + "-" + \
-        ("P" if level < 6 else "B") + "-" + graphic_tag + ".png"
+    #     [env][story_num]-[tag]-[background_type].png
+    #     where background_type is b=background or p=plain
+    #     e.g., LR1-a-b.png or CF1-f-p.png
+    # Levels 1-5: p for plain background.
+    # Levels 6-10: b for complex background.
+    graphic_name = story_name.replace("STORY-","") + "-" + graphic_tag + "-" \
+        + ("p" if level < 6 else "b") + ".png"
     cursor.execute("""
         INSERT INTO graphics (story_id, level, scene_num, graphic)
         VALUES (
@@ -257,7 +258,7 @@ def insert_to_graphics_table(cursor, story_name, level, scene, graphic_tag):
             (SELECT level FROM levels WHERE level=(?)),
             (?),
             (?))
-        """, (story_name, level, scene, graphic_name))
+        """, (story_name.lower(), level, scene, graphic_name))
 
 
 def insert_to_questions_table(cursor, story, level, question_num,
