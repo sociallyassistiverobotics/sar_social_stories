@@ -23,8 +23,8 @@ WAIT	CORRECT_INCORRECT	10
 ROBOT	DO	"Lisa felt frustrated."
 OPAL	CLEAR	ANSWERS
 PAUSE	1
-OPAL	LOAD_ANSWERS	answers/lisa_mad.png, answers/lisa_afraid.png, answers/lisa_frustrated.png, answers/lisa_happy.png
-OPAL	SET_CORRECT	{"correct":["lisa_happy"], "incorrect":["lisa_mad","lisa_afraid","lisa_frustrated"]}
+OPAL	LOAD_ANSWERS	answers/lisa_mad.png, answers/lisa_scared.png, answers/lisa_frustrated.png, answers/lisa_happy.png
+OPAL	SET_CORRECT	{"correct":["lisa_happy"], "incorrect":["lisa_mad","lisa_scared","lisa_frustrated"]}
 ROBOT	DO	"How did Lisa feel when she got her shoe back from her mom?"
 WAIT	CORRECT_INCORRECT	10
 ROBOT	DO	"Lisa felt happy."
