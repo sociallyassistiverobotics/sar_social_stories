@@ -91,37 +91,67 @@ class ss_personalization_manager():
         # If there is no previous data, start at level 1.
         if (level is None):
             return 1
+
         # If participant got 75%-80% questions correct last time, level
-        # up. If no responses were found, do not level up.
+        # up. If no responses were found or not enough were answered
+        # correctly, do not level up.
         #TODO total performance or just last time's performance?
-        if(self._db_man.get_percent_correct_responses(
-            self._participant, (self._session - 1)) > percent_correct_to_level):
-            self._logger.info("Participant got more than " +
-                (percent_correct_to_level*100) + "% questions correct last "
-                + "time, so we can level up! Level will be " + str(level+1)
+        past_performance = self._db_man.get_percent_correct_responses(
+            self._participant, (self._session - 1))
+        if past_performance is None:
+            self._logger.info("Participant did not answer any questions last "
+                + "time, so we will not level up. Level will be " + str(level)
                 + ".")
-            return level + 1
+            return level
+        elif (past_performance >= self._percent_correct_to_level):
+            self._logger.info("Participant got more than " +
+                str(self._percent_correct_to_level*100) +
+                "% questions correct last time, so we can level up! Level will"
+                " be " + str(level+1) + ".")
+            return level + 1 if level < 10 else level
         else:
             self._logger.info("Participant got less than " +
-                (percent_correct_to_level*100) + "% questions correct last "
-                + "time, so we don't level up. Level will be " + str(level)
-                + ".")
+                str(self._percent_correct_to_level*100) +
+                "% questions correct last time, so we don't level up. Level"
+                " will be " + str(level) + ".")
             return level
 
 
-    def get_emotion_performance_this_session(self):
-        """ Get the user's performance on the emotion questions in this
-        session (and ignore performance on any other questions).
+    def get_performance_this_session(self):
+        """ Get the user's performance on all questions asked this
+        session, by question type.
         """
         # Only get the user's performance if this isn't a DEMO session.
         if (self._session != -1):
-            return self._db_man.get_percent_correct_responses(self._participant,
-                self._session, "emotion")
+            # Get the user's performance on the emotion questions, on
+            # the theory of mind questions, and on the order questions.
+            return self._db_man.get_percent_correct_responses(
+                self._participant, self._session, "emotion"), \
+                self._db_man.get_percent_correct_responses(self._participant,
+                self._session, "ToM"), \
+                self._db_man.get_percent_correct_responses( \
+                self._participant, self._session, "order")
         else:
             return None
 
 
     def get_next_story_script(self):
+        """ Return the name of the next story script to load. """
+        # If this is a demo session, use the demo script.
+        if (self._session == -1):
+            return "demo-story-1.txt"
+
+        # If no story has been picked yet, print error and pick a story.
+        elif (self._current_story is None):
+            self._logger.error("We were asked for the story script, but we "
+                 "haven't picked a story yet! Picking a story...")
+            self._current_story = self.pick_next_story()
+
+        # Return name of story script: story name + level + file extension.
+        return (self._current_story + "-" + str(self._level) + ".txt").lower()
+
+
+    def pick_next_story(self):
         """ Determine which story should be heard next. We have 40
         stories. Alternate telling new stories and telling review
         stories. Earlier sessions will use more new stories since there
@@ -133,15 +163,20 @@ class ss_personalization_manager():
         # If this is a demo session, use the demo script.
         if (self._session == -1):
             self._logger.debug("Using DEMO script.")
-            return "demo-story-1.txt"
+            # Save that we are using the demo story.
+            self._current_story = "demo-story-1"
+            return "demo-story-1"
+
+        # We start without having picked the next story.
+        story = None
 
         # If we should tell a new story, get the next new story that
         # has one of the emotions to practice in it. If there aren't
         # any stories with one of those emotions, just get the next new
         # story.
-        elif self._tell_new_story:
+        if self._tell_new_story:
             story = self._db_man.get_next_new_story(self._participant,
-                self._session, self._emotion_list)
+                self._emotion_list, self._level)
 
         # If there are no more new stories to tell, or if we need to
         # tell a review story next, get a review story that has one of
@@ -149,14 +184,14 @@ class ss_personalization_manager():
         # those emotions, get the oldest, least played review story.
         if (story is None) or not self._tell_new_story:
             story = self._db_man.get_next_review_story(self._participant,
-                self._session, self._emotion_list)
+                self._session, self._emotion_list, self._level)
 
         # If there are no review stories available, get a new story
         # instead (this may happen if we are supposed to tell a review
         # story but haven't told very many stories yet).
         if (story is None):
             story = self._db_man.get_next_new_story(self._participant,
-                self._session, self._emotion_list)
+                self._emotion_list, self._level)
 
         # If we still don't have a story, then for some reason there
         # are no new stories and no review stories we can tell. This is
@@ -175,8 +210,8 @@ class ss_personalization_manager():
         # Save current story so we can provide story details later.
         self._current_story = story
 
-        # Return name of story script: story name + level + file extension.
-        return story + str(self._level) + ".txt"
+        # Return name of the story.
+        return story
 
 
     def get_next_story_details(self):
@@ -186,8 +221,8 @@ class ss_personalization_manager():
         # If this is a demo session, load a demo scene.
         if (self._session == -1):
             # Demo set:
-            graphic_names = ["scenes/CR1-scene1.png", "scenes/CR1-scene2.png",
-                    "scenes/CR1-scene3.png", "scenes/CR1-scene4.png"]
+            graphic_names = ["scenes/CR1-a-b.png", "scenes/CR1-b-b.png",
+                    "scenes/CR1-c-b.png", "scenes/CR1-d-b.png"]
 
             # Demo story has scenes in order.
             in_order = True
@@ -199,15 +234,14 @@ class ss_personalization_manager():
                     + "\nIn order: " + str(in_order)
                     + "\nNum answers: " + str(num_answers))
 
-        # If the current story isn't set, throw exception.
-        elif (self._current_story is None):
-           self._logger.error("We were asked for story details, but we \
-                haven't picked the next story yet!")
-           raise NoStoryFound("No current story is set.", self._participant,
-               self._session)
-
-        # Otherwise, we have the current story.
+        # Otherwise, we will get the details for the current story.
         else:
+            # If the current story isn't set, print error, and pick a story.
+            if (self._current_story is None):
+               self._logger.error("We were asked for story details, but we \
+                    haven't picked a story yet! Picking a story...")
+               self._current_story = self.pick_next_story()
+
             # Get story information from the database: scene graphics
             # names, whether the scenes are shown in order, how many
             # answer options there are per question at this level.

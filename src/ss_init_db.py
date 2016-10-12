@@ -76,11 +76,11 @@ def ss_init_db():
     # each level.
     cursor.execute(""" CREATE TABLE graphics (
             story_id    integer     NOT NULL,
-            level_id    integer     NOT NULL,
+            level       integer     NOT NULL,
             scene_num   integer     NOT NULL,
             graphic     text        NOT NULL,
             FOREIGN KEY(story_id) REFERENCES stories(id),
-            FOREIGN KEY(level_id) REFERENCES levels(level)
+            FOREIGN KEY(level) REFERENCES levels(level)
             )""")
 
     # The QUESTIONS table lists meta-information about questions that
@@ -129,10 +129,10 @@ def ss_init_db():
             time        timestamp   NOT NULL    default current_timestamp,
             participant text        NOT NULL,
             session     integer     NOT NULL,
-            level_id    integer     NOT NULL,
+            level       integer     NOT NULL,
             story_id    text        NOT NULL,
             FOREIGN KEY(story_id) REFERENCES stories(id),
-            FOREIGN KEY(level_id) REFERENCES levels(level)
+            FOREIGN KEY(level) REFERENCES levels(level)
             )""")
 
     conn.commit()

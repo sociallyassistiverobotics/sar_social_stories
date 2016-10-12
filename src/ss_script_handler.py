@@ -46,7 +46,7 @@ class ss_script_handler():
     # Constants for script playback:
     # Time to pause after showing answer feedback and playing robot
     # feedback speech before moving on to the next question.
-    ANSWER_FEEDBACK_PAUSE_TIME = 3
+    ANSWER_FEEDBACK_PAUSE_TIME = 2
     # Time to wait for robot to finish speaking or acting before
     # moving on to the next script line (in seconds).
     WAIT_TIME = 30
@@ -92,14 +92,16 @@ class ss_script_handler():
         self._story_parser = None
         self._repeat_parser = None
 
-        # Get session script from script parser and story scripts from
-        # the personalization manager, and give to the script parser.
+        # Get session script from script parser and give to the script
+        # parser. Story scripts we will get later from the
+        # personalization manager.
         try:
             self._script_parser.load_script(self._script_path
                     + self._session_script_path
                     + self._script_parser.get_session_script(session))
         except IOError:
-            self._logger.exception("Script parser could not open session script!")
+            self._logger.exception("Script parser could not open session "
+                + "script!")
             # Pass exception up so whoever wanted a script handler knows
             # they didn't get a script.
             raise
@@ -197,9 +199,20 @@ class ss_script_handler():
                 self._logger.info("No more script lines to get!")
                 # Pass on the stop iteration exception, with additional
                 # information about the player's performance during the
-                # game.
-                e.performance = self._personalization_man. \
-                    get_emotion_performance_this_session()
+                # game, formatted as a json object.
+                emotion, tom, order = self._personalization_man. \
+                    get_performance_this_session()
+                performance = {}
+                if emotion is not None:
+                    performance["child-emotion-question-accuracy"] = \
+                        performance_emotion
+                if tom is not None:
+                    performance["child-tom-question-accuracy"] = \
+                        performance_emotion
+                if order is not None:
+                    performance["child-order-question-accuracy"] = \
+                        performance_emotion
+                e.performance = json.dumps(performance)
                 raise
 
         except ValueError:
@@ -244,7 +257,7 @@ class ss_script_handler():
 
             # Do different stuff depending on what the first element is.
             #########################################################
-            # only STORY lines have only one part to the command.
+            # Some STORY lines have only one part to the command.
             elif len(elements) == 1:
                 # For STORY lines, play back the next story for this
                 # participant.
@@ -253,7 +266,7 @@ class ss_script_handler():
                     # If line indicates we need to start a story, do so.
                     self._doing_story = True
                     # Create a script parser for the filename provided,
-                    # assume it is in the session_scripts directory.
+                    # assuming it is in the story scripts directory.
                     self._story_parser = ss_script_parser()
                     try:
                         self._story_parser.load_script(self._script_path
@@ -277,6 +290,14 @@ class ss_script_handler():
                         self._doing_story = False
 
             # Line has 2+ elements, so check the other commands.
+            #########################################################
+            # For STORY SETUP lines, pick the next story to play so
+            # we can load its graphics and play back the story.
+            if "STORY" in elements[0] and "SETUP" in elements[1]:
+                self._logger.debug("STORY SETUP")
+                # Pick the next story to play.
+                self._personalization_man.pick_next_story()
+
             #########################################################
             # For ROBOT lines, send command to the robot.
             elif "ROBOT" in elements[0]:
@@ -799,8 +820,8 @@ class ss_script_handler():
                 self._personalization_man.get_next_story_details()
         except NoStoryFound:
             # If no story was found, we can't load the story!
-            self._logger.exception("Cannot load story - no story to load was \
-                    found!")
+            self._logger.exception("Cannot load story - no story to load was" + 
+                    " found!")
             self._doing_story = False
             return
 

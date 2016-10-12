@@ -133,6 +133,15 @@ the Opal device that is paired with this node. Due to licensing, the full set
 of graphics required for the game is available on request from students in the
 Personal Robots Group. Please email students in the group to inquire.
 
+### Stories
+
+Due to licensing, only a couple sample stories are provided in this repository.
+These can imported into the database, and story scripts generated, using the
+`source_ods/story-test-set.ods` spreadsheet and the provided
+`ss_process_story_ods.py` script (described below). The full game requires a
+set of 42 stories. This full set is available on request from students in the
+Personal Robots Group. Please email students in the group to inquire.
+
 ## ROS messages
 
 This node subscribes to the ROS topic `/sar/robot_state` to receive messages of
@@ -317,6 +326,15 @@ will look like this:
 
 `STORY`
 
+That said: Depending on your script, you may want to specify that a new story
+should be selected before attempting to load the story or play back the story.
+A `STORY` line may optionally take a string argument "SETUP", which indicates
+that the next story should be selected. You will then need to use the usual
+script lines for loading and playing back the story.
+
+`STORY  SETUP`
+
+
 ### Story scripts
 
 The story scripts follow the same format as the main session scripts. See the
@@ -352,9 +370,14 @@ load graphics and tell the robot how to read aloud the story, and add
 meta-information about the stories and the questions to ask about each story to
 the database.
 
- Note that the script assumes a very particular organization of the
+Note that the script assumes a very particular organization of the
 spreadsheet. An example spreadsheet containing two stories is provided in
 `source_ods/story-test-set.ods`.
+
+In addition, the script clears existing data from several tables, so you should
+run the script with all the spreadsheets you need to import at once. If you run
+the script again later, some or all of the previously imported data may be
+deleted.
 
 Run as follows:
 
@@ -381,7 +404,7 @@ Optional arguments:
 
 ### Personalization
 
-There are two levels of personalization. First is the level of the story
+There are two kinds of personalization. First is the level of the story
 presented. Players start at level 1. If they get sufficient emotion questions
 correct about the stories they hear, in the next session, they are leveled up.
 The percentage of questions they need to get correct to level up can be set in
@@ -405,6 +428,22 @@ couple guiding principles:
 
 We query the database to determine the player's past performance and stories
 heard.
+
+## Testing
+
+We are using python's unittest framework for testing. Some of the tests require
+an initialized and filled database, so you will need to create one prior to
+running the tests.
+
+Steps:
+- Initialize the database with the `ss_init_db.py` script as described above.
+- Fill the database with the full set of 42 SAR stories using the
+  `ss_process_story_ods.py` script. If you use only the example stories, a
+  couple tests may need to be modified, since they assume that the full set of
+  stories will be present and can be referenced.
+- Run `python -m unittest discover` from the `src/` directory. This will
+  automatically find all files in that directory containing tests, and will run
+  all the tests.
 
 ## Version notes
 

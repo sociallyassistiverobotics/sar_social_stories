@@ -41,11 +41,15 @@ def ss_process_story_ods():
     # which will each be parsed for stories.
     parser = argparse.ArgumentParser(
             formatter_class=argparse.RawDescriptionHelpFormatter,
-            description="""Read .ods spreadsheets containing story info for the
-            SAR Social Stories game stories. Generate game scripts that will be
-            used to load graphics and tell the robot how to read aloud the
-            story. Add meta-information about the stories and the questions to
-            ask about each story to the database.""")
+            description="Read .ods spreadsheets containing story info for the"
+            " SAR Social Stories game stories. Generate game scripts that will"
+            " be used to load graphics and tell the robot how to read aloud"
+            " the story. Add meta-information about the stories and the"
+            " questions to ask about each story to the database.\nThis script"
+            " will clear any existing data from the tables, so you should run"
+            " it with all the spreadsheets at once -- if you run it again"
+            " later, some or all of the previously imported data may be"
+            " deleted.")
     parser.add_argument('-d', '--database', dest='db',
            action='store', nargs='?', type=str, default='socialstories.db',
            help= "The database filename for storing story and question info. "
@@ -142,8 +146,8 @@ def ss_process_story_ods():
                             continue
 
                         # Add question to questions table at this level.
-                        insert_to_questions_table(cursor, sheet.name, level+1,
-                            question_num, question_type,
+                        insert_to_questions_table(cursor, sheet.name.lower(),
+                            level+1, question_num, question_type,
                             # Target response is the first in the list
                             # of response options
                             sheet_dict[responses][level].split(',')[0]
@@ -151,8 +155,8 @@ def ss_process_story_ods():
 
                         # Add responses to emotions_in_question table
                         # at this level.
-                        insert_to_responses_table(cursor, sheet.name, level+1,
-                            question_num, question_type,
+                        insert_to_responses_table(cursor, sheet.name.lower(),
+                            level+1, question_num, question_type,
                             sheet_dict[responses][level].split(','))
 
                         # Make dict of level: question text, responses.
@@ -197,16 +201,17 @@ def ss_process_story_ods():
                                 or (sheet[level,key] == ["-"]):
                                 print("Skipping empty cell")
                                 continue
-                            insert_to_graphics_table(cursor, sheet.name,
-                                level + 1, scene_num + 1,
+                            # Graphics scene numbers are 1-indexed.
+                            insert_to_graphics_table(cursor,
+                                sheet.name.upper(), level + 1, scene_num,
                                 sheet[level,key].lower())
 
             # For each level, generate story.
             # Rows are 0-indexed but levels are 1-indexed.
             for level in range(0,10):
                 # Use story to generate game script for robot
-                generate_script_for_story(args.out_dir, sheet.name, level+1,
-                        sheet[level, "Story"], question_list[level],
+                generate_script_for_story(args.out_dir, sheet.name.lower(),
+                        level+1, sheet[level, "Story"], question_list[level],
                         midway_question_list[level])
 
             # Commit after each story.
@@ -224,7 +229,7 @@ def insert_to_stories_table(cursor, story_names):
             cursor.execute("""
                 INSERT INTO stories (story_name)
                 VALUES (?)
-                """, (name,))
+                """, (name.lower(),))
         except sqlite3.IntegrityError as e:
             print("Error adding story " + name + " to DB! It may already "
                 "exist. Exception: " + str(e))
@@ -232,27 +237,28 @@ def insert_to_stories_table(cursor, story_names):
 
 def insert_to_graphics_table(cursor, story_name, level, scene, graphic_tag):
     """ Add a list of graphics names to the graphics table."""
-    # story_id = The id from the stories table for this story.
-    # level_id = The level number from the levels table for this level.
+    # story_name = The name of the story.
+    # level = The level number from the levels table for this level.
     # scene = Scene number (1,2,3,4) to load this graphic into.
     # graphic_tag = Tag of graphic to load (lowercase letter).
     print("ADD GRAPHIC: " + story_name + "-" + str(level) + " scene" +
             str(scene) + " " + graphic_tag)
     # Graphics file names:
-    #     [env][story_num]-[background_type]-[tag].png
-    #     e.g., LR1-B-a.png or CF1-P-f.png
-    # Levels 1-5: tag P for plain background.
-    # Levels 6-10: tag B for complex background.
-    graphic_name = story_name.replace("Story-","") + "-" + \
-        ("P" if level < 6 else "B") + "-" + graphic_tag + ".png"
+    #     [env][story_num]-[tag]-[background_type].png
+    #     where background_type is b=background or p=plain
+    #     e.g., LR1-a-b.png or CF1-f-p.png
+    # Levels 1-5: p for plain background.
+    # Levels 6-10: b for complex background.
+    graphic_name = story_name.replace("STORY-","") + "-" + graphic_tag + "-" \
+        + ("p" if level < 6 else "b") + ".png"
     cursor.execute("""
-        INSERT INTO graphics (story_id, level_id, scene_num, graphic)
+        INSERT INTO graphics (story_id, level, scene_num, graphic)
         VALUES (
             (SELECT id FROM stories WHERE story_name=(?)),
             (SELECT level FROM levels WHERE level=(?)),
             (?),
             (?))
-        """, (story_name, level, scene, graphic_name))
+        """, (story_name.lower(), level, scene, graphic_name))
 
 
 def insert_to_questions_table(cursor, story, level, question_num,
@@ -312,24 +318,24 @@ def insert_to_responses_table(cursor, story, level, question_num,
 def fill_levels_table(cursor):
     """ Initialize levels table. """
     # level = The level number.
-    # num_scenes = The number of answer options for questions asked
+    # num_answers = The number of answer options for questions asked
     # about the story this level.
     # in_order = Whether the scenes for stories at that level are shown
     # in order (1=True) or out of order (0=False).
     try:
         cursor.execute("""
-            INSERT INTO levels (level, num_scenes, in_order)
+            INSERT INTO levels (level, num_answers, in_order)
             VALUES
-            ("1", "1", "1"),
-            ("2", "2", "1"),
+            ("1", "3", "1"),
+            ("2", "3", "1"),
             ("3", "3", "1"),
-            ("4", "4", "1"),
-            ("5", "4", "0"),
+            ("4", "3", "1"),
+            ("5", "3", "0"),
             ("6", "4", "0"),
             ("7", "4", "0"),
             ("8", "4", "0"),
             ("9", "4", "0"),
-            ("10", "4", "0"),
+            ("10", "5", "0"),
             ("11", "4", "0"),
             ("12", "4", "0")
             """)
@@ -351,21 +357,41 @@ def generate_script_for_story(output_dir, story_name, level, story, questions,
         # We can't split on sentences because splitting by period may
         # make some quoted speech in the stories be split onto multiple
         # lines, since periods may be inside of the quotations...
-        if "*" in story:
-            # There's a question to ask partway through the story, so
-            # we need to tell half the story, ask the question, then
-            # tell the second half.
-            story = story.split("*")
-            # Add first half of story.
-            f.write("ROBOT\tDO\t" + story[0].strip() + "\n")
+        # We do need to split by scenes, using "//" as a delimiter, so
+        # that we can send a "highlight scene" message to highlight the
+        # scene corresponding to the current story text being read.
+        if "//" in story:
+            # There's a scene delimiter, so there is text for more than
+            # one scene here.
+            story = story.split("//")
 
-            # Add midway question
-            add_question_to_script(midway_questions[0], f)
+            # Add each story segment with a scene highlight command.
+            counter = 0
+            for s in story:
+                # Highlight current scene.
+                f.write("OPAL\tHIGHLIGHT\tscene" + str(counter) + "\n")
+                # Add story text.
+                if "*" in s:
+                    # There's a question to ask partway through the
+                    # story, so we need to tell half the story, ask the
+                    # question, then tell the second half.
+                    s = s.split("*")
+                    # Add first half of story.
+                    f.write("ROBOT\tDO\t" + s[0].strip() + "\n")
+                    # Add midway question
+                    add_question_to_script(midway_questions[0], f)
+                    # Add second half of story.
+                    f.write("ROBOT\tDO\t" + s[1].strip() + "\n")
+                else:
+                    # There's no question to ask partway through this
+                    # story segment.
+                    f.write("ROBOT\tDO\t" + s.strip() + "\n")
+                counter += 1
 
-            # Add second half of story.
-            f.write("ROBOT\tDO\t" + story[1].strip() + "\n")
-
+        # Or, there's only text for one scene in this story.
         else:
+            # Highlight current scene.
+            f.write("OPAL\tHIGHLIGHT\tscene0\n")
             f.write("ROBOT\tDO\t" + story.strip() + "\n")
 
         # Add "The end" and a pause.
@@ -393,30 +419,69 @@ def find_character(words):
 
 def add_question_to_script(question, outfile):
     """ Add a question to a game script. """
-    # Find character this question is about.
+    # Find the character this question is about.
+    # The question provided has two parts:
+    #   [0] = the question text
+    #   [1] = the comma-separated list of responses
     character = find_character(question[0].split())
 
-    # Load answers line.
-    outfile.write("OPAL\tLOAD_ANSWERS\t")
     # Make a string so we can deal with commas.
     s = ""
-    for response in question[1]:
-        s += "answers/" + character + "_" + response.lower() \
-            + ".png, "
-    # Remove last comma before adding ending punctuation and
-    # writing the rest of the line to the file.
-    outfile.write(s[:-2] + "\n")
 
-    # Set correct line.
-    outfile.write("OPAL\tSET_CORRECT\t{\"correct\":[\"" + character + "_"
-            + question[1][0].lower() + "\"], \"incorrect\":[")
-    # Make a string so we can deal with commas.
-    s = ""
-    for i in range (1, len(question[1])):
-        s += "\"" + character + "_" + question[1][i].lower() + "\","
-    # Remove last comma before adding ending punctuation and
-    # writing the rest of the line to the file.
-    outfile.write(s[:-1] + "]}" + "\n")
+    # We only want to load character faces as answers if the question is
+    # an emotion or ToM question about a character.
+    if "scene" not in question[1][0]:
+        # Load answers line.
+        outfile.write("OPAL\tLOAD_ANSWERS\t")
+        for response in question[1]:
+            s += "answers/" + character + "_" + response.lower().strip() \
+                + ".png, "
+        # Remove last comma before adding ending punctuation and
+        # writing the rest of the line to the file.
+        outfile.write(s[:-2] + "\n")
+
+        # Set correct line.
+        outfile.write("OPAL\tSET_CORRECT\t{\"correct\":[\"" + character + "_"
+                + question[1][0].lower().strip() + "\"], \"incorrect\":[")
+        # Make a string so we can deal with commas.
+        s = ""
+        for i in range (1, len(question[1])):
+            s += "\"" + character + "_" + question[1][i].lower().strip() + "\","
+        # Remove last comma before adding ending punctuation and
+        # writing the rest of the line to the file.
+        outfile.write(s[:-1] + "]}" + "\n")
+
+    # For order questions, we don't need to load answers -- we will use
+    # the scenes as the answer slots. So we will just need to set the
+    # scenes as correct or incorrect.
+    else:
+        # Set correct line. Scene slots in the game are 0-indexed, but
+        # in the story scripts, they are 1-indexed, so we need to
+        # convert them.
+        responses_0indexed = []
+        for response in question[1]:
+            try:
+                num = re.findall(r'\d+', response)[0]
+                responses_0indexed.append("scene" + str(int(num)-1))
+            except:
+                # If there is no number, we have a problem. Order
+                # questions should always have numbered scene responses.
+                print("No scene number found in question responses!")
+                raise
+
+        # Now that we have 0-indexed responses, build a line to set
+        # the correct and incorrect responses.
+        outfile.write("OPAL\tSET_CORRECT\t{\"correct\":[\""
+            + responses_0indexed[0]
+            + "\"], \"incorrect\":[")
+        # Make a string so we can deal with commas.
+        s = ""
+        for i in range (1, len(responses_0indexed)):
+            s += "\"" + responses_0indexed[i] + "\","
+
+        # Remove last comma before adding ending punctuation and
+        # writing the rest of the line to the file.
+        outfile.write(s[:-1] + "]}" + "\n")
 
     # Robot will say the question text next.
     outfile.write("ROBOT\tDO\t" + question[0] + "\n")
@@ -427,7 +492,8 @@ def add_question_to_script(question, outfile):
     # Robot will say the answer, but only for ToM and emotion questions.
     if "scene" not in question[1][0]:
         outfile.write("ROBOT\tDO\t" + (character[0].upper() + character[1:])
-                + " felt " + question[1][0].lower() + ".\n")
+                + " felt " + question[1][0].lower() + " <"
+                + question[1][0].lower() + ">.\n")
 
     # Add clear and pause lines.
     outfile.write("OPAL\tCLEAR\tANSWERS\n"

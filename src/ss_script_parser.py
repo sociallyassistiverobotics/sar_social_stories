@@ -35,18 +35,43 @@ class ss_script_parser():
         self._logger = logging.getLogger(__name__)
         self._logger.info("Setting up script parser...")
 
+
     def get_session_script(self, session):
         """ Get scripts for the specified session """
-        if session == -1:
-            # We will use the demo session script.
-            # TODO get script!
+        if not isinstance(session, int):
+            raise TypeError("session should be an integer")
+
+        if session < -1:
+            raise ValueError("Session number out of range. Should be -1 to "
+                 "play the demo or a positive integer to play a particular "
+                 "session.")
+
+        if session <= 0:
+            # We will use the demo session script if this is a demo
+            # session or if the session number doesn't make sense.
             return "demo.txt"
+
+        # This isn't a demo session, so we need to select a script for
+        # the specified session. We only have specific scripts some
+        # sessions (e.g., to give extra instructions for the first time
+        # the user plays); the rest will use a generic session script.
+        elif session < 3:
+            self._logger.info("We assume session scripts are named with the "
+                + "pattern \"session-[session_number].txt\", where the "
+                + "session number is an integer starting at 1 for session 1. "
+                + "But if this is a later session, we will use a generic "
+                + "session script instead, which we expect to be called "
+                + "\"session-general.txt\". So for this session, we will load"
+                + " \"session-" + str(session) + ".txt\".")
+            return "session-" + str(session) + ".txt"
         else:
-            # This isn't a demo session, so we need to select a script
-            # for the specified session.
-            # TODO get script!
-            self._logger.info("TODO pick session script -- using DEMO script")
-            return "demo.txt"
+            self._logger.info("We assume session scripts are named with the "
+                + "pattern \"session-[session_number].txt\", where the "
+                + "session number is an integer starting at 1 for session 1. "
+                + "But this is a later session, so we will use a generic "
+                + "session script instead, which we expect to be called "
+                + "\"session-general.txt\".")
+            return "session-general.txt"
 
 
     def load_script(self, script):
@@ -56,7 +81,7 @@ class ss_script_parser():
             self._fh = open(script, "r")
         except IOError as e:
             self._logger.exception("Cannot open script: " + str(script))
-            #Ppass exception up so anyone trying to load a script
+            # Pass exception up so anyone trying to load a script
             # knows it didn't work.
             raise
         else:

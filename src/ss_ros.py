@@ -135,15 +135,14 @@ class ss_ros():
                 self._logger.warning("Did not get properties for a "
                     + "MOVE_OBJECT command! Not sending empty command.")
                 return
-        elif "HIGHLIGHT_OBJECT" in command:
+        elif "HIGHLIGHT" in command:
             msg.command = OpalCommand.HIGHLIGHT_OBJECT
             # Properties: a string with name of the object to highlight.
             if properties:
                 msg.properties = properties
             else:
                 self._logger.warning("Did not get properties for a "
-                    + "HIGHLIGHT_OBJECT command! Not sending empty command.")
-                return
+                    + "HIGHLIGHT_OBJECT command! Adding null properties.")
         elif "REQUEST_KEYFRAME" in command:
             msg.command = OpalCommand.REQUEST_KEYFRAME
         elif "FADE_SCREEN" in command:
@@ -250,6 +249,8 @@ class ss_ros():
             msg.state = GameState.PAUSED
         if "TIMEOUT" in state:
             msg.state = GameState.USER_TIMEOUT
+        if "READY" in state:
+            msg.state = GameState.READY
         if "END" in state:
             msg.state = GameState.END
             if performance is not None:
