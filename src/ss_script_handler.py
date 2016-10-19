@@ -293,7 +293,7 @@ class ss_script_handler():
             #########################################################
             # For STORY SETUP lines, pick the next story to play so
             # we can load its graphics and play back the story.
-            if "STORY" in elements[0] and "SETUP" in elements[1]:
+            elif "STORY" in elements[0] and "SETUP" in elements[1]:
                 self._logger.debug("STORY SETUP")
                 # Pick the next story to play.
                 self._personalization_man.pick_next_story()
