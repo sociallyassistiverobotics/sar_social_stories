@@ -46,9 +46,17 @@ class ss_game_node():
     nodes (such as the node that translates robot commands to specific robot
     platforms).
     """
+    # Initialize the ROS node.
+    # TODO If running on network where DNS does not resolve local
+    # hostnames, get the public IP address of this machine and
+    # export to the environment variable $ROS_IP to set the public
+    # address of this node, so the user doesn't have to remember
+    # to do this before starting the node.
+    _ros_node = rospy.init_node('social_story_game', anonymous=True)
+            # We could set the ROS log level here if we want:
+            #log_level=rospy.DEBUG)
+            # The rest of our logging is set up in the log config file.
 
-    # We will have a ROS node, which we initialize when we launch the game.
-    _ros_node = None
 
     def __init__(self):
         """ Initialize anything that needs initialization """
@@ -121,17 +129,6 @@ class ss_game_node():
         # Log session and participant ID.
         self._logger.info("\n==============================\nSOCIAL STORIES " +
             "GAME\nSession: %s, Participant ID: %s", session, participant)
-
-        # Initialize the ROS node.
-        # TODO If running on network where DNS does not resolve local
-        # hostnames, get the public IP address of this machine and
-        # export to the environment variable $ROS_IP to set the public
-        # address of this node, so the user doesn't have to remember
-        # to do this before starting the node.
-        self._ros_node = rospy.init_node('social_story_game', anonymous=True)
-                # We could set the ROS log level here if we want:
-                #log_level=rospy.DEBUG)
-                # The rest of our logging is set up in the log config file.
 
         # Set up ROS node publishers and subscribers.
         self._ros_ss = ss_ros(self._queue)
@@ -212,6 +209,7 @@ class ss_game_node():
             signal.signal(signal.SIGINT, self._signal_handler)
 
             # Ready to start the game. Send a "READY" message.
+            self._logger.info("Ready to start!")
             self._ros_ss.send_game_state("READY")
 
             while (not self._stop):
