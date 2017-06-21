@@ -104,6 +104,7 @@ def ss_process_story_ods():
             midway_question_list = {}
             # Add each question to the DB. Loop through columns.
             for key in sheet_dict.keys():
+            	key = key.encode('ascii', 'ignore')
                 # For each question column, get question text without
                 # the answer list.
                 if "question" in key.lower() and not "correct" in key.lower():
