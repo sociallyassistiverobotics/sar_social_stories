@@ -91,6 +91,9 @@ class ss_script_handler():
         # These are other script parsers we may use later.
         self._story_parser = None
         self._repeat_parser = None
+        # If we have a repeating script, we will need to save its filename so
+        # we can re-load it when we repeat it.
+        self._repeating_script_name = ""
 
         # Get session script from script parser and give to the script
         # parser. Story scripts we will get later from the
@@ -194,6 +197,21 @@ class ss_script_handler():
                         - self._total_time_paused >= self._max_game_time):
                     self._logger.info("Done repeating!")
                     self._repeating = False
+                # Otherwise, we need to repeat again. Reload the repeating
+                # script.
+                else:
+                    # Create a script parser for the filename provided,
+                    # assume it is in the session_scripts directory.
+                    self._repeat_parser = ss_script_parser()
+                    try:
+                        self._repeat_parser.load_script(self._script_path
+                                + self._session_script_path
+                                + self._repeating_script_name)
+                    except IOError:
+                        self._logger.exception("Script parser could not open "
+                            + "session script to repeat! Skipping REPEAT line.")
+                        sself._repeating = False
+                        return
             # Otherwise we're at the end of the main script.
             else:
                 self._logger.info("No more script lines to get!")
@@ -477,6 +495,7 @@ class ss_script_handler():
                 # Create a script parser for the filename provided,
                 # assume it is in the session_scripts directory.
                 self._repeat_parser = ss_script_parser()
+                self._repeating_script_name = elements[2]
                 try:
                     self._repeat_parser.load_script(self._script_path
                             + self._session_script_path
