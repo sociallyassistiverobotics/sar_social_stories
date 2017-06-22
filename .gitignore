@@ -123,7 +123,7 @@ target/
 
 # project-specific stuff to ignore
 # ignore script files
-game_scripts/session_scripts/*
+#game_scripts/session_scripts/*
 game_scripts/story_scripts/*
 
 # but don't ignore the demo scripts

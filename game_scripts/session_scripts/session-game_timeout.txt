@@ -1,0 +1,4 @@
+"<lookat_child> That was the last story for today!"
+"<lookat_child> Thanks for trying so hard today!"
+"<lookat_child> Thanks for listening to the stories today!"
+"<lookat_child> Oh, that was the last story for today!"

@@ -1,0 +1,16 @@
+ADD	INCORRECT_RESPONSES	session-incorrect.txt
+ADD	CORRECT_RESPONSES	session-correct.txt
+SET	MAX_INCORRECT_RESPONSES	3
+ADD	START_RESPONSES	session-start.txt
+ADD	ANSWER_FEEDBACK	session-answer-feedback.txt
+ADD	NO_RESPONSES	session-no-start.txt
+ADD	STORY_INTROS	session-story_intro.txt
+ADD	STORY_CLOSINGS	session-story_closing.txt
+ADD	TIMEOUT_CLOSINGS	session-game_timeout.txt
+ADD	MAX_STORIES_REACHED	session-max-stories-reached.txt
+SET	MAX_GAME_TIME	7
+SET	MAX_STORIES	5
+ROBOT	DO	<lookat_child> Okay [child-name] <smile>, time for the story game! <bounce> Remember, I'll tell the story, and the story pictures will <lookat_screen> show up here! Then, I might have questions about the story.
+PAUSE	1
+REPEAT	MAX_STORIES	session-story.txt
+OPAL	CLEAR

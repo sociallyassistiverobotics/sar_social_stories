@@ -1,0 +1,5 @@
+"Let's start! <lookat_screen,b>"
+"All right! <lookat_screen,b>"
+"Okay! <lookat_screen,b>"
+"Great! <lookat_screen,b>"
+"Let's begin! <lookat_screen,b>"
