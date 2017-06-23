@@ -14,3 +14,4 @@ ROBOT	DO	<lookat_child> Okay [child-name] <smile>, time for the story game! <bou
 PAUSE	1
 REPEAT	MAX_STORIES	session-story.txt
 OPAL	CLEAR
+OPAL	EXIT
