@@ -1,3 +1,0 @@
-"<lookat_screen,b> This one is correct."
-"<lookat_screen,b> The answer is boxed in green."
-"<lookat_screen,b> This is the right answer."

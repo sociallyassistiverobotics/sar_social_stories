@@ -1,2 +1,0 @@
-"<lookat_screen,b> <head-shake> Hm, that's not it. Let's try again."
-"<lookat_screen,b> Not that one. Try again. <head-tilt>"

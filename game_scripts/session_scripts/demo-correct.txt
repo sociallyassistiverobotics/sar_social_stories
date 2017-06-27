@@ -1,3 +1,0 @@
-"<lookat_screen,b> Right, that's it! <happy>"
-"<lookat_screen,b> <bounce> Correct!"
-"<lookat_screen,b> <nod> That's right!"

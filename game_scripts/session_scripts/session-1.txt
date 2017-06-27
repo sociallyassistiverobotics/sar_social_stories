@@ -15,58 +15,58 @@ PAUSE	1
 ROBOT	DO	In the stories, the characters will show different emotions. Let's look at these first. <lookat_screen>
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
-OPAL	LOAD_OBJECT	{ "name": "answers/blake_scared.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false", "scale": ["10","10","10"]}
-ROBOT	DO	<lookat_screen,b>This is scared. <scaredinitial>
+OPAL	LOAD_OBJECT	{ "name": "answers/blake_scared.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
+ROBOT	DO	<lookat_screen,b>This is scared. <scared>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
-OPAL	LOAD_OBJECT	{ "name": "answers/sefa_happy.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false", "scale": ["10","10","10"]}
+OPAL	LOAD_OBJECT	{ "name": "answers/sefa_happy.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
 ROBOT	DO	<lookat_screen,b>This is happy. <happy>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
-OPAL	LOAD_OBJECT	{ "name": "answers/jeff_sad.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false", "scale": ["10","10","10"]}
+OPAL	LOAD_OBJECT	{ "name": "answers/jeff_sad.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
 ROBOT	DO	<lookat_screen,b>This is sad. <sad>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
-OPAL	LOAD_OBJECT	{ "name": "answers/darby_nervous.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false", "scale": ["10","10","10"]}
+OPAL	LOAD_OBJECT	{ "name": "answers/darby_nervous.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
 ROBOT	DO	<lookat_screen,b>This is nervous. <scared>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
-OPAL	LOAD_OBJECT	{ "name": "answers/raj_mad.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false", "scale": ["10","10","10"]}
+OPAL	LOAD_OBJECT	{ "name": "answers/raj_mad.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
 ROBOT	DO	<lookat_screen,b>This is mad. <angry>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
-OPAL	LOAD_OBJECT	{ "name": "answers/lisa_surprised.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false", "scale": ["10","10","10"]}
+OPAL	LOAD_OBJECT	{ "name": "answers/lisa_surprised.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
 ROBOT	DO	<lookat_screen,b>This is surprised. <wide-eyed>
 PAUSE	3
 OPAL	CLEAR
 ROBOT	DO	Just a few more!
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
-OPAL	LOAD_OBJECT	{ "name": "answers/sefa_frustrated.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false", "scale": ["10","10","10"]}
+OPAL	LOAD_OBJECT	{ "name": "answers/sefa_frustrated.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
 ROBOT	DO	<lookat_screen,b>This is frustrated. <frustrated>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
-OPAL	LOAD_OBJECT	{ "name": "answers/sally_bored.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false", "scale": ["10","10","10"]}
+OPAL	LOAD_OBJECT	{ "name": "answers/sally_bored.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
 ROBOT	DO	<lookat_screen,b>This is bored. <yawn-only>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
-OPAL	LOAD_OBJECT	{ "name": "answers/bo_calm.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false", "scale": ["10","10","10"]}
+OPAL	LOAD_OBJECT	{ "name": "answers/bo_calm.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
 ROBOT	DO	<lookat_screen,b>This is calm. <calm>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
-OPAL	LOAD_OBJECT	{ "name": "answers/lisa_guilty.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false", "scale": ["10","10","10"]}
-ROBOT	DO	<lookat_screen,b>This is guilty. <ashamed>
+OPAL	LOAD_OBJECT	{ "name": "answers/lisa_guilty.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
+ROBOT	DO	<lookat_screen,b>This is guilty. <ashamed,nb>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
-OPAL	LOAD_OBJECT	{ "name": "answers/joy_excited.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false", "scale": ["10","10","10"]}
+OPAL	LOAD_OBJECT	{ "name": "answers/joy_excited.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
 ROBOT	DO	<lookat_screen,b>This is excited. <excited>
 PAUSE	3
 ROBOT	DO	<lookat_child> That's all! Now, let's tell the first story! <bounce> I'll tell the story, and the story pictures will <lookat_screen> show up here! Then, <lookat_child> I might have questions about the story.

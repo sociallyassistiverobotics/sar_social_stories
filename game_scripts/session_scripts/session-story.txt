@@ -1,10 +1,11 @@
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
-OPAL	LOAD_ALL	demo-yesno-scene.txt
+OPAL	LOAD_ALL	session-yesno-scene.txt
 ROBOT	DO	<lookat_screen>[child-name], touch start when you are ready to hear the story!<lookat_child,b><anticipate>
 WAIT	START	300
 OPAL	CLEAR
 PAUSE	1
+STORY	SETUP
 OPAL	LOAD_STORY
 ROBOT	STORY_INTRO
 ROBOT	DO	Let's <lookat_screen> look at the story together.
