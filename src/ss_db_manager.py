@@ -438,7 +438,7 @@ class ss_db_manager():
         try:
             self._cursor.execute("""
                 INSERT INTO stories_played (participant, session,
-                    level, story_id)
+                    story_id, level)
                 VALUES (
                 (?),
                 (?),
