@@ -323,9 +323,9 @@ class ss_ros():
                     # Assumes answer graphic names follow the pattern
                     # "someone_emotion" or "scene0", "scene1". TODO generalize.
                     parts = data.objectName.split("_")
-                    if len(parts) > 1
+                    if len(parts) > 1:
                         self._touched_object = parts[1]
-                    else
+                    else:
                         self._touched_object = parts[0]
                 except:
                     self._touched_object = ""

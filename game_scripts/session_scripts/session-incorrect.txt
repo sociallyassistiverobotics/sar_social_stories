@@ -4,4 +4,3 @@
 "<lookat_screen,b> Not that one. <head-shake>"
 "<lookat_screen,b> <head-shake> Hm, that's not it."
 "<lookat_screen,b> <head-shake> Let's try again."
-

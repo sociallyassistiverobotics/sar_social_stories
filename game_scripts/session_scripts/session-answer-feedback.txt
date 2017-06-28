@@ -4,4 +4,3 @@
 "<lookat_screen,b> The green one is the right answer."
 "<lookat_screen,b> The green one is correct."
 "<lookat_screen,b> This one is right."
-

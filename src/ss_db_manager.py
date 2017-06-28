@@ -466,7 +466,7 @@ class ss_db_manager():
         try:
             self._cursor.execute("""
                 INSERT INTO responses (stories_played_id, questions_id,
-                    response
+                    response)
                 VALUES (
                 (SELECT id from stories_played
                     WHERE participant = (?)
