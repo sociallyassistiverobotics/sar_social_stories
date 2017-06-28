@@ -245,9 +245,9 @@ class ss_db_manager():
                 LEFT JOIN stories_played
                     ON stories_played.story_id = stories.id
                 WHERE questions.target_response IN (%s)
-                AND (stories_played.participant <> (?)
+                    AND (stories_played.participant <> (?)
                     OR stories_played.participant IS NULL)
-                AND questions.level = (?)
+                    AND questions.level = (?)
                 """ % ",".join("?"*len(emotions))
 
             query2 = """
@@ -255,8 +255,8 @@ class ss_db_manager():
                 FROM stories
                 LEFT JOIN stories_played
                     ON stories_played.story_id = stories.id
-                AND (stories_played.participant <> (?)
-                    OR stories_played.participant IS NULL)
+                WHERE stories_played.participant <> (?)
+                    OR stories_played.participant IS NULL
                 """
 
             query = query1 + " UNION " + query2 + """
