@@ -200,6 +200,7 @@ following, which are described in more detail below:
 - WAIT
 - REPEAT
 - STORY
+- QUESTION
 
 #### ADD
 
@@ -334,6 +335,24 @@ script lines for loading and playing back the story.
 
 `STORY  SETUP`
 
+#### QUESTION
+
+`QUESTION` is used to set meta-information about a question that will be asked.
+This command is used so we can record and track user responses to questions in
+the database. This command requires two arguments: The question type and the
+question number. The type could be any tag you like, so long as it corresponds
+exactly with the question type tags you use in your database. The three
+question types used in the stories provided for this game are _emotion_, _ToM_
+(i.e., theory of mind), and _order_. Since there may be multiple questions for
+a story of the same type, the question number uniquely identifies which one
+this is. While it may be possible to simply have a question counter in the
+code, rather than listing the number in the script, we think listing the number
+is better on the off-chance that questions appear out of order. Here are some
+examples:
+
+`QUESTION emotion 1`
+
+`QUESTION order 2`
 
 ### Story scripts
 

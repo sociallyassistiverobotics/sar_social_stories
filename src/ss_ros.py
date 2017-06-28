@@ -65,6 +65,7 @@ class ss_ros():
         self._robot_doing_action = False
         self._robot_speaking = False
         self._response_received = None
+        self._touched_object = ""
 
         # Subscribe to messages from opal game.
         rospy.Subscriber('/sar/opal_action', OpalAction,
@@ -296,8 +297,8 @@ class ss_ros():
 
     def on_opal_action_msg(self, data):
         """ Called when we receive OpalAction messages """
-        self._logger.info("Received OpalAction message: ACTION="
-                + data.action + ", MESSAGE=" + data.message)
+        self._logger.info("Received OpalAction message: ACTION=" + data.action +
+                ", MESSAGE=" + data.message + ", OBJECT=" + data.objectName)
 
         # Currently, we are only using OpalAction messages to get
         # responses from the user. So we only care whether the action
@@ -318,6 +319,19 @@ class ss_ros():
             if "CORRECT" in data.message:
                 self._correct_incorrect_response_received = True
                 self._response_received = data.message
+                try:
+                    # Assumes answer graphic names follow the pattern
+                    # "someone_emotion" or "scene0", "scene1". TODO generalize.
+                    parts = data.objectName.split("_")
+                    if len(parts) > 1
+                        self._touched_object = parts[1]
+                    else
+                        self._touched_object = parts[0]
+                except:
+                    self._touched_object = ""
+                    self._logger.warning("Tried to get name of touched object "
+                            + "that was correct or incorrect, but could not "
+                            + "parse it: " + str(data.objectName))
             pass
         elif "release" in data.action:
             # No object
@@ -394,12 +408,12 @@ class ss_ros():
                 self._waiting_for_start = False
                 self._waiting_for_correct_incorrect = False
                 self._waiting_for_robot_speaking = False
-                return self._response_received
+                return self._response_received, self._touched_object
         # If we don't get the response we were waiting for, we're done
         # waiting and timed out.
         self._waiting_for_start = False
         self._waiting_for_correct_incorrect = False
         self._waiting_for_robot_speaking = False
         self._logger.info("Timed out! Moving on...")
-        return "TIMEOUT"
+        return "TIMEOUT", ""
 

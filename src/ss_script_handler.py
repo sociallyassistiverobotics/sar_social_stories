@@ -119,6 +119,11 @@ class ss_script_handler():
         self._repeating = False
         self._end_game = False
 
+        # When we start, we are not asking a question, and so there is no
+        # current question type or number.
+        self._current_question_type = ""
+        self._current_question_num = 0
+
         # For counting repetitions of a repeating script.
         self._repetitions = 0
 
@@ -485,6 +490,15 @@ class ss_script_handler():
                 self.wait_for_response(elements[1], int(elements[2]))
 
             #########################################################
+            # For QUESTION lines, save the question type and question number
+            # for later use.
+            elif "QUESTION" in elements[0] and len(elements) >= 3:
+                self._current_question_type = elements[1]
+                self._current_question_num = int(elements[2])
+                self._logger.info("Current question: type " + elements[1]
+                        + ", num " + elements[2])
+
+            #########################################################
             # For REPEAT lines, repeat lines in the specified script
             # file the specified number of times.
             elif "REPEAT" in elements[0] and len(elements) >= 3:
@@ -548,7 +562,7 @@ class ss_script_handler():
             self._last_response_timeout = timeout
             # Wait for the specified type of response, or until the
             # specified time has elapsed.
-            response = self._ros_node.wait_for_response(response_to_get,
+            response, answer = self._ros_node.wait_for_response(response_to_get,
                     datetime.timedelta(seconds=int(timeout)))
 
             # After waiting for a response, need to play back an
@@ -584,6 +598,11 @@ class ss_script_handler():
             # If response was INCORRECT, randomly select a robot
             # response to an incorrect user action.
             elif "INCORRECT" in response:
+                # Record incorrect response in the db.
+                self._personalization_man.record_user_response(
+                        self._current_question_num, self._current_question_type,
+                        answer)
+
                 try:
                     self._ros_node.send_robot_command("DO",
                         response="ROBOT_NOT_SPEAKING",
@@ -617,6 +636,10 @@ class ss_script_handler():
             # to a correct user action, highlight the correct answer,
             # and break out of response loop.
             elif "CORRECT" in response:
+                # Record correct response in the db.
+                self._personalization_man.record_user_response(
+                        self._current_question_num, self._current_question_type,
+                        answer)
                 try:
                     self._ros_node.send_robot_command("DO",
                         response="ROBOT_NOT_SPEAKING",
