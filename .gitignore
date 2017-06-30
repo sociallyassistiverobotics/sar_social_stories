@@ -131,7 +131,7 @@ game_scripts/story_scripts/*
 !game_scripts/story_scripts/demo*.txt
 
 # ignore json config files
-src/*.json
+# src/*.json
 
 # but don't ignore the example and demo config files
 !src/ss_config.demo.json

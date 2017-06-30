@@ -1,0 +1,7 @@
+{
+    "script_path": "../game_scripts/",
+    "story_script_path": "../src/",
+    "session_script_path": "session_scripts/",
+    "database": "socialstories.db",
+    "percent_correct_to_level": 0.75
+}
