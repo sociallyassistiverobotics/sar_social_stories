@@ -224,8 +224,9 @@ class ss_db_manager():
             # correct number of ?'s into the query for the number of
             # emotions and supply a list with a matching number of
             # parameters.
-            params = list(emotions)
+            params = []
             params.append(participant)
+            params = params + list(emotions)
             params.append(level)
             params.append(participant)
 
@@ -244,9 +245,9 @@ class ss_db_manager():
                     ON questions.story_id = stories.id
                 LEFT JOIN stories_played
                     ON stories_played.story_id = stories.id
+                    AND stories_played.participant = (?)
                 WHERE questions.target_response IN (%s)
-                    AND (stories_played.participant <> (?)
-                    OR stories_played.participant IS NULL)
+                    AND stories_played.participant IS NULL
                     AND questions.level = (?)
                 """ % ",".join("?"*len(emotions))
 
@@ -255,8 +256,8 @@ class ss_db_manager():
                 FROM stories
                 LEFT JOIN stories_played
                     ON stories_played.story_id = stories.id
-                WHERE stories_played.participant <> (?)
-                    OR stories_played.participant IS NULL
+                    AND stories_played.participant = (?)
+                WHERE stories_played.participant IS NULL
                 """
 
             query = query1 + " UNION " + query2 + """
