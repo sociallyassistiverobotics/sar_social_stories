@@ -221,8 +221,8 @@ class ss_personalization_manager():
         # If this is a demo session, load a demo scene.
         if (self._session == -1):
             # Demo set:
-            graphic_names = ["scenes/CR1-a-b.png", "scenes/CR1-b-b.png",
-                    "scenes/CR1-c-b.png", "scenes/CR1-d-b.png"]
+            graphic_names = ["CR1-a-b.png", "CR1-b-b.png",
+                    "CR1-c-b.png", "CR1-d-b.png"]
 
             # Demo story has scenes in order.
             in_order = True

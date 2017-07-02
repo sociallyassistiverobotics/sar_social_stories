@@ -862,7 +862,7 @@ class ss_script_handler():
                 self._personalization_man.get_next_story_details()
         except NoStoryFound:
             # If no story was found, we can't load the story!
-            self._logger.exception("Cannot load story - no story to load was" + 
+            self._logger.exception("Cannot load story - no story to load was" +
                     " found!")
             self._doing_story = False
             return
@@ -877,7 +877,7 @@ class ss_script_handler():
         # Load the scene graphics.
         for scene in scenes:
             toload = {}
-            toload["name"] = scene
+            toload["name"] = "scenes/" + scene
             toload["tag"] = "PlayObject"
             toload["slot"] = scenes.index(scene) + 1
             if not in_order:
