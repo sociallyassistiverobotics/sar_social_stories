@@ -295,7 +295,6 @@ class ss_script_handler():
                         self._story_parser.load_script(self._script_path
                            + self._story_script_path
                            + self._personalization_man.get_next_story_script())
-                        self._personalization_man.record_story_loaded()
                     except IOError:
                         self._logger.exception("Script parser could not open "
                                 + "story script! Skipping STORY line.")
