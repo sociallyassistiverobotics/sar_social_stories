@@ -158,7 +158,7 @@ class ss_db_manager():
             else:
                 # Return percent responses correct (database gave us
                 # these values in tuples).
-                return float(correct_responses[0]) / total_responses[0]
+                return float(total_correct[0]) / total_responses[0]
         except Exception as e:
             self._logger.exception("Failed when trying to find responses for "
                 + participant + " for session " + str(session)
@@ -449,6 +449,9 @@ class ss_db_manager():
                 """, (participant, session, story, level))
             # Commit after recording the story.
             self._conn.commit()
+            self._logger.debug("Recorded story played: participant=" +
+                participant + ", session=" + str(session) + ", level=" +
+                str(level) + ", story=" + story)
         except Exception as e:
             self._logger.exception("Could not insert record into stories_played"
                 + " table in database! Tried to insert: participant=" +
