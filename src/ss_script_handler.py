@@ -228,13 +228,13 @@ class ss_script_handler():
                 performance = {}
                 if emotion is not None:
                     performance["child-emotion-question-accuracy"] = \
-                        performance_emotion
+                        emotion
                 if tom is not None:
                     performance["child-tom-question-accuracy"] = \
-                        performance_emotion
+                       tom
                 if order is not None:
                     performance["child-order-question-accuracy"] = \
-                        performance_emotion
+                        order
                 e.performance = json.dumps(performance)
                 raise
 
