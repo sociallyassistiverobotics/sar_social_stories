@@ -93,13 +93,13 @@ other ROS logging, the default config file is generally located at
 "$ROS\_ROOT/../../etc/ros/python\_logging.conf" and follows the general Python
 logging configuration conventions. According to the [rospy logging
 documentation](http://wiki.ros.org/rospy/Overview/Logging#Advanced:_Override_Logging_Configuration),
-you can override the location by setting the `ROS\_PYTHON\_LOG\_CONFIG\_FILE`
+you can override the location by setting the `ROS_PYTHON_LOG_CONFIG_FILE`
 environment variable. You can also change the ROS log level without messing
 with this config file by passing the `log_level` parameter to the
 `rospy.init_node()` call made in "ss\_game\_node.py". Currently, the log level
 DEBUG is passed in to the init\_node call.
 
-By default, ROS saves a node's log files to `~/.ros/log/` or `$ROS\_ROOT/log`.
+By default, ROS saves a node's log files to `~/.ros/log/` or `$ROS_ROOT/log`.
 Note that rosout only gets log messages after the node is fully initialized, so
 the ROS rosout log file will likely be missing the initial messages. See the
 [rospy logging documentation](http://wiki.ros.org/rospy/Overview/Logging) for

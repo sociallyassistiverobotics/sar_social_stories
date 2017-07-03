@@ -158,7 +158,7 @@ class ss_db_manager():
             else:
                 # Return percent responses correct (database gave us
                 # these values in tuples).
-                return float(correct_responses[0]) / total_responses[0]
+                return float(total_correct[0]) / total_responses[0]
         except Exception as e:
             self._logger.exception("Failed when trying to find responses for "
                 + participant + " for session " + str(session)
@@ -224,8 +224,9 @@ class ss_db_manager():
             # correct number of ?'s into the query for the number of
             # emotions and supply a list with a matching number of
             # parameters.
-            params = list(emotions)
+            params = []
             params.append(participant)
+            params = params + list(emotions)
             params.append(level)
             params.append(participant)
 
@@ -244,9 +245,9 @@ class ss_db_manager():
                     ON questions.story_id = stories.id
                 LEFT JOIN stories_played
                     ON stories_played.story_id = stories.id
+                    AND stories_played.participant = (?)
                 WHERE questions.target_response IN (%s)
-                    AND (stories_played.participant <> (?)
-                    OR stories_played.participant IS NULL)
+                    AND stories_played.participant IS NULL
                     AND questions.level = (?)
                 """ % ",".join("?"*len(emotions))
 
@@ -255,8 +256,8 @@ class ss_db_manager():
                 FROM stories
                 LEFT JOIN stories_played
                     ON stories_played.story_id = stories.id
-                WHERE stories_played.participant <> (?)
-                    OR stories_played.participant IS NULL
+                    AND stories_played.participant = (?)
+                WHERE stories_played.participant IS NULL
                 """
 
             query = query1 + " UNION " + query2 + """
@@ -449,6 +450,9 @@ class ss_db_manager():
                 """, (participant, session, story, level))
             # Commit after recording the story.
             self._conn.commit()
+            self._logger.debug("Recorded story played: participant=" +
+                participant + ", session=" + str(session) + ", level=" +
+                str(level) + ", story=" + story)
         except Exception as e:
             self._logger.exception("Could not insert record into stories_played"
                 + " table in database! Tried to insert: participant=" +

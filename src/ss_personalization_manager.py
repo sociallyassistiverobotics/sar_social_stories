@@ -152,13 +152,12 @@ class ss_personalization_manager():
 
 
     def pick_next_story(self):
-        """ Determine which story should be heard next. We have 40
-        stories. Alternate telling new stories and telling review
-        stories. Earlier sessions will use more new stories since there
-        isn't much to review. Return name of the next script file, based
-        on which emotions should be present in the stories, which
-        stories have already been heard, whether we should tell a review
-        story, and the current level.
+        """ Determine which story should be heard next. We have some number of
+        stories. Alternate telling new stories and telling review stories.
+        Earlier sessions will use more new stories since there isn't much to
+        review. Return name of the next script file, based on which emotions
+        should be present in the stories, which stories have already been
+        heard, whether we should tell a review story, and the current level.
         """
         # If this is a demo session, use the demo script.
         if (self._session == -1):
@@ -221,8 +220,8 @@ class ss_personalization_manager():
         # If this is a demo session, load a demo scene.
         if (self._session == -1):
             # Demo set:
-            graphic_names = ["scenes/CR1-a-b.png", "scenes/CR1-b-b.png",
-                    "scenes/CR1-c-b.png", "scenes/CR1-d-b.png"]
+            graphic_names = ["CR1-a-b.png", "CR1-b-b.png",
+                    "CR1-c-b.png", "CR1-d-b.png"]
 
             # Demo story has scenes in order.
             in_order = True
