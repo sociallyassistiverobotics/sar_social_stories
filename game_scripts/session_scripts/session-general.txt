@@ -10,7 +10,7 @@ ADD	TIMEOUT_CLOSINGS	session-game_timeout.txt
 ADD	MAX_STORIES_REACHED	session-max-stories-reached.txt
 SET	MAX_GAME_TIME	7
 SET	MAX_STORIES	5
-ROBOT	DO	<lookat_child> All right [child-name] <smile>, let's play the story game next!<bounce>
+ROBOT	DO	<lookat_child,nb> All right [child-name] <smile,nb>, let's play the story game next!<bounce,nb>
 PAUSE	1
 REPEAT	MAX_STORIES	session-story.txt
 PAUSE	1

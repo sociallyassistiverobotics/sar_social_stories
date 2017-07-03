@@ -1,4 +1,4 @@
-"<bounce> Here we go!"
-"I know just the one! <nod>"
-"<happy>Story time!"
+"<bounce,nb> Here we go!"
+"I know just the one! <nod,nb>"
+"<happy,nb>Story time!"
 "Let's see..."

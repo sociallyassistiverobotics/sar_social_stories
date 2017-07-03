@@ -10,54 +10,54 @@ ADD	TIMEOUT_CLOSINGS	session-game_timeout.txt
 ADD	MAX_STORIES_REACHED	session-max-stories-reached.txt
 SET	MAX_GAME_TIME	7
 SET	MAX_STORIES	5
-ROBOT	DO	<lookat_child> All right [child-name] <smile>, let's play a story game next!
+ROBOT	DO	<lookat_child,nb> All right [child-name] <smile,nb>, let's play a story game next!
 PAUSE	1
-ROBOT	DO	In the stories, the characters will show different emotions. Let's look at these first. <lookat_screen>
+ROBOT	DO	In the stories, the characters will show different emotions. Let's look at these first. <lookat_screen,nb>
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
 OPAL	LOAD_OBJECT	{ "name": "answers/blake_scared.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
-ROBOT	DO	<lookat_screen,b>This is scared. <scared>
+ROBOT	DO	<lookat_screen,b>This is scared. <scared,nb>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
 OPAL	LOAD_OBJECT	{ "name": "answers/sefa_happy.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
-ROBOT	DO	<lookat_screen,b>This is happy. <happy>
+ROBOT	DO	<lookat_screen,b>This is happy. <happy,nb>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
 OPAL	LOAD_OBJECT	{ "name": "answers/jeff_sad.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
-ROBOT	DO	<lookat_screen,b>This is sad. <sad>
+ROBOT	DO	<lookat_screen,b>This is sad. <sad,nb>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
 OPAL	LOAD_OBJECT	{ "name": "answers/darby_nervous.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
-ROBOT	DO	<lookat_screen,b>This is nervous. <scared>
+ROBOT	DO	<lookat_screen,b>This is nervous. <scared,nb>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
 OPAL	LOAD_OBJECT	{ "name": "answers/raj_mad.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
-ROBOT	DO	<lookat_screen,b>This is mad. <angry>
+ROBOT	DO	<lookat_screen,b>This is mad. <angry,nb>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
 OPAL	LOAD_OBJECT	{ "name": "answers/lisa_surprised.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
-ROBOT	DO	<lookat_screen,b>This is surprised. <wide-eyed>
+ROBOT	DO	<lookat_screen,b>This is surprised. <wide-eyed,nb>
 PAUSE	3
 OPAL	CLEAR
 ROBOT	DO	Just a few more!
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
 OPAL	LOAD_OBJECT	{ "name": "answers/sefa_frustrated.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
-ROBOT	DO	<lookat_screen,b>This is frustrated. <frustrated>
+ROBOT	DO	<lookat_screen,b>This is frustrated. <frustrated,nb>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
 OPAL	LOAD_OBJECT	{ "name": "answers/sally_bored.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
-ROBOT	DO	<lookat_screen,b>This is bored. <yawn-only>
+ROBOT	DO	<lookat_screen,b>This is bored. <yawn-only,nb>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
 OPAL	LOAD_OBJECT	{ "name": "answers/bo_calm.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
-ROBOT	DO	<lookat_screen,b>This is calm. <calm>
+ROBOT	DO	<lookat_screen,b>This is calm. <calm,nb>
 PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
@@ -67,9 +67,9 @@ PAUSE	3
 OPAL	CLEAR
 OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0"}
 OPAL	LOAD_OBJECT	{ "name": "answers/joy_excited.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
-ROBOT	DO	<lookat_screen,b>This is excited. <excited>
+ROBOT	DO	<lookat_screen,b>This is excited. <excited,nb>
 PAUSE	3
-ROBOT	DO	<lookat_child> That's all! Now, let's tell the first story! <bounce> I'll tell the story, and the story pictures will <lookat_screen> show up here! Then, <lookat_child> I might have questions about the story.
+ROBOT	DO	<lookat_child,nb> That's all! Now, let's tell the first story! <bounce,nb> I'll tell the story, and the story pictures will <lookat_screen,nb> show up here! Then, <lookat_child,nb> I might have questions about the story.
 REPEAT	MAX_STORIES	session-story.txt
 PAUSE	1
 OPAL	CLEAR

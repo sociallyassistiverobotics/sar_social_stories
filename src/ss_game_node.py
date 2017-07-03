@@ -35,6 +35,7 @@ import Queue # for getting messages from ROS callback threads
 import datetime # for getting time deltas for timeouts
 from ss_script_handler import ss_script_handler # plays back script lines
 from ss_ros import ss_ros # we put all our ROS stuff here
+from std_msgs.msg import String
 
 class ss_game_node():
     """ The SAR social stories main game node orchestrates the game: what the
@@ -80,6 +81,10 @@ class ss_game_node():
                 + "config file \"" + config_file + "\". Does the file "
                 + "exist? Is it valid json?\n\nUsing default log setup to "
                 + "log to \"ss.log\". Will not be logging to rosout!")
+
+        #cmhuang
+        self._ss_signal = None
+        rospy.Subscriber("/sar/social_story/signal", String, self.ss_signal_callback)
 
 
     def parse_arguments(self):
@@ -135,13 +140,14 @@ class ss_game_node():
 
         # Read config file to get relative file path to game scripts.
         try:
-            config_file = "ss_config.demo.json" if participant == "DEMO" \
-                    else "ss_config.json"
+            config_file = "/home/sar/catkin_ws/src/sar_social_stories/src/ss_config.demo.json" if participant == "DEMO" \
+                    else "/home/sar/catkin_ws/src/sar_social_stories/src/ss_config.json"
             with open(config_file) as json_file:
                 json_data = json.load(json_file)
                 self._logger.debug("Reading game config file...: %s", json_data)
                 if ("script_path" in json_data):
-                    script_path = json_data["script_path"]
+                    # script_path = json_data["script_path"]
+                    script_path = ''
                 else:
                     self._logger.error("Could not read relative path to game "
                         + "scripts! Expected option \"script_path\" to be in "
@@ -149,7 +155,8 @@ class ss_game_node():
                         + "scripts to run the game.")
                     return
                 if ("story_script_path" in json_data):
-                    story_script_path = json_data["story_script_path"]
+                    # story_script_path = json_data["story_script_path"]
+                    story_script_path = '/home/sar/catkin_ws/src/sar_social_stories/src/'
                 else:
                     self._logger.error("Could not read path to story scripts! "
                         + "Expected option \"story_script_path\" to be in "
@@ -157,7 +164,8 @@ class ss_game_node():
                         + " game script directory and not a sub-directory.")
                     story_script_path = None
                 if ("session_script_path" in json_data):
-                    session_script_path = json_data["session_script_path"]
+                    # session_script_path = json_data["session_script_path"]
+                    session_script_path = '/home/sar/catkin_ws/src/sar_social_stories/game_scripts/session_scripts/'
                 else:
                     self._logger.error("Could not read path to session scripts! "
                         + "Expected option \"session_script_path\" to be in "
@@ -165,12 +173,14 @@ class ss_game_node():
                         + "game script directory and not a sub-directory.")
                     session_script_path = None
                 if ("database") in json_data:
-                    database = json_data["database"]
+                    # database = json_data["database"]
+                    database = '/home/sar/catkin_ws/src/sar_social_stories/src/socialstories.db'
                 else:
                     self._logger.error("""Could not read name of database!
                         Expected option \"database\" to be in the config file.
                         Assuming database is named \"socialstories.db\"""")
-                    database = "socialstories.db"
+                    # database = "socialstories.db"
+                    database = '/home/sar/catkin_ws/src/sar_social_stories/src/socialstories.db'
                 if ("percent_correct_to_level") in json_data:
                     percent_correct_to_level = json_data[
                             "percent_correct_to_level"]
@@ -206,7 +216,7 @@ class ss_game_node():
             log_timer = datetime.datetime.now()
 
             # Set up signal handler to catch SIGINT (e.g., ctrl-c).
-            signal.signal(signal.SIGINT, self._signal_handler)
+            signal.signal(signal.SIGINT, self._signal_handler) #cmhuang: comment out for testing
 
             # Ready to start the game. Send a "READY" message.
             self._logger.info("Ready to start!")
@@ -345,12 +355,34 @@ class ss_game_node():
             exit("Interrupted by user.")
 
 
+    def ss_signal_callback(self, data):
+        self._ss_signal = data.data
+        print self._ss_signal
+
+
+    def go(self):
+        session = 1
+        participant = "default"
+        while True:
+            if self._ss_signal == 'exit':
+                return
+            elif self._ss_signal == 'go':
+                # print "gogogo"
+                session = 1
+                participant = "test"
+                break
+            else:
+                rospy.sleep(2.)
+
+        self.launch_game(session, participant)
+
 if __name__ == '__main__':
     # Try launching the game!
     try:
         game_node = ss_game_node()
-        (session, participant) = game_node.parse_arguments()
-        game_node.launch_game(session, participant)
+        game_node.go()
+        # (session, participant) = game_node.parse_arguments()
+        # game_node.launch_game(session, participant)
 
     # If roscore isn't running or shuts down unexpectedly...
     except rospy.ROSInterruptException:

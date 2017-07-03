@@ -1,4 +1,4 @@
-"<lookat_child> <sad>Oh, we've told all our stories for today."
-"<lookat_child> Oh, looks like that was the last story for today!"
-"<lookat_child> That was the last story for today!"
-"<lookat_child> Thanks for listening to the stories today!"
+"<lookat_child,nb> <sad,nb>Oh, we've told all our stories for today."
+"<lookat_child,nb> Oh, looks like that was the last story for today!"
+"<lookat_child,nb> That was the last story for today!"
+"<lookat_child,nb> Thanks for listening to the stories today!"
