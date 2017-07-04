@@ -67,7 +67,8 @@ class ss_game_node():
         self._logger = logging.getLogger(__name__)
         # Configure logging.
         try:
-            config_file = "ss_log_config.json"
+            #cmhuang: could not find the log config file below.
+            config_file = "/home/sar/catkin_ws/src/sar_social_stories/src/ss_log_config.json"
             with open(config_file) as json_file:
                 json_data = json.load(json_file)
                 logging.config.dictConfig(json_data)
@@ -216,7 +217,7 @@ class ss_game_node():
             log_timer = datetime.datetime.now()
 
             # Set up signal handler to catch SIGINT (e.g., ctrl-c).
-            signal.signal(signal.SIGINT, self._signal_handler) #cmhuang: comment out for testing
+            # signal.signal(signal.SIGINT, self._signal_handler) #cmhuang: comment out for testing
 
             # Ready to start the game. Send a "READY" message.
             self._logger.info("Ready to start!")
