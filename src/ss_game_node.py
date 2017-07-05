@@ -337,11 +337,16 @@ class ss_game_node():
 
                 except StopIteration as e:
                     self._logger.info("Finished script!")
+                    rospy.loginfo("MIT game is FINISHED.")
                     # Send message to announce the game is over.
                     if "performance" in dir(e):
                         self._ros_ss.send_game_state("END", e.performance)
+                        self._ros_ss.send_game_state("END", e.performance)
+                        rospy.loginfo("MIT game sent END state 1")
                     else:
                         self._ros_ss.send_game_state("END")
+                        self._ros_ss.send_game_state("END")
+                        rospy.loginfo("MIT game sent END state 2")
                     break
 
             # TODO wait after exiting this loop for the main
@@ -369,8 +374,9 @@ class ss_game_node():
                 return
             elif self._ss_signal == 'go':
                 # print "gogogo"
-                session = 1
-                participant = "test"
+                session = rospy.get_param('/sar/global/_g_day')
+                participant = rospy.get_param('/sar/global/_child_name')
+                rospy.loginfo('playing story game on day [%d] with [%s]', session, participant)
                 break
             else:
                 rospy.sleep(2.)
