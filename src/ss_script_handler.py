@@ -792,7 +792,7 @@ class ss_script_handler():
         with the same parameters for the response and the timeout.
         """
         return self.wait_for_response(self._last_response_to_get,
-            last_response_timeout)
+            self._last_response_timeout)
 
 
     def _load_answers(self, answer_list):
