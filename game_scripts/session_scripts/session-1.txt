@@ -69,6 +69,7 @@ OPAL	SETUP_STORY_SCENE	{"numScenes":"1", "scenesInOrder":"true", "numAnswers":"0
 OPAL	LOAD_OBJECT	{ "name": "answers/joy_excited.png", "tag": "PlayObject", "draggable": "false",  "slot": "1", "isAnswerSlot": "false"}
 ROBOT	DO	<lookat_screen,b>This is excited. <excited,nb>
 PAUSE	3
+OPAL	CLEAR
 ROBOT	DO	<lookat_child,nb> That's all! Now, let's tell the first story! <bounce,nb> I'll tell the story, and the story pictures will <lookat_screen,nb> show up here! Then, <lookat_child,nb> I might have questions about the story.
 REPEAT	MAX_STORIES	session-story.txt
 PAUSE	1
