@@ -167,7 +167,8 @@ def ss_process_story_ods():
                             level+1, question_num, question_type,
                             sheet_dict[responses][level].split(','))
 
-                        # Make dict of level: question text, responses.
+                        # Make dict of level:(question text, question type,
+                        # question num, responses).
                         if level not in question_list.keys():
                             question_list[level] = []
                         if level not in midway_question_list.keys():
@@ -178,12 +179,15 @@ def ss_process_story_ods():
                         if "ToM" in question_type:
                             midway_question_list[level].append(
                                 [sheet_dict[key][level],
-                                sheet_dict[responses][level].split(',')])
+                                sheet_dict[responses][level].split(','),
+                                question_type,
+                                question_num])
                         else:
                             question_list[level].append(
                                 [sheet_dict[key][level],
-                                sheet_dict[responses][level].split(',')])
-
+                                sheet_dict[responses][level].split(','),
+                                question_type,
+                                question_num])
                 # If this is a Scene column, add the graphics filenames
                 # to the DB.
                 # We also want to save the graphics names for use when
@@ -435,9 +439,15 @@ def find_character(words):
 def add_question_to_script(question, outfile, graphic_names, level):
     """ Add a question to a game script. """
     # Find the character this question is about.
-    # The question provided has two parts:
+    # The question provided has four parts:
     #   [0] = the question text
     #   [1] = the comma-separated list of responses
+    #   [2] = the question type
+    #   [3] = the question number
+    # First, write a line with the question's meta-information.
+    outfile.write("QUESTION\t" + question[2] + "\t" + str(question[3]) + "\n")
+
+    # Find the character this question is about.
     character = find_character(question[0].split())
 
     # Make a string so we can deal with commas.
