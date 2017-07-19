@@ -92,6 +92,9 @@ def ss_process_story_ods():
         # Add list of story names to story table (from sheet names).
         insert_to_stories_table(cursor, book.sheet_names())
 
+        # We need to keep track of graphic names for later...
+        graphic_names = {}
+
         # For each sheet, read in story, generate scripts, input info
         # about stories, questions, and emotions to DB.
         for sheet in book:
@@ -99,9 +102,14 @@ def ss_process_story_ods():
             sheet.name_columns_by_row(0)
             print("Has columns: " + str(sheet.colnames))
 
+            story_name = str(sheet.name.lower())
+            print "Story name: " + story_name
+
             sheet_dict = sheet.to_dict()
             question_list = {}
             midway_question_list = {}
+            graphic_names[story_name] = {}
+
             # Add each question to the DB. Loop through columns.
             for key in sheet_dict.keys():
             	key = key.encode('ascii', 'ignore')
@@ -160,8 +168,7 @@ def ss_process_story_ods():
                             level+1, question_num, question_type,
                             sheet_dict[responses][level].split(','))
 
-                        # Make dict of level:(question text, question type,
-                        # question num, responses).
+                        # Make dict of level: question text, responses.
                         if level not in question_list.keys():
                             question_list[level] = []
                         if level not in midway_question_list.keys():
@@ -172,18 +179,16 @@ def ss_process_story_ods():
                         if "ToM" in question_type:
                             midway_question_list[level].append(
                                 [sheet_dict[key][level],
-                                sheet_dict[responses][level].split(','),
-                                question_type,
-                                question_num])
+                                sheet_dict[responses][level].split(',')])
                         else:
                             question_list[level].append(
                                 [sheet_dict[key][level],
-                                sheet_dict[responses][level].split(','),
-                                question_type,
-                                question_num])
+                                sheet_dict[responses][level].split(',')])
 
                 # If this is a Scene column, add the graphics filenames
                 # to the DB.
+                # We also want to save the graphics names for use when
+                # adding order/scene questions to the script later.
                 if "scene" in key.lower() and "graphic" in key.lower():
                     # Get the number of the scene
                     try:
@@ -194,6 +199,8 @@ def ss_process_story_ods():
                         print("Error! No scene number found!\n" + str(e))
                         return
                     else:
+                        if scene_num not in graphic_names[story_name]:
+                            graphic_names[story_name][scene_num] = {}
                         # Graphics may have different descriptions at
                         # different levels, so we cannot automatically
                         # figure out which description matches which
@@ -208,7 +215,8 @@ def ss_process_story_ods():
                                 print("Skipping empty cell")
                                 continue
                             # Graphics scene numbers are 1-indexed.
-                            insert_to_graphics_table(cursor,
+                            graphic_names[story_name][scene_num][level+1] = \
+                                insert_to_graphics_table(cursor,
                                 sheet.name.upper(), level + 1, scene_num,
                                 sheet[level,key].lower())
 
@@ -218,7 +226,7 @@ def ss_process_story_ods():
                 # Use story to generate game script for robot
                 generate_script_for_story(args.out_dir, sheet.name.lower(),
                         level+1, sheet[level, "Story"], question_list[level],
-                        midway_question_list[level])
+                        midway_question_list[level], graphic_names)
 
             # Commit after each story.
             conn.commit()
@@ -265,6 +273,7 @@ def insert_to_graphics_table(cursor, story_name, level, scene, graphic_tag):
             (?),
             (?))
         """, (story_name.lower(), level, scene, graphic_name))
+    return graphic_name.replace(".png", "")
 
 
 def insert_to_questions_table(cursor, story, level, question_num,
@@ -351,7 +360,7 @@ def fill_levels_table(cursor):
 
 
 def generate_script_for_story(output_dir, story_name, level, story, questions,
-        midway_questions):
+        midway_questions, graphic_names):
     """ Using the provided story text, generate a game script with the
     instructions for loading and playing the story with a robot.
     """
@@ -385,7 +394,8 @@ def generate_script_for_story(output_dir, story_name, level, story, questions,
                     # Add first half of story.
                     f.write("ROBOT\tDO\t" + s[0].strip() + "\n")
                     # Add midway question
-                    add_question_to_script(midway_questions[0], f)
+                    add_question_to_script(midway_questions[0], f,
+                            graphic_names[story_name], level)
                     # Add second half of story.
                     f.write("ROBOT\tDO\t" + s[1].strip() + "\n")
                 else:
@@ -406,7 +416,7 @@ def generate_script_for_story(output_dir, story_name, level, story, questions,
 
         # Then add questions!
         for question in questions:
-            add_question_to_script(question, f)
+            add_question_to_script(question, f, graphic_names[story_name], level)
 
 
 def find_character(words):
@@ -423,17 +433,12 @@ def find_character(words):
                 return word.lower()
 
 
-def add_question_to_script(question, outfile):
+def add_question_to_script(question, outfile, graphic_names, level):
     """ Add a question to a game script. """
-    # The question provided has four parts:
+    # Find the character this question is about.
+    # The question provided has two parts:
     #   [0] = the question text
     #   [1] = the comma-separated list of responses
-    #   [2] = the question type
-    #   [3] = the question number
-    # First, write a line with the question's meta-information.
-    outfile.write("QUESTION\t" + question[2] + "\t" + str(question[3]) + "\n")
-
-    # Find the character this question is about.
     character = find_character(question[0].split())
 
     # Make a string so we can deal with commas.
@@ -464,20 +469,21 @@ def add_question_to_script(question, outfile):
 
     # For order questions, we don't need to load answers -- we will use
     # the scenes as the answer slots. So we will just need to set the
-    # scenes as correct or incorrect.
+    # scenes as correct or incorrect. We use the graphic names as the
+    # scene names.
     else:
         # Set correct line. Scene slots in the game are 0-indexed, but
-        # in the story scripts, they are 1-indexed, so we need to
-        # convert them.
+        # in the story scripts and graphic names, they are 1-indexed.
         responses_0indexed = []
         for response in question[1]:
             try:
                 num = re.findall(r'\d+', response)[0]
-                responses_0indexed.append("scene" + str(int(num)-1))
+                responses_0indexed.append(graphic_names[int(num)][level])
             except:
                 # If there is no number, we have a problem. Order
                 # questions should always have numbered scene responses.
                 print("No scene number found in question responses!")
+                print response
                 raise
 
         # Now that we have 0-indexed responses, build a line to set
