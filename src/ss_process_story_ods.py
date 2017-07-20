@@ -522,9 +522,13 @@ def add_question_to_script(question, outfile, graphic_names, level):
                 + " felt " + question[1][0].lower() + " <"
                 + question[1][0].lower() + ">.\n")
 
-    # Add clear and pause lines.
-    outfile.write("OPAL\tCLEAR\tANSWERS\n"
-        + "PAUSE\t1\n")
+    # Add clear line, but only clear after emotion/ToM questions.
+    # Order questions use the scenes as answers, so we don't want to clear them.
+    if "order" not in question[2]:
+        outfile.write("OPAL\tCLEAR\tANSWERS\n")
+
+    # Add pause line.
+    outfile.write("PAUSE\t1\n")
 
 
 if __name__ == '__main__':
